@@ -1,0 +1,29 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Enterprise cloud file manager user profile.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "fullName": { "type": "string" },
+        "email": { "type": "string" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" },
+        "plan": { "type": "string" },
+        "storageUsed": { "type": "number" },
+        "storageLimit": { "type": "number" },
+        "totalFiles": { "type": "number" },
+        "downloads": { "type": "number" },
+        "sharedFiles": { "type": "number" }
+      },
+      "required": ["uid", "fullName", "email"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "Profiles for authenticated cloud storage users containing active subscription and metrics data."
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "users": {
+    "rahul.sharma@enterprise.com": {
+      "id": "user-rahul",
+      "name": "Anjan",
+      "email": "rahul.sharma@enterprise.com",
+      "password": "$2b$10$rh9woUQlFrHmgYzmRJm7Hu3ScJH7ekTzq6w8VOzBhun73/o2BkKgy"
+    }
+  },
+  "profiles": {
+    "user-rahul": {
+      "id": "user-rahul",
+      "name": "Anjan",
+      "email": "rahul.sharma@enterprise.com",
+      "storageUsed": 0,
+      "storageLimit": 214748364800,
+      "plan": "free",
+      "createdAt": "2026-06-10T18:27:12.554Z",
+      "mfaEnabled": false
+    }
+  },
+  "files": [],
+  "activities": [],
+  "notifications": [],
+  "sessions": {
+    "user-rahul": [
+      {
+        "id": "session-rahul",
+        "device": "Cloud Workstation",
+        "ip": "127.0.0.1",
+        "location": "Enterprise Gateway Authenticated",
+        "lastActive": "2026-06-10T18:27:12.554Z",
+        "current": true
+      }
+    ]
+  },
+  "billingHistory": {}
+}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { 
-  HelpCircle, MessageSquare, Send, CheckCircle, Search, Mail, BookOpen, AlertCircle 
+  HelpCircle, MessageSquare, Send, CheckCircle, Search, Mail, BookOpen, AlertCircle, CheckCircle2 
 } from 'lucide-react';
 
 interface HelpCenterViewProps {
@@ -72,57 +72,61 @@ export default function HelpCenterView({ token }: HelpCenterViewProps) {
   };
 
   return (
-    <div className="space-y-6 font-sans" id="help-center-view-root">
-      {/* help header */}
-      <div className="border-b border-slate-200/50 pb-5">
-        <h1 className="text-2xl sm:text-3xl font-display font-bold text-slate-800">Support Operations Desk</h1>
-        <p className="text-xs text-slate-400 mt-1">Acquire S3 connection blueprints, generate support tickets, and chat directly with operational technicians.</p>
+    <div className="space-y-8 font-sans pb-12" id="help-center-view-root">
+      
+      {/* Help header */}
+      <div className="border-b border-slate-200/50 pb-6">
+        <h1 className="text-3xl sm:text-4xl font-display font-medium tracking-tight text-slate-900 leading-tight">
+          Operational Support desk
+        </h1>
+        <p className="text-xs font-semibold text-slate-400 font-mono tracking-wide uppercase mt-1">Acquire S3 connection blueprints & secure support tickets</p>
       </div>
 
-      {/* Grid panels */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      {/* Grid layouts */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {/* Left Column: Chatbots and support tickers */}
+        {/* Left Column: Chat bot */}
         <div className="lg:col-span-7 space-y-6">
           
-          {/* Card A: Chatbot terminal */}
-          <div className="bg-white border border-slate-200/60 rounded-3xl p-5 sm:p-6 shadow-sm flex flex-col justify-between h-[480px]">
-            <div className="space-y-1 pb-4 border-b border-slate-100">
+          <div className="bg-white border border-slate-200/50 rounded-3xl p-6 sm:p-8 shadow-sm flex flex-col justify-between h-[520px]">
+            <div className="space-y-1.5 pb-4 border-b border-slate-100">
               <div className="flex items-center space-x-2">
                 <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                <h3 className="font-display font-medium text-slate-800 text-sm">Interactive Operations Assistant Chat</h3>
+                <h3 className="font-display font-bold text-slate-900 text-sm">Real-time S3 Operations Assistant</h3>
               </div>
-              <p className="text-[10px] text-slate-400">Ask about S3 configs, credentials, or billing</p>
+              <p className="text-[10px] text-slate-400 font-semibold font-mono uppercase tracking-wide">Automated developer hotline active</p>
             </div>
 
-            {/* Chat content container list */}
-            <div className="flex-1 overflow-y-auto space-y-3 py-4 pr-1 text-xs">
+            {/* Chat content chat list */}
+            <div className="flex-1 overflow-y-auto space-y-4 py-5 pr-1 text-xs">
               {chatLogs.map((msg, idx) => (
                 <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                  <div className={`p-3.5 rounded-2xl max-w-sm border ${
-                    msg.sender === 'user' ? 'bg-indigo-600 text-white border-indigo-500 rounded-tr-none' : 'bg-slate-50 text-slate-700 border-slate-100 rounded-tl-none'
+                  <div className={`p-4 rounded-2xl max-w-md border ${
+                    msg.sender === 'user' 
+                      ? 'bg-blue-600 text-white border-blue-500/30 rounded-tr-none shadow-md shadow-blue-500/10' 
+                      : 'bg-slate-50 text-slate-700 border-slate-100 rounded-tl-none font-semibold'
                   }`}>
-                    <p className="leading-relaxed font-medium">{msg.text}</p>
-                    <span className="text-[9px] opacity-60 block text-right mt-1 font-mono">{msg.time}</span>
+                    <p className="leading-relaxed">{msg.text}</p>
+                    <span className="text-[9px] opacity-60 block text-right mt-1.5 font-mono">{msg.time}</span>
                   </div>
                 </div>
               ))}
             </div>
 
-            {/* Message input trigger */}
-            <form onSubmit={handleSendMessage} className="pt-3 border-t border-slate-100 flex items-center gap-2">
+            {/* Message input field */}
+            <form onSubmit={handleSendMessage} className="pt-4 border-t border-slate-100 flex items-center gap-2">
               <input 
                 id="chatbot-input-field"
                 type="text"
                 value={chatInput}
                 onChange={(e) => setChatInput(e.target.value)}
                 placeholder="Can I sync my local Dropbox directories natively?"
-                className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-indigo-600 font-medium text-slate-800"
+                className="flex-1 p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold focus:outline-none focus:border-blue-600 text-slate-800 shadow-inner"
               />
               <button 
                 id="chatbot-send-btn"
                 type="submit"
-                className="p-3 bg-indigo-600 hover:bg-slate-900 text-white rounded-xl shadow cursor-pointer"
+                className="p-3.5 bg-blue-600 hover:bg-blue-700 text-white rounded-2xl shadow transition-all cursor-pointer border border-blue-500/20"
               >
                 <Send className="w-4 h-4" />
               </button>
@@ -131,53 +135,52 @@ export default function HelpCenterView({ token }: HelpCenterViewProps) {
 
         </div>
 
-        {/* Right Column: Ticketing */}
+        {/* Right Column: Ticket submission */}
         <div className="lg:col-span-5 space-y-6">
           
-          {/* Card B: Support Ticket Submission Form */}
-          <div className="bg-white border border-slate-200/60 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
+          <div className="bg-white border border-slate-200/50 rounded-3xl p-6 sm:p-8 shadow-sm space-y-5">
             <div>
-              <h3 className="font-display font-medium text-slate-800 text-sm">Generate Incident Support Ticket</h3>
-              <p className="text-[10px] text-slate-400">Transmits formal support tickets to engineering lists</p>
+              <h3 className="font-display font-bold text-slate-900 text-sm">Create Technical Incident Ticket</h3>
+              <p className="text-[10px] text-slate-400 font-semibold mt-0.5">Dispatches issues to off-duty reliability engineers</p>
             </div>
 
             {ticketSubmitted ? (
-              <div className="p-8 text-center bg-slate-50 border border-slate-100 rounded-2xl space-y-3 py-12">
-                <CheckCircle className="w-10 h-10 text-emerald-500 mx-auto" />
-                <h4 className="font-display font-bold text-slate-800 text-sm">Support Ticket Transmission Logged!</h4>
-                <p className="text-xs text-slate-500">Subject received. Standard SLA responses fall inside 1-2 hours.</p>
+              <div className="p-8 text-center bg-slate-50 border border-slate-100 rounded-2xl space-y-3.5 py-14">
+                <CheckCircle2 className="w-12 h-12 text-emerald-500 mx-auto animate-bounce" />
+                <h4 className="font-display font-bold text-slate-800 text-sm">Incident Ticket Registered!</h4>
+                <p className="text-xs text-slate-500 font-semibold leading-relaxed">Subject logged inside support registers. Our team responds inside 30-60 minutes on corporate tiers.</p>
               </div>
             ) : (
-              <form onSubmit={handleTicketSubmit} className="space-y-4 text-xs font-medium">
-                <div>
-                  <label className="block text-[10px] uppercase font-mono font-bold text-slate-400 mb-1">Issue Categorization</label>
+              <form onSubmit={handleTicketSubmit} className="space-y-4 text-xs font-semibold">
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] uppercase font-mono tracking-wider font-extrabold text-slate-400">Issue Classification</label>
                   <select 
                     value={ticketCategory}
                     onChange={(e) => setTicketCategory(e.target.value)}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-600 font-semibold text-slate-700"
+                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-blue-600 text-slate-700 font-bold"
                   >
-                    <option value="technical">S3 / Technical Sync Fault</option>
-                    <option value="billing">Invoices / Subscription scale</option>
-                    <option value="access">Access Keys Recovery</option>
-                    <option value="compliance">Security & Audits Compliance</option>
+                    <option value="technical">S3 / Metadata sync error</option>
+                    <option value="billing">Direct Invoice billing scaling</option>
+                    <option value="access">Access Keys / Decryptions</option>
+                    <option value="compliance">Corporate audits and trust</option>
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-[10px] uppercase font-mono font-bold text-slate-400 mb-1">Subject Title</label>
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] uppercase font-mono tracking-wider font-extrabold text-slate-400">Incident Subject Line</label>
                   <input 
                     id="support-ticket-subject"
                     type="text"
                     required
                     value={ticketSubject}
                     onChange={(e) => setTicketSubject(e.target.value)}
-                    placeholder="Cannot authenticate custom AWS S3 API key"
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-600 font-semibold text-slate-800"
+                    placeholder="Cannot authenticate custom bucket credentials"
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:border-blue-600 text-slate-800"
                   />
                 </div>
 
-                <div>
-                  <label className="block text-[10px] uppercase font-mono font-bold text-slate-400 mb-1">Describe operational problem</label>
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] uppercase font-mono tracking-wider font-extrabold text-[#94A3B8]">Describe Incident Details</label>
                   <textarea 
                     id="support-ticket-description"
                     required
@@ -185,14 +188,14 @@ export default function HelpCenterView({ token }: HelpCenterViewProps) {
                     value={ticketMsg}
                     onChange={(e) => setTicketMsg(e.target.value)}
                     placeholder="We seek to authorize a custom AWS storage bucket but the validation endpoint returns unauthorized code errors..."
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-600 font-medium text-slate-800"
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:border-blue-600 text-slate-800 font-semibold leading-relaxed"
                   />
                 </div>
 
                 <button 
                   id="submit-ticket-btn"
                   type="submit"
-                  className="w-full py-2.5 bg-indigo-600 hover:bg-slate-900 font-bold text-xs text-white rounded-xl shadow-md cursor-pointer"
+                  className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 font-bold text-white text-xs rounded-xl shadow-md transition-all cursor-pointer border border-blue-500/25 animate-pulse"
                 >
                   Generate Corporate Support Ticket
                 </button>
@@ -200,12 +203,12 @@ export default function HelpCenterView({ token }: HelpCenterViewProps) {
             )}
           </div>
 
-          {/* Card C: Static Resource Documents */}
-          <div className="bg-slate-50 border border-slate-250 p-5 rounded-3xl space-y-3">
-            <span className="text-[9px] uppercase font-mono tracking-widest text-indigo-700 font-extrabold block">Resource Knowledgebase</span>
-            <h4 className="font-display font-semibold text-slate-800 text-xs">AWS S3 Connection blueprints</h4>
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Every newly created folder or directory maps natively of your backends. Seek AWS bucket tutorials, encryption rules, or JSON policies directly inside our compliance page.
+          {/* Card C: blue info box */}
+          <div className="bg-[#0A0E1A] text-slate-350 p-6 sm:p-8 rounded-3xl space-y-3 shadow-xl">
+            <span className="text-[9px] uppercase font-mono tracking-widest text-blue-400 font-extrabold block">Resource blueprint guides</span>
+            <h4 className="font-display font-semibold text-white text-sm">Compliance Connections S3</h4>
+            <p className="text-xs text-slate-400 leading-relaxed font-semibold">
+              Every folder inside the S3 workspace maps to live cloud memory points. View tutorial JSON policies or API authentication strategies directly in our system index files.
             </p>
           </div>
 

@@ -13,16 +13,13 @@ interface SettingsViewProps {
 }
 
 export default function SettingsView({ user, token, onRefresh, onLogout }: SettingsViewProps) {
-  // States
   const [profileName, setProfileName] = useState(user.name);
   const [profileEmail, setProfileEmail] = useState(user.email);
   const [mfa, setMfa] = useState(user.mfaEnabled);
 
-  // Password modification state management
   const [curPwd, setCurPwd] = useState('');
   const [newPwd, setNewPwd] = useState('');
   
-  // Handlers state
   const [sessions, setSessions] = useState<UserSession[]>([]);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<{ status: 'success' | 'error', text: string } | null>(null);
@@ -159,51 +156,56 @@ export default function SettingsView({ user, token, onRefresh, onLogout }: Setti
   };
 
   return (
-    <div className="space-y-6 font-sans" id="settings-view-root">
+    <div className="space-y-8 font-sans pb-12" id="settings-view-root">
       
       {/* settings header */}
-      <div className="border-b border-slate-200/50 pb-5">
-        <h1 className="text-2xl sm:text-3xl font-display font-bold text-slate-800">Workspace Settings & Compliance</h1>
-        <p className="text-xs text-slate-400 mt-1">Manage profile properties, secure device key revocation logs, and multi-factor compliance standards.</p>
+      <div className="border-b border-slate-200/50 pb-6">
+        <h1 className="text-3xl sm:text-4xl font-display font-medium tracking-tight text-slate-900 leading-tight">
+          System Settings & Compliance
+        </h1>
+        <p className="text-xs font-semibold text-slate-400 font-mono tracking-wide uppercase mt-1">Manage personnel, monitor connected nodes, & enforce corporate access rules</p>
       </div>
 
       {feedback && (
-        <div className={`p-4 rounded-2xl border text-xs font-semibold ${
-          feedback.status === 'success' ? 'bg-emerald-50 text-emerald-800 border-emerald-100' : 'bg-red-50 text-red-800 border-red-100'
+        <div className={`p-4.5 rounded-2xl border text-xs font-semibold shadow-sm flex items-center gap-3 ${
+          feedback.status === 'success' 
+            ? 'bg-emerald-50 text-emerald-800 border-emerald-100' 
+            : 'bg-red-50 text-red-850 border-red-100'
         }`}>
-          {feedback.text}
+          <Shield className={`w-5 h-5 ${feedback.status === 'success' ? 'text-emerald-600' : 'text-red-500'}`} />
+          <span>{feedback.text}</span>
         </div>
       )}
 
       {/* Grid panels */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
-        {/* Left Column: forms */}
+        {/* Left Column: Forms */}
         <div className="lg:col-span-7 space-y-6">
           
-          {/* Card A: Account Profile Details Form */}
-          <div className="bg-white border border-slate-200/60 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
-            <h3 className="font-display font-medium text-slate-800 text-sm">Corporate Manager Identity</h3>
-            <form onSubmit={handleProfileSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                <div>
-                  <label className="block text-[10px] uppercase font-mono font-bold text-slate-400 mb-1">Full Representative Name</label>
+          {/* Card A: Profile Details */}
+          <div className="bg-white border border-slate-200/50 rounded-3xl p-6 sm:p-8 shadow-sm space-y-5">
+            <h3 className="font-display font-bold text-slate-900 text-sm">Identity profile specifications</h3>
+            <form onSubmit={handleProfileSubmit} className="space-y-5 text-slate-700 font-semibold text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] uppercase font-mono tracking-wider font-extrabold text-slate-400">Representative Name</label>
                   <input 
                     type="text"
                     required
                     value={profileName}
                     onChange={(e) => setProfileName(e.target.value)}
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-600 font-semibold text-slate-800"
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:border-blue-600 transition-all font-semibold text-slate-800 shadow-inner"
                   />
                 </div>
-                <div>
-                  <label className="block text-[10px] uppercase font-mono font-bold text-slate-400 mb-1">Authenticated Corporate Email</label>
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] uppercase font-mono tracking-wider font-extrabold text-slate-400">Corporate Email Domain</label>
                   <input 
                     type="email"
                     required
                     value={profileEmail}
                     onChange={(e) => setProfileEmail(e.target.value)}
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:border-indigo-600 font-semibold text-slate-800"
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:border-blue-600 transition-all font-semibold text-slate-800 shadow-inner"
                   />
                 </div>
               </div>
@@ -211,38 +213,38 @@ export default function SettingsView({ user, token, onRefresh, onLogout }: Setti
                 id="save-profile-btn"
                 type="submit"
                 disabled={loading}
-                className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow cursor-pointer"
+                className="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow cursor-pointer transition-all border border-blue-500/20"
               >
-                {loading ? 'Transmitting properties...' : 'Save Profile Changes'}
+                {loading ? 'Processing changes...' : 'Save Profile Details'}
               </button>
             </form>
           </div>
 
-          {/* Card B: Decryption Keys Password Modification Form */}
-          <div className="bg-white border border-slate-200/60 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
-            <h3 className="font-display font-medium text-slate-800 text-sm">Altering Password decryptions</h3>
-            <form onSubmit={handlePasswordSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
-                <div>
-                  <label className="block text-[10px] uppercase font-mono font-bold text-slate-400 mb-1">Current Password Key</label>
+          {/* Card B: decryptions credentials */}
+          <div className="bg-white border border-slate-200/50 rounded-3xl p-6 sm:p-8 shadow-sm space-y-5">
+            <h3 className="font-display font-bold text-slate-900 text-sm">Decryption key modification</h3>
+            <form onSubmit={handlePasswordSubmit} className="space-y-5 text-slate-700 font-semibold text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] uppercase font-mono tracking-wider font-extrabold text-slate-400">Current Key Phrase</label>
                   <input 
                     type="password"
                     required
                     value={curPwd}
                     onChange={(e) => setCurPwd(e.target.value)}
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none"
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:border-blue-600 transition-all shadow-inner"
                     placeholder="••••••••••••"
                   />
                 </div>
-                <div>
-                  <label className="block text-[10px] uppercase font-mono font-bold text-slate-400 mb-1">New Decryption Password</label>
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] uppercase font-mono tracking-wider font-extrabold text-slate-400">New Key Phrase</label>
                   <input 
                     type="password"
                     required
                     value={newPwd}
                     onChange={(e) => setNewPwd(e.target.value)}
-                    className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none"
-                    placeholder="Minimum 8 characters"
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:border-blue-600 transition-all shadow-inner"
+                    placeholder="Min 8 letters"
                   />
                 </div>
               </div>
@@ -250,59 +252,59 @@ export default function SettingsView({ user, token, onRefresh, onLogout }: Setti
                 id="change-pwd-btn"
                 type="submit"
                 disabled={loading}
-                className="px-4 py-2 bg-slate-900 text-white hover:bg-slate-850 font-bold text-xs rounded-xl"
+                className="px-5 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition-all cursor-pointer border border-slate-800/40"
               >
-                Modify Access Password
+                Change Decryption Key
               </button>
             </form>
           </div>
 
         </div>
 
-        {/* Right Column: Security configs, sessions & delete account */}
+        {/* Right Column */}
         <div className="lg:col-span-5 space-y-6">
           
-          {/* Card C: Multi-Factor Authentication Compliance */}
-          <div className="bg-white border border-slate-200/60 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
-            <h3 className="font-display font-medium text-slate-800 text-sm">Safety Compliance Guard</h3>
+          {/* Card C: MFA triggers */}
+          <div className="bg-white border border-slate-200/50 rounded-3xl p-6 sm:p-8 shadow-sm space-y-5">
+            <h3 className="font-display font-bold text-slate-900 text-sm">Access Control Policies</h3>
             
-            <div className="flex items-center justify-between bg-slate-50 p-3 rounded-2xl border border-slate-100 text-xs">
-              <div>
-                <span className="font-semibold text-slate-800 block">Two-Factor Authentication</span>
-                <span className="text-[10px] text-slate-400">Forces MFA prompt on standard login handshakes.</span>
+            <div className="flex items-center justify-between bg-slate-50 p-4 border border-slate-100 rounded-2xl text-xs font-semibold text-slate-705">
+              <div className="space-y-1">
+                <span className="font-bold text-slate-900 block">Enforce Multifactor MFA</span>
+                <span className="text-[10px] text-slate-400 block font-normal leading-normal">Require authenticated codes on system startup handshakes.</span>
               </div>
               <button 
                 id="toggle-mfa-btn"
                 type="button"
                 onClick={handleMfaToggle}
-                className={`w-11 h-6 rounded-full p-0.5 transition-colors focus:outline-none ${mfa ? 'bg-indigo-600' : 'bg-slate-200'}`}
+                className={`w-11 h-6 rounded-full p-0.5 transition-colors focus:outline-none cursor-pointer ${mfa ? 'bg-blue-600' : 'bg-slate-200'}`}
               >
                 <div className={`bg-white w-5 h-5 rounded-full shadow transform duration-300 ${mfa ? 'translate-x-5' : ''}`} />
               </button>
             </div>
           </div>
 
-          {/* Card D: Registered Device Session Lists */}
-          <div className="bg-white border border-slate-200/60 rounded-3xl p-5 sm:p-6 shadow-sm space-y-4">
-            <h3 className="font-display font-medium text-slate-800 text-sm">Active Connected Devices</h3>
+          {/* Card D: device indicators */}
+          <div className="bg-white border border-slate-200/50 rounded-3xl p-6 sm:p-8 shadow-sm space-y-5">
+            <h3 className="font-display font-bold text-slate-900 text-sm">Whitelisted API Terminals</h3>
             
-            <div className="divide-y divide-slate-100 max-h-40 overflow-y-auto pr-2 space-y-2">
+            <div className="divide-y divide-slate-100 max-h-40 overflow-y-auto pr-1 space-y-2.5">
               {sessions.map((sess) => (
-                <div key={sess.id} className="flex items-center justify-between py-2 text-xs">
-                  <div className="space-y-0.5">
-                    <p className="font-semibold text-slate-700 flex items-center gap-1.5">
-                      <Laptop className="w-3.5 h-3.5 text-slate-400" />
+                <div key={sess.id} className="flex items-center justify-between py-2.5 text-xs text-slate-750 font-semibold">
+                  <div className="space-y-1">
+                    <p className="font-bold text-slate-900 flex items-center gap-2">
+                      <Laptop className="w-4 h-4 text-slate-400" />
                       <span>{sess.device}</span>
                     </p>
-                    <span className="text-[9px] text-slate-400 font-mono block">IP: {sess.ip} | {sess.location}</span>
+                    <span className="text-[9px] text-slate-400 font-mono block">IP: {sess.ip} &bull; {sess.location}</span>
                   </div>
                   <div>
                     {sess.current ? (
-                      <span className="text-[9px] font-mono font-bold text-teal-600 bg-teal-50 px-2 py-0.5 rounded uppercase">Current Active</span>
+                      <span className="text-[9px] font-mono font-bold text-[#10B981] bg-emerald-50 border border-emerald-100/30 px-2 py-0.5 rounded uppercase">Current node</span>
                     ) : (
                       <button 
                         onClick={() => handleRevokeSession(sess.id)}
-                        className="text-[10px] text-red-500 hover:underline font-semibold font-mono"
+                        className="text-[10px] text-red-500 hover:text-red-650 hover:underline font-bold font-mono cursor-pointer"
                       >
                         Revoke
                       </button>
@@ -313,19 +315,19 @@ export default function SettingsView({ user, token, onRefresh, onLogout }: Setti
             </div>
           </div>
 
-          {/* Card E: Danger Territory */}
-          <div className="bg-red-50 border border-red-100 rounded-3xl p-5 sm:p-6 space-y-4">
-            <div>
-              <span className="text-[10px] uppercase font-mono tracking-widest text-red-600 font-extrabold block">Danger Zone block</span>
-              <h3 className="font-display font-semibold text-red-800 text-sm mt-0.5">Terminating Corporate Account</h3>
-              <p className="text-xs text-red-600 mt-1">This wipes everything, and cancels all active S3 connections instantly. Receipts cannot be recovered.</p>
+          {/* Card E: Danger zone */}
+          <div className="bg-red-50 border border-red-100/50 rounded-3xl p-6 sm:p-8 space-y-4 shadow-sm">
+            <div className="space-y-1">
+              <span className="text-[9px] uppercase font-mono tracking-widest text-red-600 font-black block">Absolute Terminations</span>
+              <h3 className="font-display font-bold text-red-800 text-sm">Decommissioning Node</h3>
+              <p className="text-xs text-red-600 leading-relaxed font-semibold">This immediately closes premium billing agreements, purges all S3 structures and deletes account credentials permanently. It cannot be reverted.</p>
             </div>
             <button 
               id="destroy-account-btn"
               onClick={handleDeleteAccount}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl shadow"
+              className="px-5 py-3 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl shadow transition-all cursor-pointer border border-red-500/20"
             >
-              Permanently Purge Workspace
+              Permanently Decommission Node
             </button>
           </div>
 

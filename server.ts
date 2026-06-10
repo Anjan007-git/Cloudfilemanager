@@ -45,12 +45,41 @@ async function startServer() {
       return res.status(401).json({ error: 'Authorization header missing or invalid format' });
     }
 
-    jwt.verify(token, JWT_SECRET, (err: any, user: any) => {
-      if (err) {
-        return res.status(403).json({ error: 'Session expired, please register or sign back in.' });
+    jwt.verify(token, JWT_SECRET, (err: any, decoded: any) => {
+      if (!err && decoded) {
+        req.user = decoded;
+        return next();
       }
-      req.user = user;
-      next();
+
+      // If standard verification fails, parse as Firebase ID Token
+      const decodedFirebase = jwt.decode(token) as any;
+      if (decodedFirebase && decodedFirebase.sub && decodedFirebase.email) {
+        req.user = {
+          userId: decodedFirebase.sub,
+          email: decodedFirebase.email,
+          name: decodedFirebase.name || decodedFirebase.email.split('@')[0]
+        };
+
+        // Align local profiles with Firebase uid instantly
+        const db = dbService.getDB();
+        if (!db.profiles[req.user.userId]) {
+          db.profiles[req.user.userId] = {
+            id: req.user.userId,
+            name: req.user.name,
+            email: req.user.email,
+            storageUsed: 0,
+            storageLimit: 200 * 1024 * 1024 * 1024,
+            plan: 'free',
+            createdAt: new Date().toISOString(),
+            mfaEnabled: false
+          };
+          dbService.saveDB(db);
+        }
+
+        return next();
+      }
+
+      return res.status(403).json({ error: 'Session expired, please register or sign back in.' });
     });
   };
 
@@ -948,7 +977,7 @@ async function startServer() {
     const file = db.files.find(f => f.id === fileId);
 
     if (!file) {
-      return res.status(404).setContent ? res.status(404).json({ error: 'Asset not found' }) : res.status(404).send('Asset not found');
+      return res.status(404).json({ error: 'Asset not found' });
     }
 
     // Security check: either public shareLink exists, or valid JWT token passed in query parameter "?token=..." or Bearer

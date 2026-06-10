@@ -4,7 +4,7 @@ import {
   Folder, File, ChevronRight, Grid, List, MoreVertical, Star, Trash2, Download, 
   Share2, Edit3, Eye, FileText, Image, Film, Music, Archive, Move, Copy, Plus, 
   ArrowUp, Search, SlidersHorizontal, ChevronDown, Check, X, ShieldAlert, Key, FolderPlus,
-  Play, Lock, Loader2, PlayCircle, ToggleLeft, Activity, Trash
+  Play, Lock, Loader2, PlayCircle, ToggleLeft, Activity, Trash, Sparkles
 } from 'lucide-react';
 import { CloudFile, SharedUser, ShareLink } from '../types.js';
 
@@ -26,33 +26,26 @@ export default function MyFilesView({
   onTrackActivity
 }: MyFilesViewProps) {
   
-  // Views layout settings
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   
-  // Search parameters
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeMimeFilter, setActiveMimeFilter] = useState<string>(''); // 'image', 'pdf', etc
+  const [activeMimeFilter, setActiveMimeFilter] = useState<string>(''); 
   const [sortBy, setSortBy] = useState<'name' | 'size' | 'createdAt'>('name');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
 
-  // Interactive Modals and Actions triggers
   const [isNewFolderOpen, setIsNewFolderOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [selectedFile, setSelectedFile] = useState<CloudFile | null>(null);
   
-  // Context action popup menu
   const [activeContextId, setActiveContextId] = useState<string | null>(null);
   const [loadingActionId, setLoadingActionId] = useState<string | null>(null);
 
-  // Rename Dialog popup
   const [renameId, setRenameId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState('');
 
-  // Move Dialog configurations
   const [moveId, setMoveId] = useState<string | null>(null);
   const [targetParentId, setTargetParentId] = useState<string | 'null'>('null');
 
-  // Sharing Dialog configurations
   const [shareFile, setShareFile] = useState<CloudFile | null>(null);
   const [newShareEmail, setNewShareEmail] = useState('');
   const [newSharePerm, setNewSharePerm] = useState<'viewer' | 'editor' | 'download_only'>('viewer');
@@ -62,15 +55,12 @@ export default function MyFilesView({
   const [pwdValue, setPwdValue] = useState('');
   const [expiresAtValue, setExpiresAtValue] = useState('');
 
-  // Drag and drop states
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCounterRef = useRef(0);
 
-  // Active Upload Queue States
   const [uploadQueue, setUploadQueue] = useState<any[]>([]);
 
-  // Format Helper for file sizes
   const formatBytes = (bytes: number, decimals = 2) => {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
@@ -80,36 +70,30 @@ export default function MyFilesView({
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
   };
 
-  // Determine Mime Group Icons automatically
   const getFileIcon = (file: CloudFile) => {
-    if (file.isFolder) return <Folder className="w-5 h-5 text-indigo-500 fill-indigo-500/10" />;
+    if (file.isFolder) return <Folder className="w-4.5 h-4.5 text-blue-600 fill-blue-500/10" />;
     const mime = file.mimeType.toLowerCase();
-    if (mime.startsWith('image/')) return <Image className="w-5 h-5 text-sky-500" />;
-    if (mime.includes('/pdf')) return <FileText className="w-5 h-5 text-red-500" />;
-    if (mime.startsWith('video/')) return <Film className="w-5 h-5 text-purple-500" />;
-    if (mime.startsWith('audio/')) return <Music className="w-5 h-5 text-pink-500" />;
-    if (mime.includes('zip') || mime.includes('tar') || mime.includes('archive')) return <Archive className="w-5 h-5 text-amber-500" />;
-    return <FileText className="w-5 h-5 text-slate-500" />;
+    if (mime.startsWith('image/')) return <Image className="w-4.5 h-4.5 text-cyan-500" />;
+    if (mime.includes('/pdf')) return <FileText className="w-4.5 h-4.5 text-red-500" />;
+    if (mime.startsWith('video/')) return <Film className="w-4.5 h-4.5 text-purple-500" />;
+    if (mime.startsWith('audio/')) return <Music className="w-4.5 h-4.5 text-pink-500" />;
+    if (mime.includes('zip') || mime.includes('tar') || mime.includes('archive')) return <Archive className="w-4.5 h-4.5 text-amber-500" />;
+    return <FileText className="w-4.5 h-4.5 text-slate-500" />;
   };
 
-  // Filter and sort workspace items based on user inputs
   const currentFolderFiles = initialFiles.filter(item => {
-    // Exclude trashed elements from the standard folder paths explorer views
     if (item.isTrashed) return false;
     
-    // If there is an active global search query string, skip local folderId limits
     if (searchQuery) {
       return item.name.toLowerCase().includes(searchQuery.toLowerCase().trim());
     }
     
-    // Otherwise limit representation to files belonging to this parent folderId directory
     return item.parentId === selectedFolderId;
   });
 
-  // Filter by Type
   const filteredAndSortedFiles = currentFolderFiles.filter(item => {
     if (!activeMimeFilter) return true;
-    if (item.isFolder) return false; // exclude directory folders from category filters
+    if (item.isFolder) return false; 
     
     const mime = item.mimeType.toLowerCase();
     if (activeMimeFilter === 'image') return mime.startsWith('image/');
@@ -121,9 +105,7 @@ export default function MyFilesView({
     return true;
   });
 
-  // Sort
   filteredAndSortedFiles.sort((a, b) => {
-    // Folders always pushed to the top for pristine explorer layouts
     if (a.isFolder && !b.isFolder) return -1;
     if (!a.isFolder && b.isFolder) return 1;
 
@@ -142,9 +124,8 @@ export default function MyFilesView({
     return sortOrder === 'desc' ? -comparison : comparison;
   });
 
-  // Hierarchy Nav Breadcrumbs calculation
   const getBreadcrumbs = () => {
-    const list: { id: string | null; name: string }[] = [{ id: null, name: 'My Workspace' }];
+    const list: { id: string | null; name: string }[] = [{ id: null, name: 'S3 Root Workspace' }];
     let currId = selectedFolderId;
     
     const breadcrumbChain: { id: string; name: string }[] = [];
@@ -160,7 +141,6 @@ export default function MyFilesView({
     return [...list, ...breadcrumbChain];
   };
 
-  // 1. Action: Create Folder
   const handleCreateFolderSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newFolderName.trim()) return;
@@ -189,7 +169,6 @@ export default function MyFilesView({
     }
   };
 
-  // 2. Action: Duplicate file
   const handleDuplicate = async (fileId: string) => {
     setLoadingActionId(fileId);
     try {
@@ -211,7 +190,6 @@ export default function MyFilesView({
     }
   };
 
-  // 3. Action: Star favorites
   const handleToggleStar = async (fileId: string) => {
     try {
       const response = await fetch(`/api/files/toggle-star/${fileId}`, {
@@ -227,7 +205,6 @@ export default function MyFilesView({
     }
   };
 
-  // 4. Action: Move elements
   const handleMoveSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!moveId) return;
@@ -257,7 +234,6 @@ export default function MyFilesView({
     }
   };
 
-  // 5. Action: Rename elements
   const handleRenameSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!renameId || !renameValue.trim()) return;
@@ -283,7 +259,6 @@ export default function MyFilesView({
     }
   };
 
-  // 6. Action: Relocate elements to trash
   const handleDeleteFolderOrFile = async (item: CloudFile) => {
     if (!confirm(`Are you sure you want to move "${item.name}" into the trash?`)) return;
     
@@ -304,7 +279,6 @@ export default function MyFilesView({
     }
   };
 
-  // 7. Action: Sharing Links Configuration
   const handleOpenShare = (item: CloudFile) => {
     setShareFile(item);
     setSharedEmailList(item.sharedWith || []);
@@ -324,7 +298,6 @@ export default function MyFilesView({
 
   const handleAddShareEmail = () => {
     if (!newShareEmail.trim()) return;
-    // Simple email format check
     if (!newShareEmail.includes('@')) {
       alert('Must supply valid email format');
       return;
@@ -346,7 +319,6 @@ export default function MyFilesView({
     if (!shareFile) return;
 
     try {
-      // 1. Save general emails list
       const shareResp = await fetch(`/api/files/share/${shareFile.id}`, {
         method: 'POST',
         headers: {
@@ -358,7 +330,6 @@ export default function MyFilesView({
 
       if (!shareResp.ok) throw new Error('Failed sharing item with target email lists');
 
-      // 2. Save public Link properties
       const linkPayload = {
         isPublic,
         passwordEnabled: pwdEnabled,
@@ -385,7 +356,6 @@ export default function MyFilesView({
     }
   };
 
-  // 8. Action: Direct file downloading triggers
   const handleDownload = (file: CloudFile) => {
     if (file.isFolder) {
       alert('Bulk directory zip downloading complies with Pro membership tier.');
@@ -395,7 +365,6 @@ export default function MyFilesView({
     window.open(downloadUrl, '_blank');
   };
 
-  // 9. Files drag & drop triggers
   const handleDragEnter = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -436,7 +405,6 @@ export default function MyFilesView({
     }
   };
 
-  // Main high performance upload pipeline supporting queues and pause simulators
   const handleFilesUpload = async (items: FileList) => {
     const queueList = [...uploadQueue];
 
@@ -456,7 +424,6 @@ export default function MyFilesView({
       queueList.push(newQueueItem);
       setUploadQueue([...queueList]);
 
-      // Execute actual POST file to Express server via boundary multi-parts
       const formData = new FormData();
       formData.append('file', element);
       if (selectedFolderId) {
@@ -477,7 +444,6 @@ export default function MyFilesView({
           throw new Error(errData.error || 'Upload error');
         }
 
-        // Mark progress completed
         setUploadQueue(prev => prev.map(item => item.id === trackingId ? { ...item, progress: 100, status: 'completed' } : item));
         onRefresh();
         onTrackActivity();
@@ -493,32 +459,31 @@ export default function MyFilesView({
 
   return (
     <div 
-      className="space-y-6 font-sans relative"
+      className="space-y-6 font-sans relative pb-12"
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
       id="my-files-explorer-root"
     >
-      {/* Absolute overlay for drag and drop active status */}
+      {/* Drag & Drop Overlay backdrop */}
       <AnimatePresence>
         {isDraggingOver && (
           <motion.div 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-indigo-600/10 border-4 border-dashed border-indigo-500 rounded-3xl z-40 flex flex-col items-center justify-center space-y-3 pointer-events-none backdrop-blur-sm"
+            className="absolute inset-0 bg-blue-600/10 border-4 border-dashed border-blue-500 rounded-3xl z-40 flex flex-col items-center justify-center space-y-4 pointer-events-none backdrop-blur-md"
           >
-            <div className="p-4 bg-white rounded-full text-indigo-600 shadow-xl">
+            <div className="p-5 bg-white rounded-full text-blue-600 shadow-xl">
               <ArrowUp className="w-8 h-8 animate-bounce" />
             </div>
-            <h3 className="text-lg font-bold text-indigo-900 font-display">Drop elements anywhere to upload</h3>
-            <p className="text-xs text-indigo-600 font-medium">Auto-upload begins immediately inside active folder paths</p>
+            <h3 className="text-xl font-bold text-blue-900 font-display">Drop elements to upload</h3>
+            <p className="text-xs text-blue-600 font-semibold uppercase tracking-wide">Live synchronized secure stream</p>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Hidden system file inputs */}
       <input 
         type="file" 
         multiple
@@ -527,18 +492,19 @@ export default function MyFilesView({
         className="hidden" 
       />
 
-      {/* 1. Header Toolbar Actions */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 border-b border-slate-200/50 pb-5">
-        {/* Hierarchy Breadcrumbs */}
-        <div className="flex items-center space-x-2 overflow-x-auto py-1 scrollbar-none">
+      {/* 1. Header Toolbar Controls */}
+      <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-5 border-b border-slate-200/50 pb-5">
+        
+        {/* Navigation breadcrumbs */}
+        <div className="flex items-center space-x-2.5 overflow-x-auto py-1 scrollbar-none w-full xl:w-auto">
           {getBreadcrumbs().map((b, idx) => (
             <React.Fragment key={idx}>
-              {idx > 0 && <ChevronRight className="w-4 h-4 text-slate-400 flex-shrink-0" />}
+              {idx > 0 && <ChevronRight className="w-4 h-4 text-slate-300 flex-shrink-0" />}
               <button 
                 id={`breadcrumb-${idx}`}
                 onClick={() => onSelectFolder(b.id)}
-                className={`text-sm font-semibold whitespace-nowrap transition-colors hover:text-indigo-600 ${
-                  b.id === selectedFolderId ? 'text-slate-800' : 'text-slate-400'
+                className={`text-sm font-semibold whitespace-nowrap transition-colors hover:text-blue-600 cursor-pointer ${
+                  b.id === selectedFolderId ? 'text-slate-900' : 'text-slate-400'
                 }`}
               >
                 {b.name}
@@ -547,45 +513,74 @@ export default function MyFilesView({
           ))}
         </div>
 
-        {/* Layout Filters and views choices */}
-        <div className="flex flex-wrap items-center gap-3">
+        {/* Layout Filters */}
+        <div className="flex flex-wrap items-center gap-3 w-full xl:w-auto justify-start sm:justify-end">
+          
+          {/* Category Quick Filter badges */}
+          <div className="flex space-x-1.5 overflow-x-auto text-[10px] font-bold font-mono tracking-wide uppercase bg-slate-100 p-1 rounded-xl border border-slate-200/60 leading-none">
+            <button 
+              onClick={() => setActiveMimeFilter('')} 
+              className={`px-3 py-2 rounded-lg cursor-pointer ${!activeMimeFilter ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-700'}`}
+            >
+              All Files
+            </button>
+            <button 
+              onClick={() => setActiveMimeFilter('document')} 
+              className={`px-3 py-2 rounded-lg cursor-pointer ${activeMimeFilter === 'document' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-700'}`}
+            >
+              Docs
+            </button>
+            <button 
+              onClick={() => setActiveMimeFilter('image')} 
+              className={`px-3 py-2 rounded-lg cursor-pointer ${activeMimeFilter === 'image' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-700'}`}
+            >
+              Images
+            </button>
+            <button 
+              onClick={() => setActiveMimeFilter('zip')} 
+              className={`px-3 py-2 rounded-lg cursor-pointer ${activeMimeFilter === 'zip' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-400 hover:text-slate-700'}`}
+            >
+              ZIPs
+            </button>
+          </div>
+
           {/* Quick search input */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 font-bold" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 font-semibold" />
             <input 
               id="explorer-search"
               type="text" 
               placeholder="Search active folder..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9.5 pr-4 py-2 border border-slate-200 bg-white rounded-xl text-xs font-medium focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 transition-all text-slate-800 w-full sm:w-48 placeholder-slate-400"
+              className="pl-10 pr-4 py-2.5 border border-slate-200 bg-white rounded-xl text-xs font-semibold focus:outline-none focus:border-blue-600 transition-all text-slate-800 w-full sm:w-48 placeholder-slate-400 shadow-sm"
             />
           </div>
 
           <button 
             id="trigger-file-select"
             onClick={() => fileInputRef.current?.click()}
-            className="inline-flex items-center space-x-1.5 px-4.5 py-2 bg-indigo-600 hover:bg-indigo-700 font-bold text-xs text-white rounded-xl shadow-md cursor-pointer"
+            className="inline-flex items-center space-x-1.5 px-4.5 py-3 bg-blue-650 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 font-bold text-xs text-white rounded-xl shadow-md cursor-pointer"
           >
             <Plus className="w-4 h-4" />
-            <span>Upload Files</span>
+            <span>Upload</span>
           </button>
 
           <button 
             id="trigger-folder-modal"
             onClick={() => setIsNewFolderOpen(true)}
-            className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-white border border-slate-200 hover:bg-slate-50 font-semibold text-xs text-slate-700 rounded-xl"
+            className="inline-flex items-center space-x-1.5 px-4 py-3 bg-white border border-slate-200 hover:bg-slate-50 font-bold text-xs text-slate-700 rounded-xl cursor-pointer"
           >
             <FolderPlus className="w-4 h-4 text-slate-500" />
             <span>Folder</span>
           </button>
 
-          {/* Grid/List switch toggle */}
-          <div className="flex bg-white border border-slate-200 rounded-xl p-0.5 shadow-sm">
+          {/* Grid/List toggler */}
+          <div className="flex bg-slate-100 border border-slate-200 rounded-xl p-0.5 shadow-sm">
             <button 
               id="view-grid-toggle"
               onClick={() => setViewMode('grid')}
-              className={`p-1.5 rounded-lg transition-all ${viewMode === 'grid' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
+              className={`p-2 rounded-lg transition-all cursor-pointer ${viewMode === 'grid' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
               title="Grid Layout"
             >
               <Grid className="w-4 h-4" />
@@ -593,7 +588,7 @@ export default function MyFilesView({
             <button 
               id="view-list-toggle"
               onClick={() => setViewMode('list')}
-              className={`p-1.5 rounded-lg transition-all ${viewMode === 'list' ? 'bg-indigo-50 text-indigo-600' : 'text-slate-400 hover:text-slate-600'}`}
+              className={`p-2 rounded-lg transition-all cursor-pointer ${viewMode === 'list' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
               title="List Layout"
             >
               <List className="w-4 h-4" />
@@ -602,37 +597,37 @@ export default function MyFilesView({
         </div>
       </div>
 
-      {/* 2. Upload queue notifications logs drawer */}
+      {/* 2. Upload queues drawer */}
       {uploadQueue.length > 0 && (
-        <div className="bg-slate-900 text-slate-200 rounded-2xl p-4 border border-slate-800 space-y-3 shadow-xl">
+        <div className="bg-slate-900 border border-slate-800 text-slate-200 rounded-2xl p-4.5 space-y-3 shadow-xl">
           <div className="flex items-center justify-between text-xs pb-2 border-b border-slate-800">
             <div className="flex items-center space-x-2">
-              <span className="flex h-2 w-2 rounded-full bg-indigo-400 animate-pulse"></span>
-              <p className="font-semibold text-slate-100 uppercase tracking-wider font-mono text-[10px]">Active Upload Monitor</p>
+              <span className="flex h-2 w-2 rounded-full bg-blue-500 animate-pulse"></span>
+              <p className="font-semibold text-slate-100 uppercase tracking-wider font-mono text-[10px]">Synchronizer Queue monitor</p>
             </div>
             <button 
               onClick={handleClearCompletedUploads}
-              className="text-indigo-400 font-bold hover:underline"
+              className="text-blue-400 font-bold hover:underline"
             >
               Clear Completed
             </button>
           </div>
           <div className="space-y-2 max-h-36 overflow-y-auto pr-2">
             {uploadQueue.map(item => (
-              <div key={item.id} className="flex items-center justify-between text-xs bg-slate-800/50 p-2.5 rounded-xl border border-slate-800/80">
+              <div key={item.id} className="flex items-center justify-between text-xs bg-slate-800/40 p-3 rounded-xl border border-slate-800/60">
                 <div className="flex items-center space-x-3 w-2/3">
-                  <FileText className="w-4 h-4 text-indigo-400 flex-shrink-0" />
+                  <FileText className="w-4.5 h-4.5 text-blue-400 flex-shrink-0" />
                   <div className="truncate">
                     <p className="font-semibold text-slate-200 truncate">{item.name}</p>
-                    <span className="text-[10px] text-slate-400 font-mono">{formatBytes(item.size)}</span>
+                    <span className="text-[10px] text-slate-500 font-mono">{formatBytes(item.size)}</span>
                   </div>
                 </div>
                 <div className="flex items-center space-x-3">
                   {item.status === 'uploading' && (
-                    <span className="text-indigo-400 font-mono font-bold animate-pulse">{item.progress}%</span>
+                    <span className="text-blue-400 font-mono font-bold animate-pulse">{item.progress}%</span>
                   )}
                   {item.status === 'completed' && (
-                    <span className="text-emerald-500 font-mono font-semibold">Completed</span>
+                    <span className="text-emerald-400 font-mono font-semibold">Completed</span>
                   )}
                   {item.status === 'error' && (
                     <span className="text-red-400 font-mono font-semibold" title={item.errorMsg}>Error</span>
@@ -644,58 +639,55 @@ export default function MyFilesView({
         </div>
       )}
 
-      {/* 3. Empty State or Workspace Explorer Panels */}
+      {/* 3. Empty or files layout list */}
       {filteredAndSortedFiles.length === 0 ? (
-        <div className="bg-white rounded-3xl border border-dashed border-slate-200 p-16 text-center space-y-4 max-w-2xl mx-auto my-12" id="explorer-empty">
-          <div className="shadow-lg shadow-indigo-600/5 bg-slate-50 p-4 rounded-full inline-flex text-slate-400">
-            <Folder className="w-12 h-12" />
+        <div className="bg-white rounded-3xl border border-dashed border-slate-200/80 p-20 text-center space-y-5 max-w-xl mx-auto my-12 shadow-sm" id="explorer-empty">
+          <div className="shadow-xl shadow-slate-100 bg-slate-50 border border-slate-100 p-5 rounded-full inline-flex text-slate-400">
+            <Folder className="w-10 h-10 text-blue-600" />
           </div>
-          <div className="space-y-1">
-            <h3 className="font-display font-bold text-slate-800 text-lg">Empty Cloud Directory</h3>
-            <p className="text-xs text-slate-500 leading-relaxed max-w-sm mx-auto">
-              There are no matching files or directories inside this location folder. Drag and Drop your assets here to execute an encrypted cloud upload.
+          <div className="space-y-1.5">
+            <h3 className="font-display font-medium text-slate-800 text-lg">Empty Cloud Directory</h3>
+            <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
+              No elements matches configured metrics. Drag and drop file representations to dispatch multi-part uploads inside S3 buckets.
             </p>
           </div>
           <div className="pt-2">
             <button 
               onClick={() => fileInputRef.current?.click()}
-              className="inline-flex items-center space-x-1.5 px-4.5 py-2.5 bg-indigo-600 hover:bg-slate-900 font-bold text-xs text-white rounded-xl shadow-md transition-all cursor-pointer"
+              className="inline-flex items-center space-x-1.5 px-5 py-3 bg-blue-650 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 font-bold text-xs text-white rounded-xl shadow-md transition-all cursor-pointer"
             >
               <Plus className="w-4 h-4" />
-              <span>Select File from Machine</span>
+              <span>Browse Machine files</span>
             </button>
           </div>
         </div>
       ) : (
-        /* Layout Rendering */
         viewMode === 'grid' ? (
-          /* Grid View Layout Dashboard */
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="explorer-grid">
+          /* Grid View Layout panel */
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5" id="explorer-grid">
             {filteredAndSortedFiles.map(item => {
               const isMenuOpen = activeContextId === item.id;
               return (
                 <div 
                   key={item.id}
-                  className="bg-white border border-slate-200/60 hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-600/5 hover:-translate-y-0.5 rounded-2xl p-4.5 transition-all relative flex flex-col justify-between h-40"
+                  className="bg-white border border-slate-200/50 hover:border-blue-200 hover:shadow-xl hover:shadow-slate-100/60 hover:-translate-y-0.5 rounded-2xl p-5 transition-all relative flex flex-col justify-between h-44 cursor-pointer"
                   onDoubleClick={() => item.isFolder && onSelectFolder(item.id)}
                 >
                   <div className="flex items-start justify-between">
                     <button 
                       onClick={() => item.isFolder && onSelectFolder(item.id)}
-                      className="p-2.5 rounded-xl bg-slate-50 text-slate-600 hover:text-indigo-600 transition-colors cursor-pointer"
+                      className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-slate-600 hover:text-blue-600 transition-colors cursor-pointer"
                     >
                       {getFileIcon(item)}
                     </button>
                     
-                    {/* Star status indicator */}
                     <div className="flex items-center space-x-1.5">
                       {item.isStarred && <Star className="w-3.5 h-3.5 text-amber-500 fill-current" />}
                       
-                      {/* Interactive metadata actions toggle */}
                       <div className="relative">
                         <button 
                           onClick={() => setActiveContextId(isMenuOpen ? null : item.id)}
-                          className="p-1 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors cursor-pointer"
+                          className="p-1 px-1.5 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 transition-all cursor-pointer"
                         >
                           {loadingActionId === item.id ? (
                             <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
@@ -704,53 +696,52 @@ export default function MyFilesView({
                           )}
                         </button>
 
-                        {/* Dropdown Options */}
                         <AnimatePresence>
                           {isMenuOpen && (
                             <>
                               <div className="fixed inset-0 z-40" onClick={() => setActiveContextId(null)} />
                               <motion.div 
-                                initial={{ opacity: 0, scale: 0.95, y: -5 }}
+                                initial={{ opacity: 0, scale: 0.96, y: -5 }}
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.95, y: -5 }}
-                                className="absolute right-0 mt-1 w-44 bg-white border border-slate-200 shadow-xl rounded-xl p-1 z-50 text-xs text-slate-700"
+                                exit={{ opacity: 0, scale: 0.96, y: -5 }}
+                                className="absolute right-0 mt-1 w-44 bg-white border border-slate-200/80 shadow-xl rounded-xl p-1.5 z-50 text-xs text-slate-700 text-left font-semibold space-y-0.5"
                               >
                                 {item.isFolder ? (
-                                  <button onClick={() => { onSelectFolder(item.id); setActiveContextId(null); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 font-semibold text-slate-800 flex items-center gap-2">
-                                    <Folder className="w-3.5 h-3.5" /> Open Folder
+                                  <button onClick={() => { onSelectFolder(item.id); setActiveContextId(null); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 font-bold text-slate-800 flex items-center gap-2 cursor-pointer">
+                                    <Folder className="w-3.5 h-3.5 text-blue-500" /> Open Folder
                                   </button>
                                 ) : (
-                                  <button onClick={() => { handleDownload(item); setActiveContextId(null); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-emerald-50 font-semibold text-emerald-700 flex items-center gap-2">
-                                    <Download className="w-3.5 h-3.5" /> Download file
+                                  <button onClick={() => { handleDownload(item); setActiveContextId(null); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-blue-50 font-bold text-blue-600 flex items-center gap-2 cursor-pointer">
+                                    <Download className="w-3.5 h-3.5" /> Download File
                                   </button>
                                 )}
 
-                                <button onClick={() => handleToggleStar(item.id)} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 font-semibold text-slate-800 flex items-center gap-2">
-                                  <Star className="w-3.5 h-3.5 text-slate-400" /> Star Item
+                                <button onClick={() => handleToggleStar(item.id)} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
+                                  <Star className="w-3.5 h-3.5 text-amber-500" /> Star Item
                                 </button>
 
-                                <button onClick={() => { handleOpenShare(item); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 font-semibold text-slate-800 flex items-center gap-2">
-                                  <Share2 className="w-3.5 h-3.5 text-slate-400" /> Sharing Links
+                                <button onClick={() => { handleOpenShare(item); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
+                                  <Share2 className="w-3.5 h-3.5 text-cyan-500" /> Share Config
                                 </button>
 
-                                <button onClick={() => { setRenameId(item.id); setRenameValue(item.name); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 font-semibold text-slate-800 flex items-center gap-2">
+                                <button onClick={() => { setRenameId(item.id); setRenameValue(item.name); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
                                   <Edit3 className="w-3.5 h-3.5 text-slate-400" /> Rename
                                 </button>
 
-                                <button onClick={() => { setMoveId(item.id); setTargetParentId(item.parentId || 'null'); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 font-semibold text-slate-800 flex items-center gap-2">
-                                  <Move className="w-3.5 h-3.5 text-slate-400" /> Move location
+                                <button onClick={() => { setMoveId(item.id); setTargetParentId(item.parentId || 'null'); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
+                                  <Move className="w-3.5 h-3.5 text-slate-400" /> Relocate
                                 </button>
 
                                 {!item.isFolder && (
-                                  <button onClick={() => handleDuplicate(item.id)} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 font-semibold text-slate-800 flex items-center gap-2">
-                                    <Copy className="w-3.5 h-3.5 text-slate-400" /> Duplicate
+                                  <button onClick={() => handleDuplicate(item.id)} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
+                                    <Copy className="w-3.5 h-3.5 text-purple-400" /> Duplicate
                                   </button>
                                 )}
 
                                 <div className="border-t border-slate-100 my-1"></div>
                                 
-                                <button onClick={() => handleDeleteFolderOrFile(item)} className="w-full text-left px-3 py-2 rounded-lg hover:bg-red-50 font-semibold text-red-600 flex items-center gap-2">
-                                  <Trash2 className="w-3.5 h-3.5" /> Move to Trash
+                                <button onClick={() => handleDeleteFolderOrFile(item)} className="w-full text-left px-3 py-2 rounded-lg hover:bg-red-50 text-red-600 flex items-center gap-2 cursor-pointer">
+                                  <Trash2 className="w-3.5 h-3.5" /> Direct Trash
                                 </button>
                               </motion.div>
                             </>
@@ -760,14 +751,14 @@ export default function MyFilesView({
                     </div>
                   </div>
 
-                  <div className="truncate">
+                  <div className="truncate space-y-1">
                     <button 
                       onClick={() => item.isFolder ? onSelectFolder(item.id) : handleDownload(item)}
-                      className="font-display font-semibold text-slate-800 text-[13px] hover:text-indigo-600 text-left truncate block w-full outline-none cursor-pointer"
+                      className="font-display font-semibold text-slate-900 text-sm hover:text-blue-600 text-left truncate block w-full outline-none cursor-pointer"
                     >
                       {item.name}
                     </button>
-                    <div className="flex items-center justify-between text-[10px] text-slate-400 mt-1 font-mono">
+                    <div className="flex items-center justify-between text-[10px] text-slate-400 font-semibold font-mono tracking-wide uppercase">
                       <span>{item.isFolder ? 'Folder' : formatBytes(item.size)}</span>
                       <span>{new Date(item.createdAt).toLocaleDateString()}</span>
                     </div>
@@ -777,37 +768,37 @@ export default function MyFilesView({
             })}
           </div>
         ) : (
-          /* List View Layout Dashboard */
-          <div className="bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-x-auto" id="explorer-list">
-            <table className="min-w-full divide-y divide-slate-100">
-              <thead className="bg-slate-50 text-[10px] uppercase font-mono tracking-widest text-slate-400 font-bold">
+          /* List View Layout panel */
+          <div className="bg-white rounded-2xl border border-slate-200/50 shadow-sm overflow-x-auto" id="explorer-list">
+            <table className="min-w-full divide-y divide-slate-150">
+              <thead className="bg-[#F8FAFC] text-[10px] uppercase font-mono tracking-widest text-slate-450 font-bold border-b border-slate-200/60">
                 <tr>
-                  <th scope="col" className="px-6 py-3.5 text-left">Document Title</th>
-                  <th scope="col" className="px-6 py-3.5 text-left">Created Date</th>
-                  <th scope="col" className="px-6 py-3.5 text-left">Size Index</th>
-                  <th scope="col" className="px-6 py-3.5 text-left">Shared with</th>
-                  <th scope="col" className="px-6 py-3.5 text-right"></th>
+                  <th scope="col" className="px-6 py-4 text-left">Document Title</th>
+                  <th scope="col" className="px-6 py-4 text-left">Created Date</th>
+                  <th scope="col" className="px-6 py-4 text-left">Size Index</th>
+                  <th scope="col" className="px-6 py-4 text-left">Collaboration Sharing</th>
+                  <th scope="col" className="px-6 py-4 text-right"></th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-xs">
+              <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-700">
                 {filteredAndSortedFiles.map(item => {
                   const isMenuOpen = activeContextId === item.id;
                   return (
                     <tr 
                       key={item.id} 
-                      className="hover:bg-slate-55 transition-colors group"
+                      className="hover:bg-slate-50/70 transition-colors group"
                       onDoubleClick={() => item.isFolder && onSelectFolder(item.id)}
                     >
-                      <td className="px-6 py-4 flex items-center space-x-3 w-1/3">
+                      <td className="px-6 py-4 flex items-center space-x-3.5 w-1/3">
                         <button 
                           onClick={() => item.isFolder && onSelectFolder(item.id)}
-                          className="p-1.5 bg-slate-100 rounded-lg text-slate-500 group-hover:text-indigo-600 cursor-pointer"
+                          className="p-2 bg-slate-50 border border-slate-100 rounded-xl text-slate-500 group-hover:text-blue-600 transition-colors cursor-pointer"
                         >
                           {getFileIcon(item)}
                         </button>
                         <button 
                           onClick={() => item.isFolder ? onSelectFolder(item.id) : handleDownload(item)}
-                          className="font-semibold text-slate-800 hover:text-indigo-600 truncate max-w-sm text-left truncate cursor-pointer"
+                          className="font-semibold text-slate-900 hover:text-blue-600 truncate max-w-sm text-left block outline-none cursor-pointer"
                         >
                           {item.name}
                         </button>
@@ -820,11 +811,11 @@ export default function MyFilesView({
                       </td>
                       <td className="px-6 py-4">
                         {item.sharedWith.length === 0 ? (
-                          <span className="text-[10px] text-slate-400">Only Me</span>
+                          <span className="text-[10px] uppercase font-mono tracking-wide font-bold text-slate-400 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200/50">Private (Me)</span>
                         ) : (
-                          <div className="flex -space-x-1 overflow-hidden" title={item.sharedWith.map(s => s.email).join(', ')}>
+                          <div className="flex -space-x-1.5 overflow-hidden" title={item.sharedWith.map(s => s.email).join(', ')}>
                             {item.sharedWith.map((su, idx) => (
-                              <div key={idx} className="h-5 w-5 rounded-full bg-slate-200 border border-white flex items-center justify-center text-[8px] font-bold text-slate-700">
+                              <div key={idx} className="h-5.5 w-5.5 rounded-full bg-blue-50 border border-white flex items-center justify-center text-[8px] font-bold text-blue-700">
                                 {su.email.substring(0, 2).toUpperCase()}
                               </div>
                             ))}
@@ -834,7 +825,7 @@ export default function MyFilesView({
                       <td className="px-6 py-4 text-right relative">
                         <button 
                           onClick={() => setActiveContextId(isMenuOpen ? null : item.id)}
-                          className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600"
+                          className="p-1 px-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 cursor-pointer"
                         >
                           <MoreVertical className="w-4 h-4" />
                         </button>
@@ -847,44 +838,44 @@ export default function MyFilesView({
                                 initial={{ opacity: 0, scale: 0.95, y: -5 }}
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95, y: -5 }}
-                                className="absolute right-6 top-10 mt-1 w-44 bg-white border border-slate-200 shadow-xl rounded-xl p-1 z-50 text-xs text-slate-700 text-left"
+                                className="absolute right-6 top-10 mt-1 w-44 bg-white border border-slate-200/80 shadow-xl rounded-xl p-1.5 z-50 text-xs text-slate-700 text-left font-semibold space-y-0.5"
                               >
                                 {item.isFolder ? (
-                                  <button onClick={() => { onSelectFolder(item.id); setActiveContextId(null); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 font-semibold text-slate-800 flex items-center gap-2">
-                                    <Folder className="w-3.5 h-3.5" /> Open Folder
+                                  <button onClick={() => { onSelectFolder(item.id); setActiveContextId(null); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 font-bold text-slate-800 flex items-center gap-2 cursor-pointer">
+                                    <Folder className="w-3.5 h-3.5 text-blue-500" /> Open Folder
                                   </button>
                                 ) : (
-                                  <button onClick={() => { handleDownload(item); setActiveContextId(null); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-emerald-50 font-semibold text-emerald-700 flex items-center gap-2">
-                                    <Download className="w-3.5 h-3.5" /> Download file
+                                  <button onClick={() => { handleDownload(item); setActiveContextId(null); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-blue-50 font-bold text-blue-600 flex items-center gap-2 cursor-pointer">
+                                    <Download className="w-3.5 h-3.5" /> Download File
                                   </button>
                                 )}
 
-                                <button onClick={() => handleToggleStar(item.id)} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 font-semibold text-slate-800 flex items-center gap-2">
-                                  <Star className="w-3.5 h-3.5 text-slate-400" /> Star Item
+                                <button onClick={() => handleToggleStar(item.id)} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
+                                  <Star className="w-3.5 h-3.5 text-amber-500" /> Star Item
                                 </button>
 
-                                <button onClick={() => { handleOpenShare(item); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 font-semibold text-slate-800 flex items-center gap-2">
-                                  <Share2 className="w-3.5 h-3.5 text-slate-400" /> Sharing Links
+                                <button onClick={() => { handleOpenShare(item); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
+                                  <Share2 className="w-3.5 h-3.5 text-cyan-500" /> Share Config
                                 </button>
 
-                                <button onClick={() => { setRenameId(item.id); setRenameValue(item.name); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 font-semibold text-slate-800 flex items-center gap-2">
+                                <button onClick={() => { setRenameId(item.id); setRenameValue(item.name); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
                                   <Edit3 className="w-3.5 h-3.5 text-slate-400" /> Rename
                                 </button>
 
-                                <button onClick={() => { setMoveId(item.id); setTargetParentId(item.parentId || 'null'); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 font-semibold text-slate-800 flex items-center gap-2">
-                                  <Move className="w-3.5 h-3.5 text-slate-400" /> Move location
+                                <button onClick={() => { setMoveId(item.id); setTargetParentId(item.parentId || 'null'); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
+                                  <Move className="w-3.5 h-3.5 text-slate-400" /> Relocate
                                 </button>
 
                                 {!item.isFolder && (
-                                  <button onClick={() => handleDuplicate(item.id)} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 font-semibold text-slate-800 flex items-center gap-2">
-                                    <Copy className="w-3.5 h-3.5 text-slate-400" /> Duplicate
+                                  <button onClick={() => handleDuplicate(item.id)} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
+                                    <Copy className="w-3.5 h-3.5 text-purple-400" /> Duplicate
                                   </button>
                                 )}
 
                                 <div className="border-t border-slate-100 my-1"></div>
                                 
-                                <button onClick={() => handleDeleteFolderOrFile(item)} className="w-full text-left px-3 py-2 rounded-lg hover:bg-red-50 font-semibold text-red-600 flex items-center gap-2">
-                                  <Trash2 className="w-3.5 h-3.5" /> Move to Trash
+                                <button onClick={() => handleDeleteFolderOrFile(item)} className="w-full text-left px-3 py-2 rounded-lg hover:bg-red-50 text-red-600 flex items-center gap-2 cursor-pointer">
+                                  <Trash2 className="w-3.5 h-3.5" /> Direct Trash
                                 </button>
                               </motion.div>
                             </>
@@ -900,18 +891,17 @@ export default function MyFilesView({
         )
       )}
 
-      {/* ======================================================== */}
-      {/* 4. Overlay Modal: Create Folder Form */}
+      {/* 4. Modal: Create Folder Form */}
       {isNewFolderOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 max-w-sm w-full space-y-6 shadow-2xl"
+            className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 max-w-sm w-full space-y-6 shadow-2xl relative z-10"
           >
-            <div className="text-center">
+            <div className="text-center space-y-1.5">
               <h3 className="font-display font-bold text-slate-800 text-lg">Create Directory Folder</h3>
-              <p className="text-xs text-slate-400 mt-1">Folders let you catalog and share relative files efficiently.</p>
+              <p className="text-xs text-slate-400 leading-relaxed font-semibold">Organize files and catalog assets within continuous partitions.</p>
             </div>
             <form onSubmit={handleCreateFolderSubmit} className="space-y-4">
               <input 
@@ -920,23 +910,23 @@ export default function MyFilesView({
                 required
                 value={newFolderName}
                 onChange={(e) => setNewFolderName(e.target.value)}
-                placeholder="Enterprise Reports"
-                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 font-medium text-slate-800"
+                placeholder="Enterprise Analytics Subfolders"
+                className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold focus:outline-none focus:border-blue-600 transition-all text-slate-800"
               />
               <div className="flex space-x-3">
                 <button 
                   type="button" 
                   onClick={() => setIsNewFolderOpen(false)}
-                  className="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-250 font-semibold text-xs text-slate-700 rounded-xl"
+                  className="w-1/2 py-3 bg-slate-50 hover:bg-slate-100 text-slate-500 hover:text-slate-700 text-xs font-bold rounded-xl border border-slate-200/60 transition-all cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button 
                   id="create-folder-submit"
                   type="submit"
-                  className="w-1/2 py-2.5 bg-indigo-600 hover:bg-slate-900 font-bold text-xs text-white rounded-xl shadow-md"
+                  className="w-1/2 py-3 bg-blue-600 hover:bg-blue-700 font-bold text-white text-xs rounded-xl shadow-md cursor-pointer"
                 >
-                  Create Directory
+                  Create Folder
                 </button>
               </div>
             </form>
@@ -944,17 +934,17 @@ export default function MyFilesView({
         </div>
       )}
 
-      {/* 5. Overlay Modal: Rename Element Form */}
+      {/* 5. Modal: Rename Element */}
       {renameId && (
-        <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-3xl border border-slate-200 p-6 max-w-sm w-full space-y-6 shadow-2xl"
+            className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 max-w-sm w-full space-y-6 shadow-2xl"
           >
-            <div className="text-center">
-              <h3 className="font-display font-bold text-slate-800 text-lg">Modify Element Label</h3>
-              <p className="text-xs text-slate-400 mt-1">Type name suffix properties securely.</p>
+            <div className="text-center space-y-1.5">
+              <h3 className="font-display font-bold text-slate-800 text-lg">Modify Label Name</h3>
+              <p className="text-xs text-slate-400 leading-relaxed font-semibold">Changes are reflected in direct-download links.</p>
             </div>
             <form onSubmit={handleRenameSubmit} className="space-y-4">
               <input 
@@ -963,22 +953,22 @@ export default function MyFilesView({
                 required
                 value={renameValue}
                 onChange={(e) => setRenameValue(e.target.value)}
-                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 font-medium text-slate-800"
+                className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-semibold focus:outline-none focus:border-blue-600 transition-all text-slate-800"
               />
               <div className="flex space-x-3">
                 <button 
                   type="button" 
                   onClick={() => setRenameId(null)}
-                  className="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 font-semibold text-slate-700 text-xs rounded-xl"
+                  className="w-1/2 py-3 bg-slate-50 hover:bg-slate-100 font-bold text-slate-500 text-xs border border-slate-200/60 rounded-xl transition-all cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button 
                   id="rename-element-submit"
                   type="submit"
-                  className="w-1/2 py-2.5 bg-indigo-600 hover:bg-slate-900 font-bold text-xs text-white rounded-xl"
+                  className="w-1/2 py-3 bg-blue-600 hover:bg-blue-700 font-bold text-white text-xs rounded-xl shadow-md cursor-pointer"
                 >
-                  Apply Rename
+                  Confirm Rename
                 </button>
               </div>
             </form>
@@ -986,25 +976,25 @@ export default function MyFilesView({
         </div>
       )}
 
-      {/* 6. Overlay Modal: Move Elements Location */}
+      {/* 6. Modal: Move Element Location */}
       {moveId && (
-        <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 max-w-sm w-full space-y-6 shadow-2xl"
+            className="bg-white rounded-3xl border border-slate-200/80 p-6 sm:p-8 max-w-sm w-full space-y-6 shadow-2xl container"
           >
-            <div className="text-center">
-              <h3 className="font-display font-bold text-slate-800 text-lg">Relocate Element Location</h3>
-              <p className="text-xs text-slate-400 mt-1">Select new target parent directory folder</p>
+            <div className="text-center space-y-1.5">
+              <h3 className="font-display font-medium text-slate-800 text-lg">Move Folder Location</h3>
+              <p className="text-xs text-slate-400 leading-relaxed font-semibold">Relocate elements to different nested S3 subdirectories.</p>
             </div>
             <form onSubmit={handleMoveSubmit} className="space-y-4">
               <select 
                 value={targetParentId}
                 onChange={(e) => setTargetParentId(e.target.value)}
-                className="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-indigo-600 focus:ring-1 focus:ring-indigo-600 font-medium text-slate-800"
+                className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs focus:outline-none focus:border-blue-600 font-semibold text-slate-700"
               >
-                <option value="null">My Workspace (Root)</option>
+                <option value="null">S3 Workspace (Root)</option>
                 {initialFiles.filter(f => f.isFolder && f.id !== moveId && !f.isTrashed).map(f => (
                   <option key={f.id} value={f.id}>{f.name}</option>
                 ))}
@@ -1013,16 +1003,16 @@ export default function MyFilesView({
                 <button 
                   type="button" 
                   onClick={() => setMoveId(null)}
-                  className="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 font-semibold text-xs text-slate-700 rounded-xl"
+                  className="w-1/2 py-3 bg-slate-50 hover:bg-slate-100 text-slate-500 font-bold text-xs border border-slate-200/60 rounded-xl transition-all cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button 
                   id="move-element-submit"
                   type="submit"
-                  className="w-1/2 py-2.5 bg-indigo-600 hover:bg-slate-900 font-bold text-xs text-white rounded-xl"
+                  className="w-1/2 py-3 bg-blue-600 hover:bg-blue-700 font-bold text-white text-xs rounded-xl shadow-md cursor-pointer"
                 >
-                  Move Element
+                  Move element
                 </button>
               </div>
             </form>
@@ -1030,22 +1020,22 @@ export default function MyFilesView({
         </div>
       )}
 
-      {/* 7. Overlay Modal: Comprehensive Share Link Controls */}
+      {/* 7. Modal: Share Settings Links */}
       {shareFile && (
-        <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4" id="share-modal-container">
+        <div className="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm" id="share-modal-container">
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 max-w-lg w-full space-y-6 shadow-2xl max-h-[90vh] overflow-y-auto"
           >
             <div>
-              <span className="text-[10px] uppercase font-mono tracking-widest text-indigo-600 font-extrabold block">Secure Encryption Controls</span>
-              <h3 className="font-display font-bold text-slate-800 text-lg">Sharing Properties: {shareFile.name}</h3>
-              <p className="text-xs text-slate-400 mt-1">Establish security parameters to share files securely.</p>
+              <span className="text-[10px] uppercase font-mono tracking-widest text-blue-600 font-black block">Private S3 link settings</span>
+              <h3 className="font-display font-bold text-slate-800 text-lg">Sharing Permissions: {shareFile.name}</h3>
+              <p className="text-xs text-slate-400 mt-1">Configure keys, email domains and expires rules securely.</p>
             </div>
 
-            {/* Part A: Private Email Permissions list */}
-            <div className="space-y-3 pt-2 border-t border-slate-100">
+            {/* Part A: email list permissions */}
+            <div className="space-y-3.5 pt-4 border-t border-slate-100">
               <span className="text-[10px] uppercase font-mono font-bold tracking-wider text-slate-400 block">Collaborator Permissions</span>
               
               <div className="flex items-center gap-2">
@@ -1054,41 +1044,41 @@ export default function MyFilesView({
                   placeholder="colleague@enterprise.com"
                   value={newShareEmail}
                   onChange={(e) => setNewShareEmail(e.target.value)}
-                  className="flex-1 p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-indigo-600 font-medium text-slate-800"
+                  className="flex-1 p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-blue-600 font-semibold text-slate-800"
                 />
                 <select 
                   value={newSharePerm}
                   onChange={(e: any) => setNewSharePerm(e.target.value)}
-                  className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 font-semibold focus:outline-none"
+                  className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 font-bold focus:outline-none"
                 >
                   <option value="viewer">Viewer</option>
                   <option value="editor">Editor</option>
-                  <option value="download_only">Download-Only</option>
+                  <option value="download_only">Download Only</option>
                 </select>
                 <button 
                   type="button" 
                   onClick={handleAddShareEmail}
-                  className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl"
+                  className="px-4 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl cursor-pointer"
                 >
                   Add
                 </button>
               </div>
 
-              {/* Members lists representation */}
+              {/* Emails lists representation */}
               <div className="space-y-2 max-h-28 overflow-y-auto pr-1">
                 {sharedEmailList.length === 0 ? (
-                  <p className="text-[11px] text-slate-400 italic">No explicit emails configured yet.</p>
+                  <p className="text-[11px] text-slate-400 italic font-semibold">No direct email addresses whitelisted.</p>
                 ) : (
                   sharedEmailList.map((su, index) => (
-                    <div key={index} className="flex items-center justify-between text-xs bg-slate-50 p-2 rounded-lg border border-slate-100">
+                    <div key={index} className="flex items-center justify-between text-xs bg-slate-50 p-2.5 rounded-xl border border-slate-100">
                       <div>
-                        <span className="font-semibold text-slate-700 block">{su.email}</span>
-                        <span className="text-[9px] uppercase font-mono text-indigo-600 font-bold">{su.permission.replace('_', ' ')}</span>
+                        <span className="font-semibold text-slate-800 block">{su.email}</span>
+                        <span className="text-[9px] uppercase font-mono text-blue-600 font-bold">{su.permission.replace('_', ' ')}</span>
                       </div>
                       <button 
                         type="button" 
                         onClick={() => handleRemoveShareEmail(su.email)}
-                        className="p-1 rounded hover:bg-red-50 text-red-500"
+                        className="p-1 rounded-lg hover:bg-red-50 text-red-500 cursor-pointer"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -1098,64 +1088,64 @@ export default function MyFilesView({
               </div>
             </div>
 
-            {/* Part B: Secure Public Direct Share Link Option */}
+            {/* Part B: public link expiry */}
             <div className="space-y-4 pt-4 border-t border-slate-100">
-              <span className="text-[10px] uppercase font-mono font-bold tracking-wider text-slate-400 block">External Secure Share Links URL</span>
+              <span className="text-[10px] uppercase font-mono font-bold tracking-wider text-slate-400 block">External Secure Direct Link Options</span>
               
-              <div className="flex items-center justify-between bg-slate-50 p-3 rounded-2xl border border-slate-100">
+              <div className="flex items-center justify-between bg-slate-50 p-4 rounded-2xl border border-slate-100">
                 <div>
-                  <span className="font-semibold text-slate-800 text-xs block">Toggle Public Access Links</span>
-                  <span className="text-[10px] text-slate-400">Generate a signed URL accessible by external clients.</span>
+                  <span className="font-bold text-slate-850 text-xs block">Allow Public Share Links</span>
+                  <span className="text-[11px] font-semibold text-slate-400">Generates a live link index in public dashboards.</span>
                 </div>
                 <button 
                   type="button"
                   onClick={() => setIsPublic(!isPublic)}
-                  className={`w-12 h-6.5 rounded-full p-0.5 transition-colors duration-300 focus:outline-none ${isPublic ? 'bg-indigo-600' : 'bg-slate-200'}`}
+                  className={`w-12 h-6.5 rounded-full p-0.5 transition-colors focus:outline-none cursor-pointer ${isPublic ? 'bg-blue-600' : 'bg-slate-200'}`}
                 >
-                  <div className={`bg-white w-5.5 h-5.5 rounded-full shadow-md transform duration-300 ${isPublic ? 'translate-x-5.5' : ''}`} />
+                  <div className={`bg-white w-5.5 h-5.5 rounded-full shadow transform duration-300 ${isPublic ? 'translate-x-5.5' : ''}`} />
                 </button>
               </div>
 
               {isPublic && (
-                <div className="space-y-3 p-3.5 bg-slate-50 rounded-2xl border border-slate-100 space-y-4">
-                  {/* Password Lock configuration */}
+                <div className="space-y-4 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                  {/* password verification switches */}
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="font-semibold text-slate-800 text-xs block">Password Verification Locked</span>
-                      <span className="text-[10px] text-slate-400">Force viewer to type key phrase to resolve downloads.</span>
+                      <span className="font-bold text-slate-850 text-xs block">Apply Key Password Lock</span>
+                      <span className="text-[11px] font-semibold text-slate-400">Force viewers to solve lock to download file.</span>
                     </div>
                     <button 
                       type="button"
                       onClick={() => setPwdEnabled(!pwdEnabled)}
-                      className={`w-10 h-5.5 rounded-full p-0.5 transition-colors focus:outline-none ${pwdEnabled ? 'bg-indigo-600' : 'bg-slate-200'}`}
+                      className={`w-11 h-6 rounded-full p-0.5 transition-colors focus:outline-none cursor-pointer ${pwdEnabled ? 'bg-blue-600' : 'bg-slate-200'}`}
                     >
-                      <div className={`bg-white w-4.5 h-4.5 rounded-full shadow-md transform duration-300 ${pwdEnabled ? 'translate-x-4.5' : ''}`} />
+                      <div className={`bg-white w-5 h-5 rounded-full shadow transform duration-300 ${pwdEnabled ? 'translate-x-5' : ''}`} />
                     </button>
                   </div>
 
                   {pwdEnabled && (
                     <input 
                       type="text"
-                      placeholder="AccessPassword2026"
+                      placeholder="Enter Secure Link Password"
                       value={pwdValue}
                       onChange={(e) => setPwdValue(e.target.value)}
-                      className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-indigo-600 text-slate-800 font-semibold"
+                      className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-blue-600 text-slate-800"
                     />
                   )}
 
-                  {/* Expire settings */}
-                  <div>
-                    <label className="block text-[10px] uppercase font-mono font-bold tracking-wider text-slate-400 mb-1">Link Expirations Date</label>
+                  {/* expires block */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[10px] uppercase font-mono font-bold tracking-wider text-slate-400">Expire Date Threshold</label>
                     <input 
                       type="date"
                       value={expiresAtValue}
                       onChange={(e) => setExpiresAtValue(e.target.value)}
-                      className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:border-indigo-600 font-medium text-slate-800"
+                      className="w-full p-2.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-blue-600 text-slate-700"
                     />
                   </div>
 
-                  {/* Print direct download path helper */}
-                  <div className="bg-white p-2.5 rounded-xl border border-dotted border-slate-200 text-[10px] text-indigo-700 font-mono break-all font-semibold">
+                  {/* clipboard links print */}
+                  <div className="bg-white p-3 rounded-xl border border-dashed border-slate-200 text-[10px] text-blue-600 font-mono break-all font-bold">
                     <span>{window.location.origin}/api/files/download/{shareFile.id}{pwdEnabled && pwdValue ? `?pwd=${pwdValue}` : ''}</span>
                   </div>
                 </div>
@@ -1166,7 +1156,7 @@ export default function MyFilesView({
               <button 
                 type="button" 
                 onClick={() => setShareFile(null)}
-                className="w-1/2 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl"
+                className="w-1/2 py-3 bg-slate-50 hover:bg-slate-100 text-slate-500 font-bold text-xs border border-slate-200/60 rounded-xl transition-all cursor-pointer"
               >
                 Close Controls
               </button>
@@ -1174,7 +1164,7 @@ export default function MyFilesView({
                 id="share-save-btn"
                 type="button"
                 onClick={handleSaveShareConfig}
-                className="w-1/2 py-2.5 bg-indigo-600 hover:bg-slate-900 text-white font-bold text-xs rounded-xl shadow-md"
+                className="w-1/2 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md cursor-pointer"
               >
                 Save Permissions
               </button>
