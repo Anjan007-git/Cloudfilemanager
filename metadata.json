@@ -1,0 +1,6 @@
+{
+  "name": "Cloud File Manager",
+  "description": "A premium secure cloud storage and metadata management platform for enterprise teams.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
