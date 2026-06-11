@@ -93,52 +93,78 @@ export default function LandingPage({ onGetStarted, onLoginClick }: LandingPageP
   const pricingPlans = [
     {
       id: 'free',
-      name: "Standard Sandbox",
-      storage: "200 GB",
+      name: "Free",
+      storage: "5 GB",
       price: 0,
-      badge: "Free Tier",
-      desc: "Perfect for testing cloud S3 capabilities and standard backup testing.",
+      badge: "Personal Use",
+      desc: "Perfect for personal file storage and standard backup testing.",
+      suitableFor: "Personal use",
       features: [
-        "200 GB Encrypted Storage Space",
-        "Individual files up to 50MB size",
-        "Classic file sharing links",
-        "Full root folder navigation matrix",
-        "Standard support tickets queue"
-      ]
+        "5 GB secure cloud storage",
+        "File upload & download",
+        "Folder management",
+        "Basic file sharing",
+        "Cross-device access",
+        "Secure authentication"
+      ],
+      ctaText: "Get Started Free"
     },
     {
       id: 'pro',
-      name: "Professional Node",
-      storage: "1 TB",
+      name: "Pro",
+      storage: "200 GB",
       price: 299,
       badge: "Most Popular",
-      desc: "High performance architecture optimized for freelancers and operations.",
+      desc: "Enhanced storage limits and file control capabilities for creators.",
+      suitableFor: "Individuals and creators",
       features: [
-        "1 TB Enterprise Storage allocation",
-        "Upload file limits up to 5GB per action",
-        "Password-protected sharing keys",
-        "Timed expiration download links",
-        "Advanced activity history streams",
-        "Subtle micro-interactions statistics",
-        "Priority live email support response"
-      ]
+        "200 GB secure storage",
+        "Faster uploads",
+        "Password-protected sharing",
+        "File version history",
+        "Priority support",
+        "Advanced sharing controls"
+      ],
+      ctaText: "Upgrade to Pro"
     },
     {
       id: 'business',
-      name: "Enterprise Core",
-      storage: "5 TB",
-      price: 999,
-      badge: "Corporate SLA",
-      desc: "Built to unify cross-team resources, analytics, and heavy directory loads.",
+      name: "Business",
+      storage: "1 TB",
+      price: 499,
+      badge: "Best for Teams",
+      desc: "Robust cloud space and collaboration suite for small teams.",
+      suitableFor: "Professionals and small teams",
       features: [
-        "5 TB fully isolated storage pools",
-        "File files upload size up to 20GB",
-        "Immutable write-permission whitelist",
-        "Custom branded workspace templates",
-        "90-day comprehensive audit logging",
-        "MFA compliance controls dashboard",
-        "24/7/365 dedicated developer priority"
-      ]
+        "1 TB secure storage",
+        "Team collaboration",
+        "Shared workspaces",
+        "Activity history",
+        "Advanced permissions",
+        "Priority support",
+        "Enhanced security"
+      ],
+      ctaText: "Choose Business"
+    },
+    {
+      id: 'enterprise',
+      name: "Enterprise",
+      storage: "5 TB+",
+      price: null,
+      badge: "Enterprise Solution",
+      desc: "Fully customized, scalable secure workspace for organizations.",
+      suitableFor: "Organizations",
+      features: [
+        "Multi-user management",
+        "Enterprise-grade security",
+        "Compliance controls",
+        "Dedicated support",
+        "Custom storage plans",
+        "SSO integration ready",
+        "Audit logs",
+        "SLA support"
+      ],
+      ctaText: "Contact Sales"
     }
   ];
 
@@ -449,78 +475,95 @@ export default function LandingPage({ onGetStarted, onLoginClick }: LandingPageP
       </section>
 
       {/* 5. PRICING MATRIX SECTION */}
-      <section id="pricing" className="py-24 bg-slate-50/50 relative">
-        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+      <section id="pricing" className="py-24 bg-slate-50/50 relative overflow-hidden">
+        <div className="absolute inset-0 bg-radial-at-t from-blue-50/10 via-transparent to-transparent pointer-events-none" />
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 relative animate-fade-in">
           
           <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
-            <span className="text-[10px] uppercase font-mono tracking-widest text-blue-600 font-black">SIMPLE TRANSPARENT TIER CODES</span>
-            <h2 className="text-3xl sm:text-4xl font-display font-extrabold text-slate-900 tracking-tight leading-none">
-              Workspace subscription capacities that expand with you.
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-blue-600 bg-blue-50/80 border border-blue-100 rounded-full mx-auto w-fit">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Storage Plans & Pricing</span>
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-sans font-bold text-slate-900 tracking-tight leading-tight">
+              Simple, transparent pricing built for everyone
             </h2>
-            <p className="text-slate-500 text-xs sm:text-sm font-semibold max-w-md mx-auto">
-              Deploy basic testing clusters for sandbox workloads or expand to unlimited military-grade storage instantly.
+            <p className="text-slate-500 text-sm font-normal max-w-md mx-auto leading-relaxed">
+              Choose the perfect plan tailored to your storage, speed, and security requirements. No hidden fees.
             </p>
 
             {/* Premium Billing Toggler */}
-            <div className="inline-flex items-center space-x-1.5 bg-white p-1 rounded-2xl border border-slate-200/70 shadow-sm mt-4">
+            <div className="inline-flex items-center space-x-1 bg-slate-100/80 p-1 rounded-2xl border border-slate-200/50 shadow-sm mt-6">
               <button 
                 onClick={() => setBillingPeriod('monthly')}
-                className={`px-5 py-2.5 rounded-xl text-[10px] uppercase font-mono font-black tracking-wider transition-all duration-300 ${billingPeriod === 'monthly' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
+                className={`px-5 py-2 rounded-xl text-xs font-semibold transition-all duration-300 ${billingPeriod === 'monthly' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
               >
-                Monthly Plan
+                Monthly Billing
               </button>
               <button 
                 onClick={() => setBillingPeriod('yearly')}
-                className={`px-5 py-2.5 rounded-xl text-[10px] uppercase font-mono font-black tracking-wider transition-all duration-300 ${billingPeriod === 'yearly' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
+                className={`px-5 py-2 rounded-xl text-xs font-semibold transition-all duration-300 flex items-center gap-1.5 ${billingPeriod === 'yearly' ? 'bg-white text-blue-600 shadow-sm' : 'text-slate-500 hover:text-slate-900'}`}
               >
-                Yearly (20% Off)
+                Yearly Billing 
+                <span className="text-[10px] bg-blue-105 text-blue-700 font-bold px-1.5 py-0.5 rounded-lg">Save 20%</span>
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
             {pricingPlans.map((plan) => {
-              const adjustedPrice = (plan.price * priceMultiplier).toFixed(2);
-              const isBusiness = plan.id === 'business';
+              const adjustedPrice = plan.price === null ? null : Math.round(plan.price * priceMultiplier);
               const isPro = plan.id === 'pro';
-
+              const isEnterprise = plan.id === 'enterprise';
+              
               return (
                 <div 
                   key={plan.id}
-                  className={`bg-white rounded-3xl p-8 border hover:shadow-2xl transition-all duration-300 relative flex flex-col justify-between ${
-                    isBusiness ? 'border-blue-500 ring-2 ring-blue-150/40 shadow-xl' : 'border-slate-200/80 shadow-sm'
+                  className={`bg-white rounded-3xl p-6 border transition-all duration-300 relative flex flex-col justify-between ${
+                    isPro 
+                      ? 'border-blue-500 ring-4 ring-blue-500/5 shadow-xl shadow-blue-500/5 hover:-translate-y-1' 
+                      : 'border-slate-200/80 hover:border-slate-300 shadow-sm hover:shadow-md hover:-translate-y-1'
                   }`}
                 >
-                  {isBusiness && (
-                    <span className="absolute -top-3.5 left-1/4 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[9px] uppercase font-mono font-black tracking-widest rounded-full shadow-md">
-                      BEST SECURE VALUE
+                  {isPro && (
+                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[10px] font-bold rounded-full shadow-sm tracking-wide">
+                      Most Popular
                     </span>
                   )}
 
-                  <div className="space-y-6">
-                    <div className="flex justify-between items-center pb-4 border-b border-slate-100">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-start pb-4 border-b border-slate-100">
                       <div>
-                        <span className="text-[10px] uppercase font-mono tracking-wider font-extrabold text-slate-400 block">{plan.badge}</span>
-                        <h4 className="font-display font-extrabold text-xl text-slate-800 mt-0.5">{plan.name}</h4>
+                        <span className="text-[10px] font-semibold text-slate-405 block tracking-wide uppercase">{plan.badge}</span>
+                        <h4 className="font-sans font-bold text-lg text-slate-900 mt-1">{plan.name}</h4>
                       </div>
-                      <span className="text-2xl font-bold font-display text-blue-600 bg-blue-50/50 p-2.5 px-3 rounded-2xl border border-blue-100/50 leading-none">
+                      <span className="text-base font-bold font-sans text-blue-600 bg-blue-50/80 p-2 px-2.5 rounded-xl border border-blue-100 leading-none">
                         {plan.storage}
                       </span>
                     </div>
 
-                    <p className="text-slate-500 text-xs font-semibold leading-relaxed">{plan.desc}</p>
+                    <p className="text-slate-500 text-xs font-normal leading-relaxed min-h-[36px]">{plan.desc}</p>
 
-                    <div className="flex items-baseline py-2 border-b border-slate-50">
-                      <span className="text-4xl font-display font-extrabold text-slate-950">₹{plan.price === 0 ? '0' : Math.round(Number(adjustedPrice))}</span>
-                      <span className="text-xs font-bold text-slate-400 font-mono ml-2">/ month</span>
+                    <div className="flex flex-col py-1 pb-4 border-b border-slate-50">
+                      <div className="flex items-baseline">
+                        {plan.price === null ? (
+                          <span className="text-xl sm:text-2xl font-bold font-sans text-slate-900">Custom pricing</span>
+                        ) : (
+                          <>
+                            <span className="text-3xl sm:text-4xl font-bold font-sans text-slate-900">₹{adjustedPrice}</span>
+                            <span className="text-xs text-slate-400 ml-2 font-normal">/ month</span>
+                          </>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-slate-400 mt-1 font-medium font-sans">
+                        Suitable for {plan.suitableFor}
+                      </p>
                     </div>
 
                     <ul className="space-y-3 pt-2">
-                      <span className="text-[9px] uppercase font-mono tracking-widest text-slate-400 font-extrabold block mb-1">INCLUDED FEATURES</span>
                       {plan.features.map((feat, idx) => (
-                        <li key={idx} className="flex items-center text-xs font-semibold text-slate-650">
-                          <Check className={`w-4 h-4 flex-shrink-0 mr-3 ${isBusiness ? 'text-blue-650' : 'text-emerald-500'}`} />
-                          <span className="truncate">{feat}</span>
+                        <li key={idx} className="flex items-start text-xs text-slate-605 leading-normal">
+                          <Check className={`w-4 h-4 flex-shrink-0 mr-2 mt-0.5 ${isPro ? 'text-blue-600' : 'text-slate-400'}`} />
+                          <span>{feat}</span>
                         </li>
                       ))}
                     </ul>
@@ -528,61 +571,78 @@ export default function LandingPage({ onGetStarted, onLoginClick }: LandingPageP
 
                   <button 
                     id={`pricing-select-${plan.id}`}
-                    onClick={onGetStarted}
-                    className={`mt-8 w-full py-4 px-6 rounded-xl text-xs uppercase font-mono tracking-wider font-black transition-all shadow-md active:scale-[0.98] cursor-pointer ${
-                      isBusiness ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white' :
-                      isPro ? 'bg-blue-600 hover:bg-blue-700 text-white' :
-                      'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                    onClick={(e) => {
+                      if (isEnterprise) {
+                        e.preventDefault();
+                        const contactSec = document.getElementById('contact');
+                        if (contactSec) {
+                          contactSec.scrollIntoView({ behavior: 'smooth' });
+                        }
+                      } else {
+                        onGetStarted();
+                      }
+                    }}
+                    className={`mt-8 w-full py-3 px-5 rounded-xl text-xs font-semibold transition-all shadow-sm active:scale-[0.98] cursor-pointer ${
+                      isPro 
+                        ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-500/10' 
+                        : isEnterprise
+                        ? 'bg-slate-950 hover:bg-slate-900 text-white shadow-md'
+                        : 'bg-slate-50 hover:bg-slate-100 text-slate-700 border border-slate-200'
                     }`}
                   >
-                    {plan.price === 0 ? 'Activate Free Sandbox' : 'Establish Corporate Space'}
+                    {plan.ctaText}
                   </button>
                 </div>
               );
             })}
           </div>
 
-          {/* Clean feature matrix comparisons table */}
-          <div className="mt-16 bg-white rounded-3xl border border-slate-200/50 overflow-hidden shadow-sm">
+          {/* Clean feature comparison database SLA comparisons table */}
+          <div className="mt-16 bg-white rounded-3xl border border-slate-150 overflow-hidden shadow-sm hover:shadow-md transition-all">
             <div className="p-6 border-b border-slate-100">
-              <span className="text-[10px] uppercase font-mono tracking-widest text-[#06b6d4] font-black">COMPREHENSIVE INDEX</span>
-              <h4 className="font-display font-extrabold text-slate-800 text-base mt-0.5">S3 Infrastructure SLA Matrix</h4>
+              <h4 className="font-sans font-bold text-slate-900 text-base">Compare Storage Infrastructure Details</h4>
+              <p className="text-xs text-slate-400 font-normal mt-0.5">A side-by-side breakdown of storage limits and operational scope.</p>
             </div>
             
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs font-semibold">
+              <table className="w-full text-left border-collapse text-xs font-normal">
                 <thead>
-                  <tr className="bg-slate-50/50 border-b border-slate-200/50 text-[10px] uppercase font-mono tracking-widest text-slate-400 font-extrabold">
-                    <th scope="col" className="px-6 py-4.5">Capabilities Index</th>
-                    <th scope="col" className="px-6 py-4.5 text-center">Free Sandbox</th>
-                    <th scope="col" className="px-6 py-4.5 text-center text-cyan-600">Professional Node</th>
-                    <th scope="col" className="px-6 py-4.5 text-center text-blue-600">Enterprise Core</th>
+                  <tr className="bg-slate-50/50 border-b border-slate-200/50 text-xs font-medium text-slate-500">
+                    <th scope="col" className="px-6 py-4">Capability</th>
+                    <th scope="col" className="px-6 py-4 text-center">Free</th>
+                    <th scope="col" className="px-6 py-4 text-center text-blue-600 font-semibold">Pro</th>
+                    <th scope="col" className="px-6 py-4 text-center">Business</th>
+                    <th scope="col" className="px-6 py-4 text-center">Enterprise</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 text-slate-650">
                   <tr className="hover:bg-slate-50/20">
-                    <td className="px-6 py-4 font-bold text-slate-900">Encryption Layer</td>
-                    <td className="px-6 py-4 text-center">AES-256 standard</td>
-                    <td className="px-6 py-4 text-center text-cyan-600 font-bold">AES-256 + Signed keys</td>
-                    <td className="px-6 py-4 text-center text-blue-600 font-bold">Immutable crypt locks</td>
+                    <td className="px-6 py-4 font-semibold text-slate-800">File Storage</td>
+                    <td className="px-6 py-4 text-center text-slate-600">5 GB</td>
+                    <td className="px-6 py-4 text-center text-blue-600 font-semibold">200 GB</td>
+                    <td className="px-6 py-4 text-center text-slate-600">1 TB</td>
+                    <td className="px-6 py-4 text-center font-semibold text-slate-800">5 TB+ Scalable</td>
                   </tr>
                   <tr className="hover:bg-slate-50/20">
-                    <td className="px-6 py-4 font-bold text-slate-900">Custom Branded Expiries</td>
-                    <td className="px-6 py-4 text-center text-slate-350">—</td>
-                    <td className="px-6 py-4 text-center text-cyan-600 font-bold">✔ Included</td>
-                    <td className="px-6 py-4 text-center text-blue-600 font-bold">✔ Fully Customizable</td>
+                    <td className="px-6 py-4 font-semibold text-slate-800">Max File Upload Size</td>
+                    <td className="px-6 py-4 text-center text-slate-600">50 MB</td>
+                    <td className="px-6 py-4 text-center text-blue-600 font-semibold">5 GB</td>
+                    <td className="px-6 py-4 text-center text-slate-600">50 GB</td>
+                    <td className="px-6 py-4 text-center font-semibold text-slate-800">Unlimited</td>
                   </tr>
                   <tr className="hover:bg-slate-50/20">
-                    <td className="px-6 py-4 font-bold text-slate-900">Lifecycle Auditing Controls</td>
+                    <td className="px-6 py-4 font-semibold text-slate-800">Advanced Security & Audits</td>
                     <td className="px-6 py-4 text-center text-slate-350">—</td>
-                    <td className="px-6 py-4 text-center text-slate-350">—</td>
-                    <td className="px-6 py-4 text-center text-blue-600 font-bold">90-Day SOC2 logs</td>
+                    <td className="px-6 py-4 text-center text-blue-600 font-medium">Password Sharing</td>
+                    <td className="px-6 py-4 text-center text-slate-600">Password + Activity Logs</td>
+                    <td className="px-6 py-4 text-center font-semibold text-emerald-600">Full Audit Logs & SSO</td>
                   </tr>
                   <tr className="hover:bg-slate-50/20">
-                    <td className="px-6 py-4 font-bold text-slate-900">Assured Platform SLA</td>
-                    <td className="px-6 py-4 text-center text-slate-400">Best effort</td>
-                    <td className="px-6 py-4 text-center">99.9% availability</td>
-                    <td className="px-6 py-4 text-center text-emerald-600 font-bold">99.999% Signed SLA</td>
+                    <td className="px-6 py-4 font-semibold text-slate-800">Support Mode</td>
+                    <td className="px-6 py-4 text-center text-slate-600">Standard Queue</td>
+                    <td className="px-6 py-4 text-center text-slate-600">Email Priority</td>
+                    <td className="px-6 py-4 text-center text-blue-600 font-semibold">24/7 Priority Support</td>
+                    <td className="px-6 py-4 text-center text-purple-600 font-semibold">Dedicated Team & SLA</td>
                   </tr>
                 </tbody>
               </table>
