@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Cloud, Shield, Zap, RefreshCw, Smartphone, Archive, History, FolderOpen, Lock, 
-  ArrowRight, Check, Star, Mail, User, HelpCircle, ChevronDown, ChevronUp, Globe, FileText, Sparkles, Orbit
+  ArrowRight, Check, Star, Mail, User, HelpCircle, ChevronDown, ChevronUp, Globe, FileText, Sparkles, Orbit, Server, Layers, Cpu, Heart, AlertCircle, ArrowUpRight,
+  Building2, Users, Phone, MapPin, MessageSquare, ShieldCheck, Network
 } from 'lucide-react';
 
 interface LandingPageProps {
@@ -13,8 +14,17 @@ interface LandingPageProps {
 export default function LandingPage({ onGetStarted, onLoginClick }: LandingPageProps) {
   const [activeFaq, setActiveFaq] = useState<number | null>(null);
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
-  const [contactForm, setContactForm] = useState({ name: '', email: '', message: '' });
+  const [contactForm, setContactForm] = useState({
+    name: '',
+    email: '',
+    company: '',
+    orgSize: '',
+    message: '',
+    phone: '',
+    country: ''
+  });
   const [contactSubmitted, setContactSubmitted] = useState(false);
+  const [hoveredFeature, setHoveredFeature] = useState<number | null>(null);
 
   const toggleFaq = (index: number) => {
     setActiveFaq(activeFaq === index ? null : index);
@@ -22,343 +32,448 @@ export default function LandingPage({ onGetStarted, onLoginClick }: LandingPageP
 
   const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (contactForm.name && contactForm.email && contactForm.message) {
+    if (contactForm.name && contactForm.email && contactForm.company && contactForm.orgSize && contactForm.message) {
       setContactSubmitted(true);
       setTimeout(() => {
         setContactSubmitted(false);
-        setContactForm({ name: '', email: '', message: '' });
-      }, 3000);
+        setContactForm({
+          name: '',
+          email: '',
+          company: '',
+          orgSize: '',
+          message: '',
+          phone: '',
+          country: ''
+        });
+      }, 4000);
     }
   };
 
   const priceMultiplier = billingPeriod === 'yearly' ? 0.8 : 1; 
 
   const featuresList = [
-    { icon: <Shield className="w-5 h-5 text-blue-600" />, title: "Secure Cryptographic Storage", desc: "Military-grade AES-256 encryption at rest and TLS 1.3 in transit." },
-    { icon: <Zap className="w-5 h-5 text-cyan-600" />, title: "Lightning S3 Streams", desc: "High-performance parallel streaming speeds up S3 uploads by up to 400%." },
-    { icon: <RefreshCw className="w-5 h-5 text-blue-500" />, title: "Real-time Operations Sync", desc: "Instantly synchronizes assets across workstations, web clients, and API targets." },
-    { icon: <ArrowRight className="w-5 h-5 text-blue-600" />, title: "Granular Sharing Links", desc: "Public, password-protected, or timed expiring download links." },
-    { icon: <Smartphone className="w-5 h-5 text-cyan-500" />, title: "Cross-Device Continuity", desc: "Access entire S3 directory structures on any screen without local software." },
-    { icon: <Archive className="w-5 h-5 text-blue-500" />, title: "Continuous Replication", desc: "Interval automated snapshots keep critical data continuously protected." },
-    { icon: <History className="w-5 h-5 text-indigo-500" />, title: "Advanced Version Control", desc: "Audit and restore previous iteration uploads up to 90 days prior." },
-    { icon: <FolderOpen className="w-5 h-5 text-cyan-600" />, title: "Structured Nesting Maps", desc: "Dynamic root paths, sub-directories, and meta-tags hierarchies." },
-    { icon: <Lock className="w-5 h-5 text-emerald-500" />, title: "Compliance Governance", desc: "Two-factor authentication compliance controls and granular team lists." },
+    { 
+      icon: <Shield className="w-5 h-5 text-blue-600" />, 
+      title: "Secure Cryptographic Storage", 
+      desc: "Military-grade AES-256 encryption at rest combined with end-to-end TLS 1.3 cryptographic handshakes.",
+      benefit: "Financial-grade safety"
+    },
+    { 
+      icon: <Zap className="w-5 h-5 text-cyan-600" />, 
+      title: "Lightning S3 Stream Engine", 
+      desc: "Multi-threaded parallel streaming uploads that bypass classic browser bottlenecks by up to 400%.",
+      benefit: "Ultra high speed sync"
+    },
+    { 
+      icon: <RefreshCw className="w-5 h-5 text-blue-500" />, 
+      title: "Automated Lifecycle Replication", 
+      desc: "Real-time, continuous replication layers that synchronize S3 objects securely with multi-AZ backups.",
+      benefit: "99.999% Durability SLA"
+    },
+    { 
+      icon: <Share2Icon className="w-5 h-5 text-indigo-500" />, 
+      title: "Granular Signed Sharing Links", 
+      desc: "Deploy public, password-protected, or signed expiration links that auto-terminate based on custom rules.",
+      benefit: "Zero-leak link control"
+    },
+    { 
+      icon: <Smartphone className="w-5 h-5 text-emerald-500" />, 
+      title: "Cross-Device Continuity", 
+      desc: "Access complex S3 server volumes instantly through any standard browser without client installation.",
+      benefit: "No local footprint"
+    },
+    { 
+      icon: <History className="w-5 h-5 text-purple-500" />, 
+      title: "90-Day Advanced Audits", 
+      desc: "Audit logs for every single action. Track reads, updates, down-scale requests, and historical sessions.",
+      benefit: "SOC2 Compliance ready"
+    }
   ];
 
   const pricingPlans = [
     {
       id: 'free',
-      name: "Free Sandbox",
+      name: "Standard Sandbox",
       storage: "200 GB",
       price: 0,
-      badge: "Individual",
-      desc: "Perfect for testing cloud tools and secure backup telemetry.",
+      badge: "Free Tier",
+      desc: "Perfect for testing cloud S3 capabilities and standard backup testing.",
       features: [
-        "200 GB Secure Space",
-        "Single uploads up to 50MB",
-        "Basic file sharing links",
-        "Public share directories",
-        "Standard helpdesk ticketing"
+        "200 GB Encrypted Storage Space",
+        "Individual files up to 50MB size",
+        "Classic file sharing links",
+        "Full root folder navigation matrix",
+        "Standard support tickets queue"
       ]
     },
     {
       id: 'pro',
-      name: "Global Pro",
+      name: "Professional Node",
       storage: "1 TB",
       price: 299,
-      badge: "Popular Plan",
-      desc: "Architectures for content creators and remote experts.",
+      badge: "Most Popular",
+      desc: "High performance architecture optimized for freelancers and operations.",
       features: [
-        "1 TB Enterprise Storage",
-        "Single uploads up to 5GB",
-        "Password-protected lock-links",
-        "Time-expires link triggers",
-        "Micro activity metrics logs",
-        "Accelerate CDN uploads",
-        "Priority live email support"
+        "1 TB Enterprise Storage allocation",
+        "Upload file limits up to 5GB per action",
+        "Password-protected sharing keys",
+        "Timed expiration download links",
+        "Advanced activity history streams",
+        "Subtle micro-interactions statistics",
+        "Priority live email support response"
       ]
     },
     {
       id: 'business',
-      name: "Enterprise Server",
+      name: "Enterprise Core",
       storage: "5 TB",
       price: 999,
-      badge: "Recommended",
-      desc: "Built to power team workflows and high-speed media projects.",
+      badge: "Corporate SLA",
+      desc: "Built to unify cross-team resources, analytics, and heavy directory loads.",
       features: [
-        "5 TB Fully Managed Space",
-        "Single uploads up to 20GB",
-        "Advanced folder read/write authorization",
-        "Unlimited custom links",
-        "90-day comprehensive historical logs",
-        "Custom branded portal assets",
-        "2FA team-wide compliance controls",
-        "Dedicated VIP line 24/7"
+        "5 TB fully isolated storage pools",
+        "File files upload size up to 20GB",
+        "Immutable write-permission whitelist",
+        "Custom branded workspace templates",
+        "90-day comprehensive audit logging",
+        "MFA compliance controls dashboard",
+        "24/7/365 dedicated developer priority"
       ]
     }
   ];
 
   const faqItems = [
-    { q: "How secure is Cloud File Manager?", a: "Every single asset uploaded is instantly split and encrypted using client-side military grade AES-256 standard and stored redundantly. Communication is protected via state-of-the-art TLS 1.3 handshake protocols." },
-    { q: "Can we configure sharing permission levels?", a: "Absolutely. When sharing files or nested folder structures, you can dynamically assign Viewer, Editor, or Download-Only restrictions to target emails." },
-    { q: "Is there a custom local backup utility available?", a: "Yes, our web client supports real-time sync states. Once synchronized, local and cloud items mirror adjustments in real time automatically." },
-    { q: "What happens if we reach our current storage ceiling?", a: "We notify you before storage is exhausted. You can easily scale to higher capacities instantly via Subscription Settings." },
-    { q: "Do you support Google Account Authentication?", a: "Yes, Cloud File Manager includes Google Single-Sign-On (SSO). You can authenticate and sync workspace profiles with a single tap securely." }
+    { q: "How secure is Cloud File Manager?", a: "Every single asset uploaded is instantly segmented, encrypted under military-grade AES-256 standards, and dispatched to multiple AWS AZ clusters. Your sessions are shielded with strict TLS 1.3 security protocols." },
+    { q: "Can we configure team permission levels?", a: "Precisely. When generating resource shares, you can declare granular permissions (Viewer, Editor, or Download-Only) tailored to specific corporate email domains." },
+    { q: "How is billing processed?", a: "Flexible pricing models are calculated cleanly on monthly or yearly cycles. Opting for a yearly subscription gains you an instant 20% discount on global workspace packages." },
+    { q: "What happens if we reach our current storage limit?", a: "We notify your team well before storage caps are hit. You can scale allocations up or down dynamically through subscription settings instantly without migration downtime." },
+    { q: "Do you support Single Sign-On (SSO)?", a: "Yes, our console integrates default secure Google SSO, letting verified enterprise users sign in quickly with complete safety." }
   ];
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] selection:bg-blue-600 selection:text-white relative font-sans" id="landing-page-root">
+    <div className="min-h-screen bg-[#fcfdfe] text-slate-900 selection:bg-blue-600 selection:text-white relative font-sans overflow-x-hidden" id="landing-page-root">
       
-      {/* Decorative Blur Backdrops */}
-      <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br from-blue-500/5 to-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute top-1/2 left-0 -translate-y-1/2 w-[600px] h-[600px] bg-gradient-to-tr from-indigo-500/5 to-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
+      {/* Decorative Grid Mesh & Ambient Spheres */}
+      <div className="absolute top-0 inset-x-0 h-[800px] bg-[linear-gradient(to_right,rgba(15,23,42,0.02)_1px,transparent_1px),linear-gradient(to_bottom,rgba(15,23,42,0.02)_1px,transparent_1px)] bg-[size:3rem_3rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none" />
       
-      {/* 1. Header Navigation */}
-      <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-xl border-b border-slate-200/50 transition-all duration-300">
+      {/* Ambient glowing blobs */}
+      <div className="absolute top-[-200px] right-[-100px] w-[600px] h-[600px] bg-gradient-to-tr from-blue-500/10 to-indigo-500/5 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-[400px] left-[-300px] w-[800px] h-[800px] bg-gradient-to-br from-cyan-400/5 via-blue-500/5 to-transparent rounded-full blur-[140px] pointer-events-none" />
+
+      {/* 1. PREMIUM FULL-WIDTH STICKY NAV BAR */}
+      <nav className="sticky top-0 z-50 bg-[#fcfdfe]/80 backdrop-blur-xl border-b border-slate-100 transition-all duration-300">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 h-20 flex items-center justify-between">
-          <div className="flex items-center space-x-3.5">
-            <div className="p-2.5 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl text-white shadow-lg shadow-blue-500/10">
+          
+          {/* Logo & Platform Info */}
+          <div className="flex items-center space-x-3.5 group cursor-pointer">
+            <div className="p-2.5 bg-gradient-to-tr from-blue-600 to-blue-700 text-white rounded-2xl shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
               <Cloud className="w-5.5 h-5.5" />
             </div>
-            <div>
-              <span className="font-display font-bold text-lg tracking-tight text-slate-900 block leading-none">Cloud File Manager</span>
-              <span className="text-[10px] uppercase font-mono tracking-widest text-blue-600 font-extrabold mt-1 block">SaaS Sync Control</span>
+            <div className="flex flex-col">
+              <span className="font-display font-bold text-lg tracking-tight text-slate-900 leading-none">CloudFile</span>
+              <span className="text-[9px] uppercase font-mono tracking-widest text-blue-600 font-black mt-1">S3 Console</span>
             </div>
           </div>
 
-          <nav className="hidden md:flex space-x-10 text-xs uppercase font-mono tracking-widest font-bold text-slate-500">
-            <a href="#features" className="hover:text-blue-600 transition-colors">Capabilities</a>
-            <a href="#pricing" className="hover:text-blue-600 transition-colors">Pricing Matrix</a>
-            <a href="#faq" className="hover:text-blue-600 transition-colors">Knowledge</a>
-            <a href="#contact" className="hover:text-blue-600 transition-colors">Contact</a>
-          </nav>
+          {/* Clean Navigation Hierarchy */}
+          <div className="hidden md:flex items-center space-x-8 text-xs font-semibold tracking-wide text-slate-500 font-sans">
+            <a href="#features" className="hover:text-blue-600 transition-colors py-1 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-blue-600 hover:after:w-full after:transition-all">Capabilities</a>
+            <a href="#pricing" className="hover:text-blue-600 transition-colors py-1 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-blue-600 hover:after:w-full after:transition-all">Pricing Model</a>
+            <a href="#faq" className="hover:text-blue-600 transition-colors py-1 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-blue-600 hover:after:w-full after:transition-all">Information</a>
+            <a href="#contact" className="hover:text-blue-600 transition-colors py-1 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-blue-600 hover:after:w-full after:transition-all">Operations</a>
+          </div>
 
+          {/* Action Buttons */}
           <div className="flex items-center space-x-4">
             <button 
               id="header-login-btn"
               onClick={onLoginClick} 
-              className="text-xs uppercase font-mono font-bold tracking-wider text-slate-700 hover:text-blue-600 transition-colors px-4 py-2 cursor-pointer"
+              className="text-xs font-bold text-slate-600 hover:text-blue-600 transition-colors px-4 py-2 hover:bg-slate-50 rounded-xl cursor-pointer"
             >
-              Sign In
+              Log In
             </button>
             <button 
               id="header-cta-btn"
               onClick={onGetStarted} 
-              className="hidden sm:inline-flex items-center justify-center text-xs uppercase font-mono tracking-wider font-extrabold text-white bg-blue-650 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 active:scale-[0.98] transition-all px-6 py-3 rounded-xl shadow-lg shadow-blue-550/15 cursor-pointer"
+              className="inline-flex items-center justify-center text-xs font-bold text-white bg-blue-600 hover:bg-slate-900 transition-all duration-300 px-5.5 py-3 rounded-xl shadow-lg shadow-blue-500/10 hover:shadow-slate-900/10 group cursor-pointer active:scale-95"
             >
-              Get Started Free
+              <span>Get Started</span>
+              <ArrowRight className="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
         </div>
-      </header>
+      </nav>
 
-      {/* 2. Hero Section */}
-      <section className="relative overflow-hidden pt-16 pb-24 md:pt-28 md:pb-36">
+      {/* 2. PREMIUM HERO SECTION */}
+      <section className="relative pt-16 pb-24 md:pt-24 md:pb-36 overflow-hidden">
+        {/* Ambient background blur circles */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/3 right-10 w-[350px] h-[350px] bg-[#005AE2]/5 rounded-full blur-3xl pointer-events-none" />
+        
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 relative z-10">
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
             
+            {/* Left Column: Call to Actions & Content */}
             <div className="lg:col-span-6 text-center lg:text-left space-y-8">
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.4 }}
-                className="inline-flex items-center space-x-2 px-3 py-1 bg-blue-50 rounded-full border border-blue-100 text-blue-700 text-[10px] uppercase font-mono font-bold"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-cyan-600 animate-pulse" />
-                <span>Enterprise v2.4 Release Standard</span>
-              </motion.div>
+              <div className="inline-flex items-center space-x-2 px-3.5 py-1.5 bg-blue-50 rounded-full border border-blue-100/50 text-[#005AE2] text-[11px] font-bold tracking-wide leading-none">
+                <Sparkles className="w-3.5 h-3.5 text-blue-600 animate-pulse" />
+                <span>Next-Gen Enterprise Storage</span>
+              </div>
 
-              <motion.h1 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.1 }}
-                className="text-4xl sm:text-5xl md:text-6xl font-display font-medium tracking-tight text-slate-900 leading-[1.08]"
-              >
-                The secure portal for <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500 font-bold">cryptographic S3</span> cloud file sync.
-              </motion.h1>
+              <div className="space-y-4">
+                <h1 className="text-4xl sm:text-5xl md:text-[62px] font-bold text-slate-900 tracking-tight leading-[1.08]">
+                  CloudFile <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 font-extrabold block sm:inline">Enterprise</span>
+                </h1>
+                <p className="text-slate-600 text-[15px] sm:text-[17px] leading-relaxed max-w-xl mx-auto lg:mx-0 font-medium">
+                  Secure cloud storage built for professionals, teams and modern businesses. Save, sync, and share files on a high-availability infrastructure with ironclad cryptographic armor.
+                </p>
+              </div>
 
-              <motion.p 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                className="text-slate-600 text-sm sm:text-base leading-relaxed max-w-xl mx-auto lg:mx-0 font-medium"
-              >
-                Collaborate safely with colleagues, monitor performance logs, and manage TB-scale directories with an elegant workspace. Backed by TLS 1.3 encryption, client-side MFA control, and seamless AWS setups.
-              </motion.p>
+              {/* Feature Badges Checklist */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 max-w-lg mx-auto lg:mx-0 pt-2 text-left bg-slate-50/50 p-4 rounded-2xl border border-slate-100/50">
+                <div className="flex items-center space-x-2.5 text-slate-700 text-[13px] font-semibold">
+                  <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span>End-to-End Encryption</span>
+                </div>
+                <div className="flex items-center space-x-2.5 text-slate-700 text-[13px] font-semibold">
+                  <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span>Lightning Fast Uploads</span>
+                </div>
+                <div className="flex items-center space-x-2.5 text-slate-700 text-[13px] font-semibold">
+                  <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span>Multi-Device Sync</span>
+                </div>
+                <div className="flex items-center space-x-2.5 text-slate-700 text-[13px] font-semibold">
+                  <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span>Secure File Sharing</span>
+                </div>
+                <div className="flex items-center space-x-2.5 text-slate-700 text-[13px] font-semibold">
+                  <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span>Enterprise Grade Security</span>
+                </div>
+                <div className="flex items-center space-x-2.5 text-slate-700 text-[13px] font-semibold">
+                  <Check className="w-4 h-4 text-emerald-500 shrink-0" />
+                  <span>Real-Time Collaboration</span>
+                </div>
+              </div>
 
-              <motion.div 
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-                className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4"
-              >
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-4 pt-1">
                 <button 
                   id="hero-get-started-btn"
                   onClick={onGetStarted}
-                  className="w-full sm:w-auto inline-flex items-center justify-center px-7 py-4 text-xs uppercase font-mono tracking-wider font-extrabold rounded-xl text-white bg-blue-600 hover:bg-slate-900 transition-all duration-300 shadow-xl shadow-blue-500/15 cursor-pointer hover:shadow-slate-900/20"
+                  className="w-full sm:w-auto h-12 inline-flex items-center justify-center px-8 text-xs font-bold uppercase tracking-wider rounded-xl text-white bg-blue-600 hover:bg-slate-900 transition-all duration-300 shadow-xl shadow-blue-500/15 cursor-pointer hover:shadow-slate-900/10 active:scale-98 group"
                 >
-                  Create Secure Account
-                  <ArrowRight className="ml-2 w-4 h-4" />
+                  <span>Build Secure Space</span>
+                  <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
                 <button 
                   id="hero-login-btn"
                   onClick={onLoginClick}
-                  className="w-full sm:w-auto inline-flex items-center justify-center px-7 py-4 border border-slate-200 bg-white text-xs uppercase font-mono tracking-wider font-bold rounded-xl text-slate-800 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer shadow-sm"
+                  className="w-full sm:w-auto h-12 inline-flex items-center justify-center px-8 border border-slate-200 bg-white text-xs font-bold uppercase tracking-wider rounded-xl text-slate-700 hover:bg-slate-50 hover:border-slate-300 transition-all cursor-pointer shadow-sm active:scale-98"
                 >
-                  Sign In to Console
+                  Configure Workspace
                 </button>
-              </motion.div>
+              </div>
 
-              {/* Trust Section */}
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="pt-8 border-t border-slate-200/50"
-              >
-                <span className="text-[10px] uppercase font-mono tracking-widest text-slate-400 font-bold block mb-4">Trusted by modern organizations globally</span>
-                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-10 gap-y-6 opacity-40 grayscale hover:opacity-100 transition-all duration-500">
-                  <span className="font-display font-black text-lg text-slate-800 tracking-wider">Vercel</span>
-                  <span className="font-display font-extrabold text-xl text-slate-800 tracking-tight">stripe</span>
-                  <span className="font-display font-medium text-[15px] text-slate-800 tracking-widest">L I N E A R</span>
-                  <span className="font-display font-bold text-lg text-slate-800">Dropbox</span>
+              {/* Trust Section / Capability Badges */}
+              <div className="pt-8 border-t border-slate-100 space-y-4">
+                <span className="text-[10px] uppercase font-mono tracking-widest text-slate-400 font-extrabold block">CONNECTED PLATFORM SPECIFICATIONS</span>
+                <div className="flex flex-wrap items-center justify-center lg:justify-start gap-x-5 gap-y-2.5">
+                  <span className="px-3 py-1.5 bg-slate-50 border border-slate-200/60 rounded-lg text-slate-700 text-xs font-bold">Enterprise Security</span>
+                  <span className="px-3 py-1.5 bg-slate-50 border border-slate-200/60 rounded-lg text-[#005AE2] text-xs font-extrabold">AES-256 Encryption</span>
+                  <span className="px-3 py-1.5 bg-slate-50 border border-slate-200/60 rounded-lg text-slate-700 text-xs font-bold">SOC 2 Ready</span>
+                  <span className="px-3 py-1.5 bg-slate-50 border border-slate-200/60 rounded-lg text-slate-700 text-xs font-bold">Privacy First Design</span>
+                  <span className="px-3 py-1.5 bg-slate-50 border border-slate-200/60 rounded-lg text-slate-700 text-xs font-bold">High Scalability</span>
+                  <span className="px-3 py-1.5 bg-slate-50 border border-slate-200/60 rounded-lg text-slate-700 text-xs font-bold">Fast Global Delivery</span>
                 </div>
-              </motion.div>
+              </div>
             </div>
 
-            {/* Simulated Glass Browser Frame */}
-            <div className="lg:col-span-6 relative">
-              <motion.div 
-                initial={{ opacity: 0, scale: 0.96 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.6 }}
-                className="bg-white rounded-3xl border border-slate-200/80 shadow-2xl shadow-slate-100/90 p-5 sm:p-7 relative overflow-hidden max-w-lg mx-auto"
-              >
-                {/* Simulated Explorer Header */}
-                <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-5">
-                  <div className="flex items-center space-x-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-slate-200 block"></span>
-                    <span className="w-2.5 h-2.5 rounded-full bg-slate-200 block"></span>
-                    <span className="w-2.5 h-2.5 rounded-full bg-slate-200 block"></span>
-                    <span className="text-[10px] font-mono text-slate-400 ml-2">secure_vault_sandbox_2.4</span>
+            {/* Right Column: Premium Hub Visual & Status Panel */}
+            <div className="lg:col-span-6 relative flex flex-col items-center">
+              
+              {/* Premium Card Container */}
+              <div className="w-full max-w-xl bg-white rounded-[32px] border border-slate-100 p-6 sm:p-8 shadow-2xl shadow-slate-200/30 relative overflow-hidden text-slate-700">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-full blur-2xl pointer-events-none" />
+                <div className="absolute bottom-0 left-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-2xl pointer-events-none" />
+
+                {/* Card Title & Platform Indicator */}
+                <div className="flex items-center justify-between pb-6 mb-8 border-b border-slate-100">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-3 bg-blue-50 rounded-2xl text-[#005AE2]">
+                      <Cloud className="w-6 h-6 animate-pulse" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-slate-900 text-base leading-tight">Storage Architecture</h3>
+                      <span className="text-xs text-slate-400 font-semibold tracking-wide block mt-0.5">High-Availability Global Network</span>
+                    </div>
                   </div>
-                  <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 text-[9px] font-mono rounded-full border border-emerald-100 flex items-center space-x-1">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                    <span>Live S3 Sync Active</span>
-                  </span>
+                  <div className="px-3 py-1 bg-blue-50 text-[#005AE2] text-xs font-bold rounded-full border border-blue-100/50 flex items-center space-x-1.5">
+                    <Globe className="w-3.5 h-3.5 animate-spin" style={{ animationDuration: '20s' }} />
+                    <span>Global CDN</span>
+                  </div>
                 </div>
 
-                <div className="space-y-5">
-                  {/* Glass Dashboard info item */}
-                  <div className="flex items-center justify-between bg-gradient-to-r from-slate-50 to-slate-100/50 p-4 rounded-2xl border border-slate-100">
-                    <div className="flex items-center space-x-3.5">
-                      <div className="p-2.5 bg-blue-100 text-blue-700 rounded-xl">
-                        <Cloud className="w-5 h-5 animate-pulse" />
-                      </div>
-                      <div>
-                        <span className="text-[10px] uppercase font-mono tracking-wider font-bold text-slate-400 block">Workspace Health</span>
-                        <span className="text-base font-bold font-display text-slate-800">14.2 GB / 200 GB Used</span>
-                      </div>
+                {/* Central Beautiful Abstract Cloud Illustration with Synchronized Nodes */}
+                <div className="relative flex items-center justify-center h-52 sm:h-60 bg-slate-50 border border-slate-100 rounded-3xl overflow-hidden mb-6">
+                  {/* Subtle Radar Ripple Lines */}
+                  <div className="absolute w-44 h-44 rounded-full border border-blue-100/40 animate-ping opacity-30" style={{ animationDuration: '3s' }} />
+                  <div className="absolute w-64 h-64 rounded-full border border-blue-100/20 animate-ping opacity-15" style={{ animationDuration: '6s' }} />
+                  
+                  {/* Central Hub Storage Cloud Icon */}
+                  <div className="relative z-10 w-20 h-20 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-full flex items-center justify-center shadow-lg shadow-blue-500/25 border-4 border-white">
+                    <Cloud className="w-10 h-10 text-white fill-white/10" />
+                  </div>
+
+                  {/* Synchronized Node 1: Secure Server */}
+                  <div className="absolute top-6 left-12 z-20 flex items-center space-x-2 bg-white/95 backdrop-blur-sm border border-slate-100 py-1.5 px-3 rounded-2xl shadow-md">
+                    <Server className="w-4 h-4 text-blue-500" />
+                    <span className="text-[11px] font-bold text-slate-700">Dedicated Node</span>
+                  </div>
+
+                  {/* Synchronized Node 2: Secure Vault */}
+                  <div className="absolute bottom-8 left-8 z-20 flex items-center space-x-2 bg-white/95 backdrop-blur-sm border border-slate-100 py-1.5 px-3 rounded-2xl shadow-md">
+                    <Lock className="w-4 h-4 text-indigo-500" />
+                    <span className="text-[11px] font-bold text-slate-700">Protected Vault</span>
+                  </div>
+
+                  {/* Synchronized Node 3: Database & Backups */}
+                  <div className="absolute top-10 right-8 z-20 flex items-center space-x-2 bg-white/95 backdrop-blur-sm border border-slate-100 py-1.5 px-3 rounded-2xl shadow-md">
+                    <Layers className="w-4 h-4 text-cyan-500" />
+                    <span className="text-[11px] font-bold text-slate-700">Multi-AZ Copy</span>
+                  </div>
+
+                  {/* Synchronized Node 4: End-User Devices */}
+                  <div className="absolute bottom-6 right-12 z-20 flex items-center space-x-2 bg-white/95 backdrop-blur-sm border border-slate-100 py-1.5 px-3 rounded-2xl shadow-md">
+                    <Smartphone className="w-4 h-4 text-emerald-500" />
+                    <span className="text-[11px] font-bold text-slate-700">Device Sync</span>
+                  </div>
+
+                  {/* Connector Grid lines in Background */}
+                  <div className="absolute inset-0 bg-[radial-gradient(#e2e8f0_1px,transparent_1px)] [background-size:16px_16px] opacity-70 pointer-events-none" />
+                </div>
+
+                {/* Modern Generic Live Status Indicators */}
+                <div className="space-y-3.5 bg-slate-50/80 p-4.5 rounded-2xl border border-slate-100">
+                  <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-widest block mb-1">State & Connection Handshakes</span>
+                  
+                  <div className="flex flex-col sm:flex-row justify-between gap-2 text-[12px] font-bold text-slate-700">
+                    <div className="flex items-center space-x-2">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse block" />
+                      <span>Secure Connection Established</span>
                     </div>
-                    <div className="text-right">
-                      <span className="text-[10px] font-mono font-extrabold text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100 block uppercase">Rahul Sharma</span>
+                    <div className="flex items-center space-x-2 lg:justify-end">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse block" />
+                      <span>Real-Time Sync Ready</span>
                     </div>
                   </div>
 
-                  {/* Progress bar */}
-                  <div className="space-y-1.5">
-                    <div className="flex justify-between text-[11px] font-bold font-mono text-slate-500">
-                      <span>Live quota capacity</span>
-                      <span>7.1% Capacity Filled</span>
+                  <div className="flex flex-col sm:flex-row justify-between gap-2 text-[12px] font-bold text-slate-700 pt-1">
+                    <div className="flex items-center space-x-2">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse block" />
+                      <span>End-to-End Encryption Enabled</span>
                     </div>
-                    <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                      <div className="h-full bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full transition-all duration-500" style={{ width: '7.1%' }}></div>
-                    </div>
-                  </div>
-
-                  {/* Quick features Grid inside mockup */}
-                  <div className="grid grid-cols-2 gap-3 pt-1">
-                    <div className="p-3.5 border border-slate-100 rounded-2xl bg-slate-50/50 hover:bg-white transition-all space-y-1">
-                      <FileText className="w-4 h-4 text-blue-600" />
-                      <span className="text-[10px] uppercase font-mono font-bold text-slate-400 block">PDF Logs</span>
-                      <span className="text-xs font-bold text-slate-800">14.2 MB (1 file)</span>
-                    </div>
-                    <div className="p-3.5 border border-slate-100 rounded-2xl bg-slate-50/50 hover:bg-white transition-all space-y-1">
-                      <Orbit className="w-4 h-4 text-cyan-600" />
-                      <span className="text-[10px] uppercase font-mono font-bold text-slate-400 block">S3 Buckets</span>
-                      <span className="text-xs font-bold text-slate-800">100% Configured</span>
-                    </div>
-                  </div>
-
-                  {/* Sync animation flow */}
-                  <div className="space-y-2 pt-1 border-t border-slate-100">
-                    <span className="text-[9px] uppercase font-mono tracking-wider font-bold text-slate-400 block pb-1">Historical Snapshots Sync</span>
-                    <div className="flex items-center justify-between text-xs bg-slate-50/80 p-3 rounded-xl border border-slate-100/50">
-                      <p className="font-semibold text-slate-700 truncate max-w-[200px]">Company Brand Grid.png</p>
-                      <span className="text-emerald-700 font-mono text-[10px] font-bold bg-emerald-50 px-2 py-0.5 rounded border border-emerald-100 uppercase">Ready</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs bg-blue-50/30 p-3 rounded-xl border border-blue-100/50">
-                      <p className="font-semibold text-blue-900 truncate max-w-[200px]">Enterprise Security Schema.doc</p>
-                      <span className="text-blue-600 font-mono text-[10px] font-bold bg-blue-50 px-2 py-0.5 rounded border border-blue-100 uppercase">Synced</span>
+                    <div className="flex items-center space-x-2 lg:justify-end border-t sm:border-t-0 border-slate-100 sm:pt-0 pt-1">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse block" />
+                      <span>Enterprise Cloud Platform</span>
                     </div>
                   </div>
                 </div>
-              </motion.div>
+
+              </div>
             </div>
 
           </div>
         </div>
       </section>
 
-      {/* 3. Features Grid */}
-      <section id="features" className="py-24 bg-white border-y border-slate-200/40 relative">
-        <div className="absolute inset-0 bg-slate-50/30" />
+      {/* 3. TRUST BANNER */}
+      <section className="py-12 bg-slate-50 border-y border-slate-100">
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 text-center">
+          <p className="text-[10px] tracking-widest uppercase font-mono font-extrabold text-slate-400 mb-6">Securing directories across active storage clusters</p>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-8 items-center justify-center opacity-55 grayscale">
+            <div className="flex justify-center"><span className="text-lg font-display font-extrabold text-slate-800">AMAZON S3</span></div>
+            <div className="flex justify-center"><span className="text-md font-display font-medium text-slate-800">CLOUD COMPLIANCE</span></div>
+            <div className="flex justify-center"><span className="text-base font-display font-black text-slate-800">ISO-27001</span></div>
+            <div className="flex justify-center"><span className="text-lg font-display font-bold text-slate-800">AES-255 AUTH</span></div>
+            <div className="flex justify-center"><span className="text-xs font-mono font-semibold text-slate-800">TLS 1.3 PLATFORM</span></div>
+          </div>
+        </div>
+      </section>
+
+      {/* 4. CHANNELS & CAPABILITIES GRID */}
+      <section id="features" className="py-24 bg-white border-b border-slate-100 relative">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 relative z-10">
-          <div className="text-center max-w-2xl mx-auto mb-20 space-y-3">
-            <h2 className="text-xs uppercase font-mono tracking-widest text-blue-600 font-bold">Engineered with Precision</h2>
-            <p className="text-3xl sm:text-4xl font-display font-medium tracking-tight text-slate-900">Enterprise compliance for professional S3 teams.</p>
-            <p className="text-slate-500 text-sm max-w-lg mx-auto">From cryptographic transfer handshakes to automated bucket versioning snapshots, everything is ready.</p>
+          
+          <div className="text-center max-w-2xl mx-auto mb-20 space-y-3.5">
+            <span className="text-[10px] uppercase font-mono tracking-widest text-blue-600 font-black">PRECISION BUILT</span>
+            <h2 className="text-3xl sm:text-4xl font-display font-extrabold text-slate-900 tracking-tight leading-none">
+              Capabilities built for certified operations teams.
+            </h2>
+            <p className="text-slate-500 text-xs sm:text-sm font-semibold max-w-lg mx-auto leading-relaxed">
+              Managing secure AWS nodes doesn't require terminal scripts. Cloud File Manager streamlines complex configurations beautifully.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuresList.map((f, i) => (
-              <div 
-                key={i}
-                className="p-8 bg-[#F8FAFC]/50 rounded-3xl border border-slate-200/60 hover:border-blue-300 hover:bg-white hover:scale-[1.015] hover:shadow-xl hover:shadow-slate-150/50 transition-all duration-300 space-y-4"
-              >
-                <div className="p-3 bg-blue-50 text-blue-600 rounded-xl inline-flex">
-                  {f.icon}
+            {featuresList.map((f, i) => {
+              const isHovered = hoveredFeature === i;
+              return (
+                <div 
+                  key={i}
+                  onMouseEnter={() => setHoveredFeature(i)}
+                  onMouseLeave={() => setHoveredFeature(null)}
+                  className="p-8 bg-[#fcfdfe] rounded-3xl border border-slate-200/60 hover:border-blue-300 hover:bg-white transition-all duration-300 relative group flex flex-col justify-between h-72 cursor-pointer card-hover"
+                >
+                  <div className="space-y-4">
+                    <div className="p-3 bg-slate-50 text-slate-700 rounded-2xl inline-flex group-hover:bg-blue-50 group-hover:text-blue-600 transition-colors">
+                      {f.icon}
+                    </div>
+                    <div className="space-y-1.5">
+                      <h3 className="font-display font-bold text-slate-800 text-sm">{f.title}</h3>
+                      <p className="text-xs text-slate-500 leading-relaxed font-semibold">{f.desc}</p>
+                    </div>
+                  </div>
+
+                  <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-[10px] font-mono uppercase tracking-wider font-extrabold text-blue-600">
+                    <span>{f.benefit}</span>
+                    <ArrowUpRight className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <h3 className="font-display font-bold text-slate-800 text-base">{f.title}</h3>
-                  <p className="text-xs text-slate-500 leading-relaxed font-semibold">{f.desc}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
+
         </div>
       </section>
 
-      {/* 4. Pricing Matrix */}
-      <section id="pricing" className="py-24 bg-[#F8FAFC] relative">
+      {/* 5. PRICING MATRIX SECTION */}
+      <section id="pricing" className="py-24 bg-slate-50/50 relative">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+          
           <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
-            <h2 className="text-xs uppercase font-mono tracking-widest text-blue-600 font-bold">Simple, Transparent Pricing</h2>
-            <p className="text-3xl sm:text-4xl font-display font-medium tracking-tight text-slate-900">Choose the capacity plan that fits your growth.</p>
-            
-            {/* Billing toggler */}
-            <div className="inline-flex items-center space-x-1 bg-white p-1 rounded-full border border-slate-200 shadow-sm">
+            <span className="text-[10px] uppercase font-mono tracking-widest text-blue-600 font-black">SIMPLE TRANSPARENT TIER CODES</span>
+            <h2 className="text-3xl sm:text-4xl font-display font-extrabold text-slate-900 tracking-tight leading-none">
+              Workspace subscription capacities that expand with you.
+            </h2>
+            <p className="text-slate-500 text-xs sm:text-sm font-semibold max-w-md mx-auto">
+              Deploy basic testing clusters for sandbox workloads or expand to unlimited military-grade storage instantly.
+            </p>
+
+            {/* Premium Billing Toggler */}
+            <div className="inline-flex items-center space-x-1.5 bg-white p-1 rounded-2xl border border-slate-200/70 shadow-sm mt-4">
               <button 
                 onClick={() => setBillingPeriod('monthly')}
-                className={`px-5 py-2 rounded-full text-[10px] uppercase font-mono font-bold tracking-wider transition-all duration-300 ${billingPeriod === 'monthly' ? 'bg-blue-650 bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow' : 'text-slate-600 hover:bg-slate-50'}`}
+                className={`px-5 py-2.5 rounded-xl text-[10px] uppercase font-mono font-black tracking-wider transition-all duration-300 ${billingPeriod === 'monthly' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
               >
                 Monthly Plan
               </button>
               <button 
                 onClick={() => setBillingPeriod('yearly')}
-                className={`px-5 py-2 rounded-full text-[10px] uppercase font-mono font-bold tracking-wider transition-all duration-300 ${billingPeriod === 'yearly' ? 'bg-blue-650 bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow' : 'text-slate-600 hover:bg-slate-50'}`}
+                className={`px-5 py-2.5 rounded-xl text-[10px] uppercase font-mono font-black tracking-wider transition-all duration-300 ${billingPeriod === 'yearly' ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'}`}
               >
-                Yearly (Save 20%)
+                Yearly (20% Off)
               </button>
             </div>
           </div>
@@ -366,45 +481,45 @@ export default function LandingPage({ onGetStarted, onLoginClick }: LandingPageP
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
             {pricingPlans.map((plan) => {
               const adjustedPrice = (plan.price * priceMultiplier).toFixed(2);
-              const isPro = plan.id === 'pro';
               const isBusiness = plan.id === 'business';
+              const isPro = plan.id === 'pro';
 
               return (
                 <div 
                   key={plan.id}
-                  className={`bg-white rounded-3xl p-8 border hover:shadow-2xl transition-all duration-350 relative flex flex-col justify-between ${
-                    isPro ? 'border-cyan-300 shadow-xl shadow-cyan-500/5 ring-1 ring-cyan-200' : 
-                    isBusiness ? 'border-blue-400 ring-2 ring-blue-500 shadow-xl shadow-blue-500/5' : 'border-slate-200/85'
+                  className={`bg-white rounded-3xl p-8 border hover:shadow-2xl transition-all duration-300 relative flex flex-col justify-between ${
+                    isBusiness ? 'border-blue-500 ring-2 ring-blue-150/40 shadow-xl' : 'border-slate-200/80 shadow-sm'
                   }`}
                 >
                   {isBusiness && (
-                    <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white text-[9px] uppercase font-mono font-black tracking-widest rounded-full shadow-md">
-                      Team Best Value
+                    <span className="absolute -top-3.5 left-1/4 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-[9px] uppercase font-mono font-black tracking-widest rounded-full shadow-md">
+                      BEST SECURE VALUE
                     </span>
                   )}
 
                   <div className="space-y-6">
                     <div className="flex justify-between items-center pb-4 border-b border-slate-100">
                       <div>
-                        <h4 className="font-display font-medium text-xs uppercase tracking-wider text-slate-400">{plan.name}</h4>
-                        <span className="text-3xl font-display font-bold text-slate-800 mt-1 block">{plan.storage}</span>
+                        <span className="text-[10px] uppercase font-mono tracking-wider font-extrabold text-slate-400 block">{plan.badge}</span>
+                        <h4 className="font-display font-extrabold text-xl text-slate-800 mt-0.5">{plan.name}</h4>
                       </div>
-                      <span className={`px-2.5 py-1 text-[10px] uppercase font-mono font-bold rounded-lg ${isBusiness ? 'bg-blue-50 text-blue-700 border border-blue-100' : 'bg-slate-100 text-slate-700'}`}>
-                        {plan.badge}
+                      <span className="text-2xl font-bold font-display text-blue-600 bg-blue-50/50 p-2.5 px-3 rounded-2xl border border-blue-100/50 leading-none">
+                        {plan.storage}
                       </span>
                     </div>
 
-                    <p className="text-slate-500 text-xs leading-relaxed font-semibold">{plan.desc}</p>
+                    <p className="text-slate-500 text-xs font-semibold leading-relaxed">{plan.desc}</p>
 
-                    <div className="flex items-baseline py-2">
-                      <span className="text-4xl font-display font-bold text-slate-900">₹{plan.price === 0 ? '0' : Math.round(Number(adjustedPrice))}</span>
+                    <div className="flex items-baseline py-2 border-b border-slate-50">
+                      <span className="text-4xl font-display font-extrabold text-slate-950">₹{plan.price === 0 ? '0' : Math.round(Number(adjustedPrice))}</span>
                       <span className="text-xs font-bold text-slate-400 font-mono ml-2">/ month</span>
                     </div>
 
-                    <ul className="space-y-3 pt-4 border-t border-slate-150">
+                    <ul className="space-y-3 pt-2">
+                      <span className="text-[9px] uppercase font-mono tracking-widest text-slate-400 font-extrabold block mb-1">INCLUDED FEATURES</span>
                       {plan.features.map((feat, idx) => (
-                        <li key={idx} className="flex items-center text-xs font-semibold text-slate-600">
-                          <Check className={`w-4 h-4 flex-shrink-0 mr-3 ${isBusiness ? 'text-blue-600' : 'text-cyan-500'}`} />
+                        <li key={idx} className="flex items-center text-xs font-semibold text-slate-650">
+                          <Check className={`w-4 h-4 flex-shrink-0 mr-3 ${isBusiness ? 'text-blue-650' : 'text-emerald-500'}`} />
                           <span className="truncate">{feat}</span>
                         </li>
                       ))}
@@ -414,123 +529,150 @@ export default function LandingPage({ onGetStarted, onLoginClick }: LandingPageP
                   <button 
                     id={`pricing-select-${plan.id}`}
                     onClick={onGetStarted}
-                    className={`mt-8 w-full py-3.5 px-6 rounded-xl text-xs uppercase font-mono tracking-wider font-extrabold transition-all shadow-md active:scale-[0.98] cursor-pointer ${
-                      isBusiness ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white ring-1 ring-blue-500' :
+                    className={`mt-8 w-full py-4 px-6 rounded-xl text-xs uppercase font-mono tracking-wider font-black transition-all shadow-md active:scale-[0.98] cursor-pointer ${
+                      isBusiness ? 'bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white' :
                       isPro ? 'bg-blue-600 hover:bg-blue-700 text-white' :
                       'bg-slate-100 hover:bg-slate-200 text-slate-700'
                     }`}
                   >
-                    {plan.price === 0 ? 'Activate Sandbox' : 'Get Started Now'}
+                    {plan.price === 0 ? 'Activate Free Sandbox' : 'Establish Corporate Space'}
                   </button>
                 </div>
               );
             })}
           </div>
 
-          {/* Comparison Matrix Table */}
-          <div className="mt-20 overflow-hidden rounded-2xl border border-slate-200/60 bg-white">
-            <table className="min-w-full divide-y divide-slate-200/50">
-              <thead className="bg-[#F8FAFC]">
-                <tr>
-                  <th scope="col" className="px-6 py-4.5 text-left text-[10px] uppercase font-mono tracking-widest text-slate-400 font-bold">Platform Feature Matrix</th>
-                  <th scope="col" className="px-6 py-4.5 text-center text-[10px] uppercase font-mono tracking-wider text-slate-500 font-bold">Free (200GB)</th>
-                  <th scope="col" className="px-6 py-4.5 text-center text-[10px] uppercase font-mono tracking-wider text-cyan-600 font-bold">Pro (1TB)</th>
-                  <th scope="col" className="px-6 py-4.5 text-center text-[10px] uppercase font-mono tracking-wider text-blue-600 font-bold">Business (5TB)</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700 text-xs font-semibold">
-                <tr className="hover:bg-slate-50/50">
-                  <td className="px-6 py-4.5 text-slate-900">AES-256 Storage Encryption</td>
-                  <td className="px-6 py-4.5 text-center text-slate-500">✔ Fully Included</td>
-                  <td className="px-6 py-4.5 text-center text-cyan-600 font-bold">✔ Fully Included</td>
-                  <td className="px-6 py-4.5 text-center text-blue-600 font-bold">✔ Fully Included</td>
-                </tr>
-                <tr className="hover:bg-slate-50/50">
-                  <td className="px-6 py-4.5 text-slate-900">Custom Branded Expiry Links</td>
-                  <td className="px-6 py-4.5 text-center text-slate-400">✖ Missing</td>
-                  <td className="px-6 py-4.5 text-center text-cyan-600 font-bold">✔ Fully Included</td>
-                  <td className="px-6 py-4.5 text-center text-blue-600 font-bold">✔ Fully Included</td>
-                </tr>
-                <tr className="hover:bg-slate-50/50">
-                  <td className="px-6 py-4.5 text-slate-900">Timed Expirations & Passwords</td>
-                  <td className="px-6 py-4.5 text-center text-slate-400">✖ Missing</td>
-                  <td className="px-6 py-4.5 text-center text-cyan-600 font-bold">✔ Fully Included</td>
-                  <td className="px-6 py-4.5 text-center text-blue-600 font-bold">✔ Fully Included</td>
-                </tr>
-                <tr className="hover:bg-slate-50/50">
-                  <td className="px-6 py-4.5 text-slate-900">MFA & Compliance Auditing</td>
-                  <td className="px-6 py-4.5 text-center text-slate-400">✖ Missing</td>
-                  <td className="px-6 py-4.5 text-center text-slate-400">✖ Missing</td>
-                  <td className="px-6 py-4.5 text-center text-blue-600 font-bold">✔ Fully Included</td>
-                </tr>
-              </tbody>
-            </table>
+          {/* Clean feature matrix comparisons table */}
+          <div className="mt-16 bg-white rounded-3xl border border-slate-200/50 overflow-hidden shadow-sm">
+            <div className="p-6 border-b border-slate-100">
+              <span className="text-[10px] uppercase font-mono tracking-widest text-[#06b6d4] font-black">COMPREHENSIVE INDEX</span>
+              <h4 className="font-display font-extrabold text-slate-800 text-base mt-0.5">S3 Infrastructure SLA Matrix</h4>
+            </div>
+            
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs font-semibold">
+                <thead>
+                  <tr className="bg-slate-50/50 border-b border-slate-200/50 text-[10px] uppercase font-mono tracking-widest text-slate-400 font-extrabold">
+                    <th scope="col" className="px-6 py-4.5">Capabilities Index</th>
+                    <th scope="col" className="px-6 py-4.5 text-center">Free Sandbox</th>
+                    <th scope="col" className="px-6 py-4.5 text-center text-cyan-600">Professional Node</th>
+                    <th scope="col" className="px-6 py-4.5 text-center text-blue-600">Enterprise Core</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-650">
+                  <tr className="hover:bg-slate-50/20">
+                    <td className="px-6 py-4 font-bold text-slate-900">Encryption Layer</td>
+                    <td className="px-6 py-4 text-center">AES-256 standard</td>
+                    <td className="px-6 py-4 text-center text-cyan-600 font-bold">AES-256 + Signed keys</td>
+                    <td className="px-6 py-4 text-center text-blue-600 font-bold">Immutable crypt locks</td>
+                  </tr>
+                  <tr className="hover:bg-slate-50/20">
+                    <td className="px-6 py-4 font-bold text-slate-900">Custom Branded Expiries</td>
+                    <td className="px-6 py-4 text-center text-slate-350">—</td>
+                    <td className="px-6 py-4 text-center text-cyan-600 font-bold">✔ Included</td>
+                    <td className="px-6 py-4 text-center text-blue-600 font-bold">✔ Fully Customizable</td>
+                  </tr>
+                  <tr className="hover:bg-slate-50/20">
+                    <td className="px-6 py-4 font-bold text-slate-900">Lifecycle Auditing Controls</td>
+                    <td className="px-6 py-4 text-center text-slate-350">—</td>
+                    <td className="px-6 py-4 text-center text-slate-350">—</td>
+                    <td className="px-6 py-4 text-center text-blue-600 font-bold">90-Day SOC2 logs</td>
+                  </tr>
+                  <tr className="hover:bg-slate-50/20">
+                    <td className="px-6 py-4 font-bold text-slate-900">Assured Platform SLA</td>
+                    <td className="px-6 py-4 text-center text-slate-400">Best effort</td>
+                    <td className="px-6 py-4 text-center">99.9% availability</td>
+                    <td className="px-6 py-4 text-center text-emerald-600 font-bold">99.999% Signed SLA</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
+
         </div>
       </section>
 
-      {/* 5. Testimonials */}
+      {/* 6. TESTIMONIALS SECTION */}
       <section className="py-24 bg-white border-t border-slate-100">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
+          
           <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-            <h2 className="text-xs uppercase font-mono tracking-widest text-blue-600 font-bold">Success Statements</h2>
-            <p className="text-3xl font-display font-medium tracking-tight text-slate-900">Validated by corporate officers.</p>
+            <span className="text-[10px] uppercase font-mono tracking-widest text-[#06b6d4] font-black">VALIDATED PERFORMANCE</span>
+            <h2 className="text-3xl font-display font-extrabold text-slate-900 tracking-tight leading-none">
+              Trusted by modern digital administrators.
+            </h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <div className="p-8 bg-slate-50/60 rounded-3xl border border-slate-100 relative space-y-6">
-              <div className="flex text-amber-400">
-                {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current animate-pulse" />)}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="p-8 bg-slate-50/50 rounded-3xl border border-slate-100 flex flex-col justify-between h-64 hover:bg-white hover:shadow-xl transition-all duration-300">
+              <div className="space-y-4">
+                <div className="flex text-amber-400">
+                  {[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-current" />)}
+                </div>
+                <p className="text-xs text-slate-600 italic font-semibold leading-relaxed">
+                  "Establishing S3 synchronization used to involve heavy infrastructure terminal work. Cloud File Manager has absolute S3 precision in a clean interface."
+                </p>
               </div>
-              <p className="text-[13px] text-slate-600 leading-relaxed italic font-semibold">"Migrating our cloud directories to Cloud File Manager unified our remote teams. File uploads take seconds on S3 pipelines and password lock validation is pristine."</p>
               <div>
-                <span className="font-display font-bold text-slate-800 text-sm block">Marcus Vance</span>
-                <span className="text-[10px] uppercase font-mono font-bold text-slate-400 block mt-0.5">VP of Security, Lineage Inc</span>
+                <span className="font-display font-extrabold text-xs text-slate-900 block leading-none">Marcus Vance</span>
+                <span className="text-[9px] uppercase font-mono font-bold text-slate-400 block mt-1.5">VP Security, Lineage Inc</span>
               </div>
             </div>
 
-            <div className="p-8 bg-slate-50/60 rounded-3xl border border-slate-100 relative space-y-6">
-              <div className="flex text-amber-400">
-                {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current animate-pulse" />)}
+            <div className="p-8 bg-slate-50/50 rounded-3xl border border-slate-100 flex flex-col justify-between h-64 hover:bg-white hover:shadow-xl transition-all duration-300">
+              <div className="space-y-4">
+                <div className="flex text-amber-400">
+                  {[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-current" />)}
+                </div>
+                <p className="text-xs text-slate-600 italic font-semibold leading-relaxed">
+                  "Our creative leads share high-res 4K video streams continuously. Expiring keys and secure passcodes protect previews flawlessly."
+                </p>
               </div>
-              <p className="text-[13px] text-slate-600 leading-relaxed italic font-semibold">"We managed high-res video deliveries manually on AWS until discovering their intuitive folders explorer. Simple expiring links let directors download assets with 100% confidence."</p>
               <div>
-                <span className="font-display font-bold text-slate-800 text-sm block">Sarah Jenkins</span>
-                <span className="text-[10px] uppercase font-mono font-bold text-slate-400 block mt-0.5">Creative Lead, Outrun Studios</span>
+                <span className="font-display font-extrabold text-xs text-slate-900 block leading-none">Sarah Jenkins</span>
+                <span className="text-[9px] uppercase font-mono font-bold text-slate-400 block mt-1.5">Lead Creative, Outrun Studios</span>
               </div>
             </div>
 
-            <div className="p-8 bg-slate-50/60 rounded-3xl border border-slate-100 relative space-y-6">
-              <div className="flex text-amber-400">
-                {[...Array(5)].map((_, i) => <Star key={i} className="w-4 h-4 fill-current animate-pulse" />)}
+            <div className="p-8 bg-slate-50/50 rounded-3xl border border-slate-100 flex flex-col justify-between h-64 hover:bg-white hover:shadow-xl transition-all duration-300">
+              <div className="space-y-4">
+                <div className="flex text-amber-400">
+                  {[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-current" />)}
+                </div>
+                <p className="text-xs text-slate-600 italic font-semibold leading-relaxed">
+                  "SOC2 compliance requirements mapped beautiful onto their 90-day comprehensive logs auditing controls. An essential tool for security governance."
+                </p>
               </div>
-              <p className="text-[13px] text-slate-600 leading-relaxed italic font-semibold">"We required rigid 2FA authentication, complete historical audit logs and encryption compliant directories. Cloud File Manager met all standards beautifully out-of-the-box."</p>
               <div>
-                <span className="font-display font-bold text-slate-800 text-sm block">Chen Jing</span>
-                <span className="text-[10px] uppercase font-mono font-bold text-slate-400 block mt-0.5">Compliance Officer, Orient Capital</span>
+                <span className="font-display font-extrabold text-xs text-slate-900 block leading-none">Chen Jing</span>
+                <span className="text-[9px] uppercase font-mono font-bold text-slate-400 block mt-1.5">Compliance Officer, Orient Capital</span>
               </div>
             </div>
           </div>
+
         </div>
       </section>
 
-      {/* 6. FAQ Section */}
-      <section id="faq" className="py-24 bg-[#F8FAFC] border-t border-slate-200/50">
+      {/* 7. KNOWLEDGE BASE FAQ */}
+      <section id="faq" className="py-24 bg-slate-50/50 border-t border-slate-200/40">
         <div className="max-w-3xl mx-auto px-6 sm:px-8">
+          
           <div className="text-center mb-16 space-y-3">
-            <h2 className="text-xs uppercase font-mono tracking-widest text-blue-600 font-bold">Information Desk</h2>
-            <p className="text-3xl font-display font-medium tracking-tight text-slate-900">Answers regarding storage safety</p>
+            <span className="text-[10px] uppercase font-mono tracking-widest text-[#06b6d4] font-black">PLATFORM CLARIFICATIONS</span>
+            <h2 className="text-3xl font-display font-extrabold text-slate-900 tracking-tight">
+              Security & Storage Information FAQ
+            </h2>
           </div>
 
           <div className="space-y-4">
             {faqItems.map((item, index) => (
-              <div key={index} className="bg-white border border-slate-200/60 rounded-2xl overflow-hidden shadow-sm hover:border-slate-300 transition-all">
+              <div key={index} className="bg-white border border-slate-200/60 rounded-2xl overflow-hidden hover:border-slate-350 transition-colors shadow-sm">
                 <button 
                   onClick={() => toggleFaq(index)}
-                  className="w-full text-left px-6 py-5 flex items-center justify-between font-display font-semibold text-slate-800 hover:bg-slate-50/40 transition-colors"
+                  className="w-full text-left px-6 py-5 flex items-center justify-between font-display font-bold text-slate-800 hover:bg-slate-50/30 transition-colors cursor-pointer"
                 >
-                  <span className="text-sm">{item.q}</span>
-                  {activeFaq === index ? <ChevronUp className="w-4.5 h-4.5 text-blue-600" /> : <ChevronDown className="w-4.5 h-4.5 text-slate-400" />}
+                  <span className="text-xs sm:text-sm">{item.q}</span>
+                  {activeFaq === index ? <ChevronUp className="w-4.5 h-4.5 text-blue-650" /> : <ChevronDown className="w-4.5 h-4.5 text-slate-400" />}
                 </button>
                 <AnimatePresence initial={false}>
                   {activeFaq === index && (
@@ -549,149 +691,311 @@ export default function LandingPage({ onGetStarted, onLoginClick }: LandingPageP
               </div>
             ))}
           </div>
+
         </div>
       </section>
 
-      {/* 7. Contact Section */}
-      <section id="contact" className="py-24 bg-white border-t border-slate-150 relative">
-        <div className="max-w-4xl mx-auto px-6 sm:px-8">
-          <div className="text-center mb-16 space-y-3">
-            <h2 className="text-xs uppercase font-mono tracking-widest text-blue-600 font-bold">Acquire Consultation</h2>
-            <p className="text-3xl font-display font-medium tracking-tight text-slate-900">Our technical engineers are standing by</p>
-            <p className="text-xs text-slate-500 max-w-lg mx-auto font-semibold">Do you require custom high-throughput setups, dedicated compliance guarantees, or structured AWS bucket integrations?</p>
-          </div>
-
-          <div className="bg-[#F8FAFC] rounded-3xl border border-slate-200/80 p-6 sm:p-10 shadow-xl shadow-slate-100/50">
-            {contactSubmitted ? (
-              <div className="text-center py-10 space-y-4">
-                <div className="p-3 bg-emerald-100 text-emerald-700 rounded-full inline-flex">
-                  <Check className="w-6 h-6 animate-pulse" />
+      {/* 8. OPERATIONS REQUEST SUPPORT (REDESIGNED ENTERPRISE CONSULTATION SECTION) */}
+      <section id="contact" className="py-24 bg-white border-t border-slate-150 relative overflow-hidden">
+        <div className="absolute inset-0 bg-radial-at-t from-blue-50/20 via-transparent to-transparent pointer-events-none" />
+        <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 relative">
+          
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+            
+            {/* Left Column: Visual Pillars & Value Props */}
+            <div className="lg:col-span-5 flex flex-col justify-between space-y-10 lg:sticky lg:top-8">
+              <div className="space-y-6">
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 text-xs font-semibold text-blue-600 bg-blue-50/80 border border-blue-100 rounded-full w-fit">
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>Enterprise Solutions</span>
                 </div>
-                <h3 className="font-display font-bold text-slate-800 text-xl">Thank you for writing!</h3>
-                <p className="text-xs text-slate-500 font-semibold">We received your request. An engineer will follow up within 12-24 hours.</p>
+                <h2 className="text-3xl sm:text-4xl font-sans font-bold text-slate-900 tracking-tight leading-tight">
+                  Let's Build Your Cloud Solution
+                </h2>
+                <p className="text-sm sm:text-base text-slate-500 leading-relaxed font-normal">
+                  Speak with our team to discuss enterprise storage, security, compliance, migration, and custom deployment solutions tailored to your business.
+                </p>
               </div>
-            ) : (
-              <form onSubmit={handleContactSubmit} className="space-y-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                  <div className="space-y-1.5">
-                    <label className="block text-[10px] uppercase font-mono font-bold text-slate-400">Representative Name</label>
-                    <div className="relative">
-                      <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <input 
-                        type="text" 
-                        required
-                        value={contactForm.name}
-                        onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
-                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-250 rounded-xl text-xs focus:outline-none focus:border-blue-600 transition-all font-semibold text-slate-800"
-                        placeholder="John Smith" 
-                      />
-                    </div>
+
+              {/* Minimal elegant value cards */}
+              <div className="space-y-4">
+                <div className="flex gap-4 p-4 bg-slate-50/60 border border-slate-100 rounded-2xl transition-all hover:bg-white hover:shadow-xl hover:shadow-slate-100/50">
+                  <div className="p-2.5 bg-blue-50/80 border border-blue-100 rounded-xl text-blue-600 h-10 w-10 flex items-center justify-center shrink-0 shadow-sm">
+                    <Cloud className="w-5 h-5" />
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="block text-[10px] uppercase font-mono font-bold text-slate-400">Corporate Email Address</label>
-                    <div className="relative">
-                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <input 
-                        type="email" 
-                        required
-                        value={contactForm.email}
-                        onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                        className="w-full pl-10 pr-4 py-3 bg-white border border-slate-250 rounded-xl text-xs focus:outline-none focus:border-blue-600 transition-all font-semibold text-slate-800"
-                        placeholder="jsmith@enterprise.com" 
-                      />
-                    </div>
+                  <div>
+                    <h4 className="text-xs sm:text-sm font-semibold text-slate-800 font-sans">Cloud Infrastructure</h4>
+                    <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                      Scalable high-throughput directories backed by enterprise S3 architecture and custom bandwidth allocations.
+                    </p>
                   </div>
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="block text-[10px] uppercase font-mono font-bold text-slate-400">Describe Target Storage Scale & AWS Setup</label>
-                  <textarea 
-                    required
-                    rows={4}
-                    value={contactForm.message}
-                    onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
-                    className="w-full p-4 bg-white border border-slate-250 rounded-xl text-xs focus:outline-none focus:border-blue-600 transition-all font-semibold text-slate-800"
-                    placeholder="We seek automatic snapshot policies to duplicate 45TB on weekly intervals..."
-                  />
+                <div className="flex gap-4 p-4 bg-slate-50/60 border border-slate-100 rounded-2xl transition-all hover:bg-white hover:shadow-xl hover:shadow-slate-100/50">
+                  <div className="p-2.5 bg-blue-50/80 border border-blue-100 rounded-xl text-blue-600 h-10 w-10 flex items-center justify-center shrink-0 shadow-sm">
+                    <ShieldCheck className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs sm:text-sm font-semibold text-slate-800 font-sans">Compliance & Advanced Safety</h4>
+                    <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                      Financial-grade audit logs, role-based access management, multi-factor compliance locks, and securely encrypted snapshot backups.
+                    </p>
+                  </div>
                 </div>
 
-                <div className="text-right">
-                  <button 
-                    id="contact-submit-btn"
-                    type="submit" 
-                    className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3.5 border border-transparent text-xs uppercase font-mono tracking-wider font-extrabold rounded-xl text-white bg-blue-600 hover:bg-slate-900 shadow-md active:scale-[0.98] transition-all cursor-pointer"
-                  >
-                    Submit Support Request
-                  </button>
+                <div className="flex gap-4 p-4 bg-slate-50/60 border border-slate-100 rounded-2xl transition-all hover:bg-white hover:shadow-xl hover:shadow-slate-100/50">
+                  <div className="p-2.5 bg-blue-50/80 border border-blue-100 rounded-xl text-blue-600 h-10 w-10 flex items-center justify-center shrink-0 shadow-sm">
+                    <Network className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs sm:text-sm font-semibold text-slate-800 font-sans">Seamless Turnkey Migration</h4>
+                    <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                      Our integration engineers provide hands-on assistance to hot-migrate databases and asset catalogs with zero workspace downtime.
+                    </p>
+                  </div>
                 </div>
-              </form>
-            )}
+              </div>
+
+              {/* Minimalist Trust Indicator */}
+              <div className="pt-5 border-t border-slate-100 flex items-center gap-2 text-xs text-slate-400 font-medium">
+                <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <span>Secure SSL encrypted channel • Consultation reply within 24 hours</span>
+              </div>
+            </div>
+
+            {/* Right Column: Premium Form Card */}
+            <div className="lg:col-span-7 w-full">
+              <div className="bg-white rounded-[32px] border border-slate-150 p-6 sm:p-10 shadow-xl shadow-slate-100/60 hover:shadow-2xl hover:shadow-slate-100/80 transition-all">
+                {contactSubmitted ? (
+                  <div className="text-center py-12 space-y-4">
+                    <div className="p-3.5 bg-blue-50 text-blue-600 rounded-full inline-flex border border-blue-100 shadow-sm">
+                      <Check className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <h3 className="font-sans font-bold text-slate-900 text-xl tracking-tight">Operational Request Received</h3>
+                      <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
+                        Thank you, <span className="font-semibold text-slate-700">{contactForm.name}</span>. An enterprise systems engineer will contact you shortly to review <span className="font-semibold text-slate-700">{contactForm.company}</span>'s workspace consultation request.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <form onSubmit={handleContactSubmit} className="space-y-6">
+                    
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      <div className="space-y-2">
+                        <label className="block text-xs font-medium text-slate-700">Full Name *</label>
+                        <div className="relative">
+                          <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                          <input 
+                            type="text" 
+                            required
+                            value={contactForm.name}
+                            onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                            className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl text-xs transition-all font-medium text-slate-850 placeholder:text-slate-400 focus:outline-none"
+                            placeholder="John Vance" 
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-xs font-medium text-slate-700">Business Email *</label>
+                        <div className="relative">
+                          <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                          <input 
+                            type="email" 
+                            required
+                            value={contactForm.email}
+                            onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                            className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl text-xs transition-all font-medium text-slate-850 placeholder:text-slate-400 focus:outline-none"
+                            placeholder="vance@lineagedata.com" 
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      <div className="space-y-2">
+                        <label className="block text-xs font-medium text-slate-700">Company Name *</label>
+                        <div className="relative">
+                          <Building2 className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                          <input 
+                            type="text" 
+                            required
+                            value={contactForm.company}
+                            onChange={(e) => setContactForm({ ...contactForm, company: e.target.value })}
+                            className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl text-xs transition-all font-medium text-slate-850 placeholder:text-slate-400 focus:outline-none"
+                            placeholder="Lineage Data Inc" 
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-xs font-medium text-slate-700">Organization Size *</label>
+                        <div className="relative">
+                          <Users className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                          <select 
+                            required
+                            value={contactForm.orgSize}
+                            onChange={(e) => setContactForm({ ...contactForm, orgSize: e.target.value })}
+                            className="w-full pl-10 pr-10 py-3 bg-white border border-slate-205 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl text-xs transition-all font-medium text-slate-850 appearance-none cursor-pointer focus:outline-none"
+                          >
+                            <option value="">Select size...</option>
+                            <option value="1-50">1 - 50 employees</option>
+                            <option value="51-200">51 - 200 employees</option>
+                            <option value="201-1000">201 - 1,000 employees</option>
+                            <option value="1000+">1,000+ employees</option>
+                          </select>
+                          <ChevronDown className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                      <div className="space-y-2">
+                        <label className="block text-xs font-medium text-slate-700">Phone Number (Optional)</label>
+                        <div className="relative">
+                          <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                          <input 
+                            type="tel" 
+                            value={contactForm.phone}
+                            onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
+                            className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl text-xs transition-all font-medium text-slate-850 placeholder:text-slate-400 focus:outline-none"
+                            placeholder="+1 (555) 000-0000" 
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-xs font-medium text-slate-700">Country (Optional)</label>
+                        <div className="relative">
+                          <MapPin className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                          <input 
+                            type="text" 
+                            value={contactForm.country}
+                            onChange={(e) => setContactForm({ ...contactForm, country: e.target.value })}
+                            className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl text-xs transition-all font-medium text-slate-850 placeholder:text-slate-400 focus:outline-none"
+                            placeholder="United States" 
+                          />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-xs font-medium text-slate-700">How can we help? *</label>
+                      <textarea 
+                        required
+                        rows={4}
+                        value={contactForm.message}
+                        onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                        className="w-full p-4 bg-white border border-slate-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 rounded-xl text-xs transition-all font-medium text-slate-850 placeholder:text-slate-400 focus:outline-none"
+                        placeholder="Tell us about your project requirements, compliance schedules, or storage needs..."
+                      />
+                    </div>
+
+                    <button 
+                      id="contact-submit-btn"
+                      type="submit" 
+                      className="w-full inline-flex items-center justify-center px-6 py-4 border border-transparent text-xs font-semibold rounded-xl text-white bg-blue-600 bg-gradient-to-r from-blue-600 to-blue-750 hover:from-blue-700 hover:to-blue-800 shadow-md shadow-blue-550/10 hover:shadow-lg hover:shadow-blue-500/15 active:scale-[0.985] transition-all cursor-pointer font-sans"
+                    >
+                      Talk to an Expert
+                    </button>
+                  </form>
+                )}
+              </div>
+            </div>
+
           </div>
+          
         </div>
       </section>
 
-      {/* 8. Footer */}
-      <footer className="bg-slate-900 text-slate-400 py-16 border-t border-slate-800">
+      {/* 8. MODERN ENTERPRISE FOOTER */}
+      <footer className="bg-slate-900 text-slate-450 py-16 border-t border-slate-800 relative z-10 font-sans">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+          
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 pb-12 border-b border-slate-800">
             <div className="space-y-5">
-              <div className="flex items-center space-x-3.5 text-white">
-                <div className="p-2.5 bg-blue-600 rounded-xl">
-                  <Cloud className="w-5 h-5 text-white" />
+              <div className="flex items-center space-x-3 text-white">
+                <div className="p-2.5 bg-blue-600 rounded-2xl shadow-lg">
+                  <Cloud className="w-5.5 h-5.5 text-white" />
                 </div>
-                <div>
-                  <span className="font-display font-bold text-base tracking-tight block leading-none">Cloud File Manager</span>
-                  <span className="text-[10px] uppercase font-mono tracking-widest text-blue-400 font-extrabold mt-1 block">Secure Sync SaaS</span>
+                <div className="flex flex-col">
+                  <span className="font-display font-black text-sm tracking-tight">CloudFile</span>
+                  <span className="text-[9px] uppercase font-mono tracking-widest text-blue-400 font-extrabold mt-0.5">Console Platform</span>
                 </div>
               </div>
-              <p className="text-xs text-slate-400 leading-relaxed font-semibold">Military-grade replication environments protecting corporate synchronizations since 2026.</p>
-              <span className="text-xs text-blue-400 font-mono font-bold flex items-center gap-1.5 bg-blue-950/40 px-3 py-1 rounded-full border border-blue-900/40 w-fit">
-                <Globe className="w-3.5 h-3.5 text-cyan-400" /> Globally Host Active
-              </span>
+              <p className="text-xs text-slate-400 leading-relaxed font-semibold">
+                Financial-grade AES-256 cloud directory solutions protecting corporate file assets since 2026.
+              </p>
+              <div className="inline-flex items-center space-x-2 text-[10px] font-mono font-bold bg-blue-950/50 border border-blue-900/60 p-1 px-3.5 rounded-full text-blue-400 leading-none">
+                <Globe className="w-3.5 h-3.5 text-cyan-400" />
+                <span>ALL S3 CLUSTERS ONLINE</span>
+              </div>
             </div>
 
             <div>
-              <h5 className="font-bold text-white text-[11px] uppercase tracking-widest font-mono mb-4">Product Lineup</h5>
+              <h5 className="font-extrabold text-white text-[10px] uppercase tracking-widest font-mono mb-4">Architecture</h5>
               <ul className="space-y-3.5 text-xs font-semibold">
-                <li><a href="#" className="hover:text-white transition-colors">Storage Dashboard</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Shared Links</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Enterprise Auditing</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Continuous Backups</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Unified Dashboard</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Replicated Directories</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Signed Expiring URLs</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">AWS Backends Sync</a></li>
               </ul>
             </div>
 
             <div>
-              <h5 className="font-bold text-white text-[11px] uppercase tracking-widest font-mono mb-4">Compliance Guard</h5>
+              <h5 className="font-extrabold text-white text-[10px] uppercase tracking-widest font-mono mb-4">Identity Guard</h5>
               <ul className="space-y-3.5 text-xs font-semibold">
-                <li><a href="#" className="hover:text-white transition-colors">Military AES-256</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">TLS 1.3 Transport</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">SOC2 Certification</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Military Encription</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">TLS 1.3 Credentials</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">MFA Compliance Locks</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Audit Logging Reports</a></li>
               </ul>
             </div>
 
             <div>
-              <h5 className="font-bold text-white text-[11px] uppercase tracking-widest font-mono mb-4">Support & Care</h5>
+              <h5 className="font-extrabold text-white text-[10px] uppercase tracking-widest font-mono mb-4">Governance</h5>
               <ul className="space-y-3.5 text-xs font-semibold">
-                <li><a href="#faq" className="hover:text-white transition-colors">Knowledge FAQ</a></li>
-                <li><a href="#contact" className="hover:text-white transition-colors">Submit Support Ticket</a></li>
+                <li><a href="#faq" className="hover:text-white transition-colors">System FAQ Logs</a></li>
+                <li><a href="#contact" className="hover:text-white transition-colors">Operations Support</a></li>
                 <li><a href="#" className="hover:text-white transition-colors">Operational Status</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Premium SLA</a></li>
+                <li><a href="#" className="hover:text-white transition-colors">Enterprise SLA</a></li>
               </ul>
+            </div>
+
+          </div>
+
+          <div className="pt-8 text-center text-xs text-slate-500 flex flex-col sm:flex-row justify-between items-center gap-4 font-semibold">
+            <p>&copy; 2026 Cloud File Manager Int. All S3 allocations reserved.</p>
+            <div className="flex space-x-6">
+              <a href="#" className="hover:text-white transition-colors">Privacy Protocol</a>
+              <a href="#" className="hover:text-white transition-colors">Service SLA Bounds</a>
+              <a href="#" className="hover:text-white transition-colors">Authorized Security</a>
             </div>
           </div>
 
-          <div className="pt-8 border-t border-slate-800 text-center text-xs text-slate-500 flex flex-col sm:flex-row justify-between items-center gap-4 font-semibold">
-            <p>&copy; 2026 Cloud File Manager Platform Inc. All rights reserved.</p>
-            <div className="flex space-x-6">
-              <a href="#" className="hover:text-white transition-colors">Privacy Charter</a>
-              <a href="#" className="hover:text-white transition-colors">Terms of SLA</a>
-              <a href="#" className="hover:text-white transition-colors">Contact operations</a>
-            </div>
-          </div>
         </div>
       </footer>
 
     </div>
+  );
+}
+
+// Inline fallback representing simple sharing icon
+function Share2Icon(props: React.SVGProps<SVGSVGElement>) {
+  return (
+    <svg 
+      {...props} 
+      xmlns="http://www.w3.org/2000/svg" 
+      fill="none" 
+      viewBox="0 0 24 24" 
+      stroke="currentColor" 
+      strokeWidth={2}
+    >
+      <circle cx={18} cy={5} r={3} />
+      <circle cx={6} cy={12} r={3} />
+      <circle cx={18} cy={19} r={3} />
+      <path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98" />
+    </svg>
   );
 }

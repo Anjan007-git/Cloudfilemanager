@@ -74,29 +74,49 @@ export default function DashboardView({
   });
 
   const categories = [
-    { title: "PDF & Documents", count: docCount, size: docSize, color: "bg-blue-600", text: "text-blue-600" },
-    { title: "Creative Images", count: imgCount, size: imgSize, color: "bg-cyan-500", text: "text-cyan-500" },
+    { title: "Documents & PDFs", count: docCount, size: docSize, color: "bg-blue-600", text: "text-blue-600" },
+    { title: "Creative & Images", count: imgCount, size: imgSize, color: "bg-cyan-500", text: "text-cyan-500" },
     { title: "Archives & ZIPs", count: zipCount, size: zipSize, color: "bg-emerald-500", text: "text-emerald-500" },
     { title: "Uncategorized Assets", count: otherCount, size: otherSize, color: "bg-slate-400", text: "text-slate-400" }
   ];
 
+  // Motion variants for consistent high-quality staggered animations
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05
+      }
+    }
+  };
+
+  const cardVariants = {
+    hidden: { opacity: 0, y: 15 },
+    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100, damping: 15 } }
+  };
+
   return (
-    <div className="space-y-8 font-sans" id="dashboard-view-root">
+    <div className="space-y-10 font-sans text-slate-800" id="dashboard-view-root">
       
-      {/* 1. Header Greeting & Actions Area */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 border-b border-slate-200/50 pb-6">
-        <div className="space-y-1.55">
-          <h1 className="text-3xl sm:text-4xl font-display font-medium tracking-tight text-slate-900 leading-tight">
-            Welcome back, <span className="font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-blue-500 to-cyan-500">{user.name}</span> 👋
+      {/* 1. Header Greeting & Actions Area - Styled to resemble high-end SaaS dashboards */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6 pb-6 border-b border-slate-100 mt-2">
+        <div className="space-y-1.5">
+          <div className="inline-flex items-center space-x-2 px-3 py-1 bg-blue-50/70 rounded-full border border-blue-100/30 text-blue-600 text-[11px] font-semibold tracking-wide">
+            <CloudLightning className="w-3.5 h-3.5 text-blue-500" />
+            <span>Active Cloud S3 Console</span>
+          </div>
+          <h1 className="text-3xl md:text-[36px] font-bold text-slate-900 tracking-tight leading-tight">
+            Welcome back, <span className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500">{user.name}</span>
           </h1>
-          <p className="text-xs font-semibold text-slate-400 font-mono tracking-wide uppercase">Here's what's happening with your files today.</p>
+          <p className="text-sm text-slate-500 font-medium">Monitor secure channels, storage allocations, and audit logs with enterprise grade precision.</p>
         </div>
 
-        <div className="flex items-center space-x-3.5">
+        <div className="flex items-center space-x-3 shrink-0">
           <button 
             id="dashboard-quick-folder-btn"
             onClick={onCreateFolderClick}
-            className="inline-flex items-center space-x-2 px-4.5 py-3 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 transition-all cursor-pointer shadow-sm"
+            className="h-11 px-5 inline-flex items-center justify-center gap-2 bg-white hover:bg-slate-50 border border-slate-200 hover:border-slate-300 rounded-full text-xs font-semibold text-slate-700 shadow-sm transition-all cursor-pointer active:scale-95"
           >
             <FolderPlus className="w-4 h-4 text-slate-500" />
             <span>New Folder</span>
@@ -105,7 +125,7 @@ export default function DashboardView({
           <button 
             id="dashboard-quick-upload-btn"
             onClick={onUploadClick}
-            className="inline-flex items-center space-x-2 px-5 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-xs font-bold text-white rounded-xl shadow-lg shadow-blue-500/10 transition-all cursor-pointer"
+            className="h-11 px-6 inline-flex items-center justify-center gap-2 bg-[#005AE2] hover:bg-[#004dc5] text-white rounded-full text-xs font-bold shadow-lg shadow-blue-500/15 transition-all cursor-pointer active:scale-95"
           >
             <Plus className="w-4 h-4" />
             <span>Upload Files</span>
@@ -113,125 +133,150 @@ export default function DashboardView({
         </div>
       </div>
 
-      {/* 2. Premium Analytics Metric Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* 2. Premium Analytics Metric Cards - Enhanced with clean elevations and entrance animations */}
+      <motion.div 
+        variants={containerVariants}
+        initial="hidden"
+        animate="show"
+        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6"
+      >
         
         {/* Metric 1: Total Files */}
-        <div className="bg-white p-6 rounded-3xl border border-slate-200/50 hover:border-slate-350 shadow-sm hover:shadow-md transition-all duration-300 flex items-start justify-between relative overflow-hidden group">
-          <div className="space-y-3 relative z-10">
-            <span className="text-[10px] uppercase font-mono tracking-wider font-extrabold text-slate-400 block">Total Files</span>
-            <h3 className="text-2xl font-bold font-display text-slate-900 tracking-tight leading-none">{totalFilesCount}</h3>
-            <p className="text-[10px] text-slate-500 font-semibold font-mono">Based on active objects</p>
+        <motion.div 
+          variants={cardVariants}
+          className="bg-white p-6 rounded-2xl border border-slate-200/40 hover:border-blue-200 shadow-sm transition-all duration-300 flex items-start justify-between relative overflow-hidden group cursor-pointer"
+        >
+          <div className="space-y-4 relative z-10">
+            <span className="text-xs font-semibold text-slate-500 tracking-wide block">Total Active Objects</span>
+            <div className="space-y-1">
+              <h3 className="text-3xl font-black font-display text-slate-900 tracking-tight leading-none">{totalFilesCount}</h3>
+              <p className="text-xs text-slate-400 font-medium">Consolidated files index</p>
+            </div>
           </div>
-          <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl group-hover:bg-blue-100 transition-colors">
-            <Layers className="w-5 h-5 text-blue-600" />
+          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl group-hover:bg-blue-100/80 transition-colors">
+            <Layers className="w-5 h-5" />
           </div>
-        </div>
+        </motion.div>
 
         {/* Metric 2: Storage Used */}
-        <div className="bg-white p-6 rounded-3xl border border-slate-200/50 hover:border-slate-350 shadow-sm hover:shadow-md transition-all duration-300 flex items-start justify-between relative overflow-hidden group">
-          <div className="space-y-3 relative z-10">
-            <span className="text-[10px] uppercase font-mono tracking-wider font-extrabold text-slate-400 block">Storage Used</span>
-            <h3 className="text-2xl font-bold font-display text-slate-900 tracking-tight leading-none">{formatStorageUsed(user.storageUsed)}</h3>
-            <p className="text-[10px] text-slate-500 font-semibold font-mono">of {formatStorageUsed(user.storageLimit)} capacity</p>
+        <motion.div 
+          variants={cardVariants}
+          className="bg-white p-6 rounded-2xl border border-slate-200/40 hover:border-emerald-200 shadow-sm transition-all duration-300 flex items-start justify-between relative overflow-hidden group cursor-pointer"
+        >
+          <div className="space-y-4 relative z-10">
+            <span className="text-xs font-semibold text-slate-500 tracking-wide block">Quota Consumed</span>
+            <div className="space-y-1">
+              <h3 className="text-3xl font-black font-display text-slate-900 tracking-tight leading-none">{formatStorageUsed(user.storageUsed)}</h3>
+              <p className="text-xs text-slate-400 font-medium">of {formatStorageUsed(user.storageLimit)} allocation</p>
+            </div>
           </div>
-          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl group-hover:bg-emerald-100 transition-colors">
-            <HardDrive className="w-5 h-5 text-emerald-600" />
+          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-xl group-hover:bg-emerald-100/80 transition-colors">
+            <HardDrive className="w-5 h-5" />
           </div>
-        </div>
+        </motion.div>
 
         {/* Metric 3: Shared Files */}
-        <div className="bg-white p-6 rounded-3xl border border-slate-200/50 hover:border-slate-350 shadow-sm hover:shadow-md transition-all duration-300 flex items-start justify-between relative overflow-hidden group">
-          <div className="space-y-3 relative z-10">
-            <span className="text-[10px] uppercase font-mono tracking-wider font-extrabold text-slate-400 block">Shared Files</span>
-            <h3 className="text-2xl font-bold font-display text-slate-900 tracking-tight leading-none">{sharedFilesCount}</h3>
-            <p className="text-[10px] text-slate-500 font-semibold font-mono">With active shared keys</p>
+        <motion.div 
+          variants={cardVariants}
+          className="bg-white p-6 rounded-2xl border border-slate-200/40 hover:border-purple-200 shadow-sm transition-all duration-300 flex items-start justify-between relative overflow-hidden group cursor-pointer"
+        >
+          <div className="space-y-4 relative z-10">
+            <span className="text-xs font-semibold text-slate-500 tracking-wide block">Replicated Shares</span>
+            <div className="space-y-1">
+              <h3 className="text-3xl font-black font-display text-slate-900 tracking-tight leading-none">{sharedFilesCount}</h3>
+              <p className="text-xs text-slate-400 font-medium">Public & group limited links</p>
+            </div>
           </div>
-          <div className="p-3 bg-purple-50 text-purple-650 rounded-2xl group-hover:bg-purple-100 transition-colors">
-            <Share2 className="w-5 h-5 text-purple-650" />
+          <div className="p-3 bg-purple-50 text-purple-600 rounded-xl group-hover:bg-purple-100/80 transition-colors">
+            <Share2 className="w-5 h-5" />
           </div>
-        </div>
+        </motion.div>
 
         {/* Metric 4: Downloads */}
-        <div className="bg-white p-6 rounded-3xl border border-slate-200/50 hover:border-slate-350 shadow-sm hover:shadow-md transition-all duration-300 flex items-start justify-between relative overflow-hidden group">
-          <div className="space-y-3 relative z-10">
-            <span className="text-[10px] uppercase font-mono tracking-wider font-extrabold text-slate-400 block">Downloads</span>
-            <h3 className="text-2xl font-bold font-display text-slate-900 tracking-tight leading-none">{downloadsCount}</h3>
-            <p className="text-[10px] text-slate-500 font-semibold font-mono">Through secure gateway</p>
+        <motion.div 
+          variants={cardVariants}
+          className="bg-white p-6 rounded-2xl border border-slate-200/40 hover:border-amber-200 shadow-sm transition-all duration-300 flex items-start justify-between relative overflow-hidden group cursor-pointer"
+        >
+          <div className="space-y-4 relative z-10">
+            <span className="text-xs font-semibold text-slate-500 tracking-wide block">Gateway Downloads</span>
+            <div className="space-y-1">
+              <h3 className="text-3xl font-black font-display text-slate-900 tracking-tight leading-none">{downloadsCount}</h3>
+              <p className="text-xs text-slate-400 font-medium">Verified gateway transfers</p>
+            </div>
           </div>
-          <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl group-hover:bg-amber-100 transition-colors">
-            <Download className="w-5 h-5 text-amber-600" />
+          <div className="p-3 bg-amber-50 text-amber-600 rounded-xl group-hover:bg-amber-100/80 transition-colors">
+            <Download className="w-5 h-5" />
           </div>
-        </div>
+        </motion.div>
 
-      </div>
+      </motion.div>
 
       {/* 3. Deep insights layout split */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
         {/* Left Grid Content: Storage radial ring and categories breakdown */}
-        <div className="lg:col-span-4 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/50 shadow-sm space-y-8 flex flex-col justify-between">
+        <div className="lg:col-span-4 bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/40 shadow-sm space-y-8 flex flex-col justify-between">
           <div className="space-y-1">
-            <h3 className="font-display font-medium text-slate-900 text-sm">Capacity Allocation</h3>
-            <p className="text-[11px] text-slate-400 font-semibold">Live division status indicators</p>
+            <h3 className="font-display font-bold text-slate-900 text-base">Capacity Allocation</h3>
+            <p className="text-xs text-slate-450 font-medium">Live partition tracking status</p>
           </div>
 
           {/* Premium Radial Capacity Meter */}
           <div className="relative flex items-center justify-center py-4 border-b border-slate-100">
-            <div className="w-40 h-40 rounded-full border-[10px] border-slate-50 flex items-center justify-center relative">
+            <div className="w-44 h-44 rounded-full border-[10px] border-slate-50 flex items-center justify-center relative shadow-inner">
               {/* SVG Ring container with beautiful royalty color stroke */}
-              <svg className="absolute w-40 h-40 -rotate-90">
+              <svg className="absolute w-44 h-44 -rotate-90">
                 <circle 
-                  cx="80" 
-                  cy="80" 
-                  r="70" 
+                  cx="88" 
+                  cy="88" 
+                  r="74" 
                   fill="transparent" 
-                  stroke="#e2e8f0" 
+                  stroke="#f1f5f9" 
                   strokeWidth="8"
-                  opacity="0.3"
                 />
                 <circle 
-                  cx="80" 
-                  cy="80" 
-                  r="70" 
+                  cx="88" 
+                  cy="88" 
+                  r="74" 
                   fill="transparent" 
-                  stroke="url(#blueCyanGrad)" 
+                  stroke="url(#blueIndigoGrad)" 
                   strokeWidth="8" 
-                  strokeDasharray="440" 
-                  strokeDashoffset={440 - (440 * percentUsed) / 100}
+                  strokeDasharray="464" 
+                  strokeDashoffset={464 - (464 * percentUsed) / 100}
                   strokeLinecap="round"
                 />
                 <defs>
-                  <linearGradient id="blueCyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <linearGradient id="blueIndigoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stopColor="#2563EB" />
+                    <stop offset="50%" stopColor="#4F46E5" />
                     <stop offset="100%" stopColor="#06B6D4" />
                   </linearGradient>
                 </defs>
               </svg>
               <div className="text-center space-y-1 z-10">
-                <span className="text-3xl font-bold font-display text-slate-900 tracking-tight block">{percentUsed.toFixed(1)}%</span>
-                <span className="text-[9px] uppercase font-mono tracking-widest text-slate-400 font-extrabold block">Used quota</span>
+                <span className="text-3xl font-extrabold font-display text-slate-950 tracking-tight block">{percentUsed.toFixed(1)}%</span>
+                <span className="text-xs font-semibold text-cyan-500 tracking-wide block">Used Quota</span>
               </div>
             </div>
           </div>
 
           {/* Mime Breakdown lists */}
-          <div className="space-y-4">
-            <span className="text-[10px] uppercase font-mono tracking-widest text-slate-400 font-bold block">Storage breakdown by Category</span>
+          <div className="space-y-5">
+            <span className="text-xs font-bold text-slate-500 tracking-wide block">Cluster Breakdown</span>
             
-            <div className="space-y-3.5">
+            <div className="space-y-4">
               {categories.map((cat, idx) => {
                 const catPercent = user.storageUsed > 0 ? (cat.size / user.storageUsed) * 100 : 0;
                 return (
                   <div key={idx} className="space-y-1.5">
                     <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center space-x-2.5">
                         <span className={`w-2.5 h-2.5 rounded-full ${cat.color} shadow-sm`}></span>
-                        <span className="font-semibold text-slate-700">{cat.title} <span className="text-[10px] text-slate-400">({cat.count})</span></span>
+                        <span className="font-bold text-slate-700">{cat.title} <span className="text-xs text-slate-400 font-normal">({cat.count})</span></span>
                       </div>
-                      <span className="text-slate-400 font-mono text-[10px] font-bold">{formatBytes(cat.size)}</span>
+                      <span className="text-slate-500 font-mono text-[10.5px] font-bold">{formatBytes(cat.size)}</span>
                     </div>
-                    <div className="h-1.5 w-full bg-slate-50 border border-slate-100 rounded-full overflow-hidden">
+                    <div className="h-2 w-full bg-slate-50 border border-slate-100 rounded-full overflow-hidden p-0.5">
                       <div className={`h-full ${cat.color} rounded-full transition-all duration-500`} style={{ width: `${Math.max(3, catPercent)}%` }}></div>
                     </div>
                   </div>
@@ -242,35 +287,35 @@ export default function DashboardView({
         </div>
 
         {/* Right Grid Content: Analytics trend chart and complete auditor history logs */}
-        <div className="lg:col-span-8 flex flex-col justify-between gap-6">
+        <div className="lg:col-span-8 flex flex-col justify-between gap-8">
           
           {/* Top telemetry Area Chart */}
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/50 shadow-sm flex-1">
-            <div className="flex items-center justify-between pb-5 border-b border-slate-100 mb-5">
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/40 shadow-sm flex-1">
+            <div className="flex items-center justify-between pb-5 border-b border-slate-100 mb-6 font-sans">
               <div>
-                <h3 className="font-display font-medium text-slate-950 text-sm">Automated Storage Telemetry</h3>
-                <p className="text-[11px] text-slate-400 font-semibold">Real-time S3 cloud synchronize pipeline</p>
+                <h3 className="font-display font-bold text-slate-900 text-base">Automated Storage Telemetry</h3>
+                <p className="text-xs text-slate-400 font-medium">Real-time S3 infrastructure synchronizations</p>
               </div>
-              <div className="flex items-center space-x-1.5 text-[9px] font-bold font-mono uppercase bg-blue-50 text-blue-600 px-3 py-1 rounded-full border border-blue-100">
-                <span className="flex h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse"></span>
-                <span>Active channel</span>
+              <div className="flex items-center space-x-2 bg-blue-50/75 text-blue-600 px-3.5 py-1.5 rounded-full border border-blue-100/50 text-xs font-semibold leading-none">
+                <span className="flex h-2 w-2 rounded-full bg-blue-500 animate-pulse"></span>
+                <span>Active Link</span>
               </div>
             </div>
 
             {/* Custom vector Area Curve Chart representation */}
-            <div className="h-44 relative bg-slate-50/50 rounded-2xl border border-slate-100 p-3 flex flex-col justify-between overflow-hidden">
-              <div className="absolute inset-0 flex flex-col justify-between p-4 pointer-events-none opacity-40">
+            <div className="h-48 relative bg-slate-50/70 rounded-2xl border border-slate-100 p-4 flex flex-col justify-between overflow-hidden">
+              <div className="absolute inset-0 flex flex-col justify-between p-4 pointer-events-none opacity-50">
                 <span className="border-b border-dashed border-slate-200 w-full h-0"></span>
                 <span className="border-b border-dashed border-slate-200 w-full h-0"></span>
                 <span className="border-b border-dashed border-slate-200 w-full h-0"></span>
               </div>
 
-              <div className="w-full h-32 relative z-10 mt-1">
+              <div className="w-full h-36 relative z-10 mt-1">
                 <svg className="w-full h-full" viewBox="0 0 500 100" preserveAspectRatio="none">
                   <defs>
                     <linearGradient id="glowG" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="#2563EB" stopOpacity="0.25"></stop>
-                      <stop offset="100%" stopColor="#06B6D4" stopOpacity="0.00"></stop>
+                      <stop offset="0%" stopColor="#2563EB" stopOpacity="0.22"></stop>
+                      <stop offset="100%" stopColor="#312E81" stopOpacity="0.00"></stop>
                     </linearGradient>
                   </defs>
                   <path 
@@ -281,54 +326,67 @@ export default function DashboardView({
                     d="M 0,90 Q 80,60 160,80 T 320,30 T 420,15 L 500,10" 
                     fill="none" 
                     stroke="#2563EB" 
-                    strokeWidth="3" 
+                    strokeWidth="3.5" 
                     strokeLinecap="round"
                   />
                 </svg>
               </div>
 
-              <div className="flex items-center justify-between text-[10px] uppercase font-mono tracking-widest text-slate-400 font-bold px-4 z-20">
-                <span>Jan (Sandbox)</span>
-                <span>Mar (MFA sync)</span>
-                <span>May (Vault active)</span>
-                <span>Jun (Active S3)</span>
+              <div className="flex items-center justify-between text-xs font-semibold text-slate-400 px-4 z-20">
+                <span>Active Sandbox</span>
+                <span>Pipeline</span>
+                <span>Encrypted</span>
+                <span>Live Mirror</span>
               </div>
             </div>
           </div>
 
           {/* Bottom auditor events activity panel */}
-          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/50 shadow-sm">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-150 mb-4">
+          <div className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200/40 shadow-sm">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-5">
               <div>
-                <h3 className="font-display font-medium text-slate-900 text-sm font-semibold">Immutable Operations Audit</h3>
-                <p className="text-[11px] text-slate-400 font-semibold">Traceable platform activity session logs</p>
+                <h3 className="font-display font-bold text-slate-900 text-base">Immutable Operations Audit</h3>
+                <p className="text-xs text-slate-400 font-medium">Traceable continuous platform operations</p>
               </div>
-              <div className="flex items-center space-x-1 bg-slate-50 border border-slate-100 px-3 py-1 rounded-full text-[10px] text-slate-500 font-mono font-bold">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <div className="flex items-center space-x-2 bg-slate-50 border border-slate-200/60 px-3.5 py-1.5 rounded-full text-xs font-semibold text-slate-650 leading-none">
+                <ShieldCheck className="w-4 h-4 text-emerald-600" />
                 <span>Verified Trace</span>
               </div>
             </div>
 
             {activities.length === 0 ? (
-              <div className="text-center py-8 text-slate-400 flex flex-col items-center space-y-2.5">
-                <CheckCircle className="w-8 h-8 text-slate-200 animate-bounce" />
-                <p className="text-xs font-semibold leading-relaxed">No operations audit records stored in database.</p>
+              <div className="text-center py-10 text-slate-400 flex flex-col items-center space-y-3">
+                <CheckCircle className="w-8 h-8 text-slate-200 animate-pulse" />
+                <p className="text-xs font-semibold leading-relaxed">No operations audit records currently in storage.</p>
               </div>
             ) : (
-              <div className="divide-y divide-slate-100 max-h-48 overflow-y-auto pr-2 space-y-1.5 font-mono">
-                {activities.slice(0, 3).map((act) => (
-                  <div key={act.id} className="flex items-center justify-between py-2.5 text-xs">
-                    <div className="flex items-center space-x-3">
-                      <span className="flex h-2 w-2 rounded-full bg-blue-500 shadow-sm animate-pulse"></span>
-                      <div>
-                        <p className="font-semibold text-slate-700 leading-snug">{act.details}</p>
-                        <span className="text-[9px] text-slate-400 font-sans block mt-0.5">{new Date(act.createdAt).toLocaleString()}</span>
-                      </div>
-                    </div>
-                    <span className="px-2.5 py-0.5 bg-slate-50 text-slate-500 font-mono font-bold text-[9px] rounded-lg uppercase border border-slate-200/60 shadow-sm">{act.type}</span>
-                  </div>
-                ))}
-              </div>
+              <table className="w-full text-left border-collapse text-xs font-semibold">
+                <thead>
+                  <tr className="bg-slate-50 border-b border-slate-200/50 text-xs text-slate-400 font-semibold">
+                    <th scope="col" className="px-4 py-3 rounded-l-xl">Operation</th>
+                    <th scope="col" className="px-4 py-3 text-center">Type</th>
+                    <th scope="col" className="px-4 py-3 text-right rounded-r-xl">Execution Time</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-slate-650">
+                  {activities.slice(0, 4).map((act) => (
+                    <tr key={act.id} className="hover:bg-slate-50/40">
+                      <td className="px-4 py-3.5 font-bold text-slate-800">
+                        <div className="flex items-center space-x-2.5 truncate max-w-xs sm:max-w-md">
+                          <span className="flex h-1.5 w-1.5 rounded-full bg-blue-500 flex-shrink-0 animate-pulse"></span>
+                          <span className="truncate">{act.details}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5 text-center">
+                        <span className="px-2.5 py-1 bg-slate-100/70 text-slate-700 text-xs rounded-lg border border-slate-200/40 font-semibold capitalize">{act.type}</span>
+                      </td>
+                      <td className="px-4 py-3.5 text-right text-[10.5px] font-mono text-slate-400 font-semibold">
+                        {new Date(act.createdAt).toLocaleTimeString()}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             )}
           </div>
 

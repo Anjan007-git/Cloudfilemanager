@@ -106,7 +106,7 @@ export default function StorageView({ user, token, onRefresh }: StorageViewProps
         <h1 className="text-3xl sm:text-4xl font-display font-medium tracking-tight text-slate-900 leading-tight">
           Storage & Workspace Quotas
         </h1>
-        <p className="text-xs font-semibold text-slate-400 font-mono tracking-wide uppercase mt-1">Scale memory limits & synchronize files dynamically</p>
+        <p className="text-sm font-medium text-slate-500 mt-1">Scale memory limits & synchronize files dynamically with ease</p>
       </div>
 
       {successMsg && (
@@ -134,7 +134,7 @@ export default function StorageView({ user, token, onRefresh }: StorageViewProps
               <span className="text-2xl sm:text-3xl font-bold font-display text-slate-900 tracking-tight">
                 {formatBytes(user.storageUsed)} <span className="text-sm font-semibold text-slate-400">of {formatBytes(user.storageLimit)} used</span>
               </span>
-              <span className="text-[10px] font-bold font-mono text-blue-600 bg-blue-50 border border-blue-100/50 px-2.5 py-1 rounded-md uppercase tracking-wide">
+              <span className="text-xs font-bold text-blue-600 bg-blue-50/70 border border-blue-100/50 px-3 py-1 rounded-full tracking-wide">
                 {user.plan} Account Limit
               </span>
             </div>
@@ -163,13 +163,13 @@ export default function StorageView({ user, token, onRefresh }: StorageViewProps
         {/* Upgrade alert notification card */}
         <div className="bg-[#0A0E1A] text-slate-200 p-6 sm:p-8 rounded-3xl border border-slate-800/60 flex flex-col justify-between shadow-xl">
           <div className="space-y-3.5">
-            <p className="text-[10px] uppercase font-mono tracking-widest text-blue-400 font-extrabold">Active Compliance standard</p>
+            <p className="text-xs font-semibold text-blue-400">Active Compliance Shield</p>
             <h4 className="text-xl font-display font-bold text-white tracking-tight leading-snug">Need unlimited enterprise space?</h4>
             <p className="text-xs text-slate-450 leading-relaxed font-semibold">
               Unlock multi-user whitelisting permission panels, secure key-locked share codes, and express priority operational engineers at your command.
             </p>
           </div>
-          <div className="pt-4 border-t border-slate-800/50 flex items-center justify-between text-xs font-mono">
+          <div className="pt-4 border-t border-slate-800/50 flex items-center justify-between text-xs">
             <span className="text-slate-500">Service Status:</span>
             <span className="text-emerald-400 font-bold flex items-center gap-1.5">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -191,7 +191,7 @@ export default function StorageView({ user, token, onRefresh }: StorageViewProps
           <div className={`bg-white border rounded-3xl p-6 relative flex flex-col justify-between transition-all duration-300 ${user.plan === 'pro' ? 'border-blue-500 shadow-xl ring-2 ring-blue-100/50' : 'border-slate-200/60 hover:border-slate-350'}`}>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold font-mono uppercase text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100/30">Pro Tier</span>
+                <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100/30">Pro Tier</span>
                 {user.plan === 'pro' && <span className="text-xs font-bold text-teal-600 font-mono">● Active Plan</span>}
               </div>
               <h4 className="text-3xl font-bold font-display text-slate-900 tracking-tight">1 TB Space</h4>
@@ -217,7 +217,7 @@ export default function StorageView({ user, token, onRefresh }: StorageViewProps
           <div className={`bg-white border rounded-3xl p-6 relative flex flex-col justify-between transition-all duration-300 ${user.plan === 'business' ? 'border-[#06b6d4] shadow-xl ring-2 ring-cyan-100/50' : 'border-slate-200/60 hover:border-slate-350'}`}>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold font-mono uppercase text-[#06b6d4] bg-cyan-50 px-2.5 py-1 rounded-md border border-cyan-100/35">Business Tier</span>
+                <span className="text-xs font-bold text-[#06b6d4] bg-cyan-50 px-2.5 py-1 rounded-md border border-cyan-100/35">Business Tier</span>
                 {user.plan === 'business' && <span className="text-xs font-bold text-teal-600 font-mono">● Active Plan</span>}
               </div>
               <h4 className="text-3xl font-bold font-display text-slate-900 tracking-tight">5 TB Space</h4>
@@ -243,7 +243,7 @@ export default function StorageView({ user, token, onRefresh }: StorageViewProps
           <div className={`bg-white border rounded-3xl p-6 relative flex flex-col justify-between transition-all duration-300 ${user.plan === 'enterprise' ? 'border-blue-650 shadow-xl ring-2 ring-blue-200' : 'border-slate-200/60 hover:border-slate-350'}`}>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold font-mono uppercase text-slate-850 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">Corporate Premium</span>
+                <span className="text-xs font-bold text-slate-800 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">Corporate Premium</span>
                 {user.plan === 'enterprise' && <span className="text-xs font-bold text-teal-600 font-mono">● Active Plan</span>}
               </div>
               <h4 className="text-3xl font-bold font-display text-slate-900 tracking-tight">Unlimited Files</h4>
@@ -279,7 +279,7 @@ export default function StorageView({ user, token, onRefresh }: StorageViewProps
         )}
 
         {/* Modern Feature Comparison Matrix */}
-        <div className="bg-white border border-slate-200/50 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
+        <div className="bg-white border border-slate-200/40 rounded-3xl p-6 sm:p-8 shadow-sm space-y-6">
           <div>
             <h4 className="font-display font-semibold text-slate-900 text-sm">Feature Comparison Matrix</h4>
             <p className="text-[11px] text-slate-400 font-semibold mt-0.5">Compare features across all subscription plans</p>
@@ -287,7 +287,7 @@ export default function StorageView({ user, token, onRefresh }: StorageViewProps
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="border-b border-slate-100 text-[10px] uppercase font-mono tracking-wider text-slate-400 font-bold">
+                <tr className="border-b border-slate-100 text-xs font-semibold text-slate-500">
                   <th className="py-3 px-4">Workspace Features</th>
                   <th className="py-3 px-4">Free (₹0 / mo)</th>
                   <th className="py-3 px-4">Pro (₹299 / mo)</th>
@@ -321,8 +321,8 @@ export default function StorageView({ user, token, onRefresh }: StorageViewProps
                   <td className="py-3.5 px-4 font-bold text-slate-900">Immutable Audit Trails</td>
                   <td className="py-3.5 px-4 text-slate-300">—</td>
                   <td className="py-3.5 px-4 text-slate-300">—</td>
-                  <td className="py-3.5 px-4 font-mono text-[10px] text-cyan-600 bg-cyan-50 p-1 px-2 rounded-lg w-fit">90-Day Logs</td>
-                  <td className="py-3.5 px-4 font-mono text-[10px] text-blue-650 bg-blue-50 p-1 px-2 rounded-lg w-fit">Infinite Logs</td>
+                  <td className="py-3.5 px-4"><span className="text-xs text-cyan-650 bg-cyan-50 px-2.5 py-1 rounded-full border border-cyan-100">90-Day Logs</span></td>
+                  <td className="py-3.5 px-4"><span className="text-xs text-blue-650 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100 font-semibold">Infinite Logs</span></td>
                 </tr>
                 <tr className="hover:bg-slate-50/50 transition-colors">
                   <td className="py-3.5 px-4 font-bold text-slate-900">Service SLA Guarantee</td>
@@ -359,24 +359,24 @@ export default function StorageView({ user, token, onRefresh }: StorageViewProps
             </div>
           ) : (
             <table className="min-w-full divide-y divide-slate-150 text-xs text-slate-700 font-semibold">
-              <thead className="bg-[#F8FAFC] text-[10px] uppercase font-mono tracking-widest text-slate-400 font-bold border-b border-slate-200/50">
+              <thead className="bg-[#F8FAFC]/55 text-xs text-slate-500 font-semibold border-b border-slate-200/40">
                 <tr>
-                  <th scope="col" className="px-6 py-4 text-left">Invoice Identification ID</th>
-                  <th scope="col" className="px-6 py-4 text-left">Date Issued</th>
-                  <th scope="col" className="px-6 py-4 text-left">Tier Grade</th>
-                  <th scope="col" className="px-6 py-4 text-left">Receipt Sum</th>
-                  <th scope="col" className="px-6 py-4 text-right">Invoice Status</th>
+                   <th scope="col" className="px-6 py-4 text-left">Invoice Identification ID</th>
+                   <th scope="col" className="px-6 py-4 text-left">Date Issued</th>
+                   <th scope="col" className="px-6 py-4 text-left">Tier Grade</th>
+                   <th scope="col" className="px-6 py-4 text-left">Receipt Sum</th>
+                   <th scope="col" className="px-6 py-4 text-right">Invoice Status</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-slate-700 font-semibold">
                 {billingHistory.map((item) => (
                   <tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
                     <td className="px-6 py-4 font-mono font-bold text-slate-900">{item.id}</td>
-                    <td className="px-6 py-4 text-slate-400 font-mono">{item.date}</td>
+                    <td className="px-6 py-4 text-slate-400 font-sans text-xs">{item.date}</td>
                     <td className="px-6 py-4 font-bold text-slate-800">{item.planName}</td>
                     <td className="px-6 py-4 font-mono font-black text-slate-950">{item.amount}</td>
                     <td className="px-6 py-4 text-right">
-                      <span className="px-3 py-1 bg-emerald-50 border border-emerald-100 text-emerald-700 font-mono font-bold rounded-lg uppercase text-[9px] tracking-wide shadow-sm">
+                      <span className="px-3 py-1 bg-emerald-50 border border-emerald-100 text-emerald-700 font-semibold rounded-full text-xs shadow-sm shadow-emerald-500/5">
                         {item.status}
                       </span>
                     </td>
