@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Cloud, Shield, Zap, RefreshCw, Smartphone, Archive, History, FolderOpen, Lock, 
   ArrowRight, Check, Star, Mail, User, HelpCircle, ChevronDown, ChevronUp, Globe, FileText, Sparkles, Orbit, Server, Layers, Cpu, Heart, AlertCircle, ArrowUpRight,
-  Building2, Users, Phone, MapPin, MessageSquare, ShieldCheck, Network
+  Building2, Users, Phone, MapPin, MessageSquare, ShieldCheck, Network,
+  Linkedin, Github, Twitter, Youtube, Send
 } from 'lucide-react';
 
 interface LandingPageProps {
@@ -25,6 +26,8 @@ export default function LandingPage({ onGetStarted, onLoginClick }: LandingPageP
   });
   const [contactSubmitted, setContactSubmitted] = useState(false);
   const [hoveredFeature, setHoveredFeature] = useState<number | null>(null);
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterSuccess, setNewsletterSuccess] = useState(false);
 
   const toggleFaq = (index: number) => {
     setActiveFaq(activeFaq === index ? null : index);
@@ -969,68 +972,295 @@ export default function LandingPage({ onGetStarted, onLoginClick }: LandingPageP
         </div>
       </section>
 
-      {/* 8. MODERN ENTERPRISE FOOTER */}
-      <footer className="bg-slate-900 text-slate-450 py-16 border-t border-slate-800 relative z-10 font-sans">
+      {/* 8. MODERN ENTERPRISE & PREMIUM BUSINESS FOOTER */}
+      <footer className="bg-slate-950 text-slate-400 pt-20 pb-12 border-t border-slate-850 relative z-10 font-sans shadow-2xl">
+        {/* Subtle horizontal gradient separator glow */}
+        <div className="absolute top-0 left-0 right-0 h-[1.5px] bg-gradient-to-r from-transparent via-blue-500/40 to-transparent" />
+
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 pb-12 border-b border-slate-800">
-            <div className="space-y-5">
-              <div className="flex items-center space-x-3 text-white">
-                <div className="p-2.5 bg-blue-600 rounded-2xl shadow-lg">
-                  <Cloud className="w-5.5 h-5.5 text-white" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 pb-16 border-b border-slate-850">
+            
+            {/* Column 1: Brand & S3 Real-time Node */}
+            <div className="lg:col-span-2 space-y-6">
+              <div className="flex items-center space-x-3.5 text-white">
+                <div className="p-2.5 bg-blue-600 rounded-2xl shadow-xl shadow-blue-500/10">
+                  <Cloud className="w-6 h-6 text-white" />
                 </div>
                 <div className="flex flex-col">
-                  <span className="font-display font-black text-sm tracking-tight">CloudFile</span>
-                  <span className="text-[9px] uppercase font-mono tracking-widest text-blue-400 font-extrabold mt-0.5">Console Platform</span>
+                  <span className="font-display font-black text-sm tracking-tight text-white">CloudFile</span>
+                  <span className="text-[9px] uppercase font-mono tracking-widest text-blue-400 font-extrabold mt-0.5">Enterprise Cloud Platform</span>
                 </div>
               </div>
-              <p className="text-xs text-slate-400 leading-relaxed font-semibold">
-                Financial-grade AES-256 cloud directory solutions protecting corporate file assets since 2026.
+              
+              <p className="text-xs text-slate-400 leading-relaxed font-semibold max-w-sm">
+                Financial-grade AES-256 cloud directory solutions protecting corporate file assets. Re-architected for instant secure access, strict compliance auditing, and multi-region synchronization.
               </p>
-              <div className="inline-flex items-center space-x-2 text-[10px] font-mono font-bold bg-blue-950/50 border border-blue-900/60 p-1 px-3.5 rounded-full text-blue-400 leading-none">
-                <Globe className="w-3.5 h-3.5 text-cyan-400" />
-                <span>ALL S3 CLUSTERS ONLINE</span>
+
+              {/* Real-time Status Indicator Widget */}
+              <div className="space-y-3">
+                <div className="inline-flex items-center space-x-2.5 text-[10px] font-mono font-bold bg-blue-950/60 border border-blue-900/60 p-2 px-4 rounded-xl text-blue-450 leading-none">
+                  <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+                  <span>ALL S3 CLUSTERS ONLINE (99.99% SLA)</span>
+                </div>
+                <p className="text-[10px] text-slate-500 font-mono pl-1">
+                  Active Replication: <span className="text-blue-400">AWS us-east-1</span> · <span className="text-blue-400">eu-west-1</span> · <span className="text-blue-400">ap-southeast-1</span>
+                </p>
+              </div>
+
+              {/* SOCIAL MEDIA HIGHLIGHTED NETWORKS */}
+              <div className="space-y-3 pt-2">
+                <p className="text-white text-[10px] uppercase tracking-widest font-mono font-extrabold">Corporate Relations</p>
+                <div className="flex items-center space-x-3">
+                  <motion.a 
+                    href="https://linkedin.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    whileHover={{ scale: 1.1, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="p-3 w-10.5 h-10.5 flex items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:bg-blue-600 hover:border-blue-500 hover:shadow-lg hover:shadow-blue-500/20 transition-all duration-300 cursor-pointer"
+                    title="Connect with us on LinkedIn"
+                  >
+                    <Linkedin className="w-5 h-5" />
+                  </motion.a>
+
+                  <motion.a 
+                    href="https://github.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    whileHover={{ scale: 1.1, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="p-3 w-10.5 h-10.5 flex items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 hover:border-slate-700 hover:shadow-lg hover:shadow-slate-500/20 transition-all duration-300 cursor-pointer"
+                    title="View GitHub Repository"
+                  >
+                    <Github className="w-5 h-5" />
+                  </motion.a>
+
+                  <motion.a 
+                    href="https://twitter.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    whileHover={{ scale: 1.1, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="p-3 w-10.5 h-10.5 flex items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 hover:border-sky-400 hover:shadow-lg hover:shadow-sky-500/10 transition-all duration-300 cursor-pointer"
+                    title="Stay updated on Twitter/X"
+                  >
+                    <Twitter className="w-5 h-5" />
+                  </motion.a>
+
+                  <motion.a 
+                    href="https://youtube.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    whileHover={{ scale: 1.1, y: -2 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="p-3 w-10.5 h-10.5 flex items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:bg-red-950/20 hover:border-[#FF0000]/40 hover:shadow-lg hover:shadow-red-500/10 transition-all duration-300 cursor-pointer"
+                    title="Watch updates on YouTube"
+                  >
+                    <Youtube className="w-5 h-5" />
+                  </motion.a>
+                </div>
               </div>
             </div>
 
-            <div>
-              <h5 className="font-extrabold text-white text-[10px] uppercase tracking-widest font-mono mb-4">Architecture</h5>
+            {/* Column 2: Product & Architecture */}
+            <div className="space-y-4">
+              <h5 className="font-extrabold text-white text-[10px] uppercase tracking-widest font-mono border-b border-slate-850 pb-2">Platform</h5>
               <ul className="space-y-3.5 text-xs font-semibold">
-                <li><a href="#" className="hover:text-white transition-colors">Unified Dashboard</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Replicated Directories</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Signed Expiring URLs</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">AWS Backends Sync</a></li>
+                <li>
+                  <a href="#" className="flex items-center space-x-1 hover:text-white transition-colors group">
+                    <span>Unified Dashboard</span>
+                    <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-blue-400" />
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="flex items-center space-x-1 hover:text-white transition-colors group">
+                    <span>Secure Directories</span>
+                    <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-blue-400" />
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="flex items-center space-x-1 hover:text-white transition-colors group">
+                    <span>Signed Expiring URLs</span>
+                    <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-blue-400" />
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="flex items-center space-x-1 hover:text-white transition-colors group">
+                    <span>AWS Sync Engine</span>
+                    <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-blue-400" />
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="flex items-center space-x-1 hover:text-white transition-colors group">
+                    <span>Storage Analytics</span>
+                    <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-blue-400" />
+                  </a>
+                </li>
               </ul>
             </div>
 
-            <div>
-              <h5 className="font-extrabold text-white text-[10px] uppercase tracking-widest font-mono mb-4">Identity Guard</h5>
+            {/* Column 3: Identity & Compliance */}
+            <div className="space-y-4">
+              <h5 className="font-extrabold text-white text-[10px] uppercase tracking-widest font-mono border-b border-slate-850 pb-2">Security & compliance</h5>
               <ul className="space-y-3.5 text-xs font-semibold">
-                <li><a href="#" className="hover:text-white transition-colors">Military Encription</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">TLS 1.3 Credentials</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">MFA Compliance Locks</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Audit Logging Reports</a></li>
+                <li>
+                  <a href="#" className="flex items-center space-x-1 hover:text-white transition-colors group">
+                    <span>Military Encryption</span>
+                    <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-blue-400" />
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="flex items-center space-x-1 hover:text-white transition-colors group">
+                    <span>TLS 1.3 Credentials</span>
+                    <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-blue-400" />
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="flex items-center space-x-1 hover:text-white transition-colors group">
+                    <span>MFA Compliance Locks</span>
+                    <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-blue-400" />
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="flex items-center space-x-1 hover:text-white transition-colors group">
+                    <span>GDPR Residency Pools</span>
+                    <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-blue-400" />
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="flex items-center space-x-1 hover:text-white transition-colors group">
+                    <span>Continuous Audit Logs</span>
+                    <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-blue-400" />
+                  </a>
+                </li>
               </ul>
             </div>
 
-            <div>
-              <h5 className="font-extrabold text-white text-[10px] uppercase tracking-widest font-mono mb-4">Governance</h5>
+            {/* Column 4: Governance & SLA */}
+            <div className="space-y-4">
+              <h5 className="font-extrabold text-white text-[10px] uppercase tracking-widest font-mono border-b border-slate-850 pb-2">Governance</h5>
               <ul className="space-y-3.5 text-xs font-semibold">
-                <li><a href="#faq" className="hover:text-white transition-colors">System FAQ Logs</a></li>
-                <li><a href="#contact" className="hover:text-white transition-colors">Operations Support</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Operational Status</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Enterprise SLA</a></li>
+                <li>
+                  <a href="#faq" className="flex items-center space-x-1 hover:text-white transition-colors group">
+                    <span>System FAQ Logs</span>
+                    <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-blue-400" />
+                  </a>
+                </li>
+                <li>
+                  <a href="#contact" className="flex items-center space-x-1 hover:text-white transition-colors group">
+                    <span>Operations Hub</span>
+                    <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-blue-400" />
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="flex items-center space-x-1 hover:text-white transition-colors group">
+                    <span>Enterprise SLA Contract</span>
+                    <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-blue-400" />
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="flex items-center space-x-1 hover:text-white transition-colors group">
+                    <span>Status Boards</span>
+                    <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-blue-400" />
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="flex items-center space-x-1 hover:text-white transition-colors group">
+                    <span>Strategic Partners</span>
+                    <ArrowUpRight className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity text-blue-400" />
+                  </a>
+                </li>
               </ul>
+            </div>
+
+            {/* Column 5: Newsletter Corporate Update Form */}
+            <div className="space-y-4">
+              <h5 className="font-extrabold text-white text-[10px] uppercase tracking-widest font-mono border-b border-slate-850 pb-2">Advisory Stream</h5>
+              <p className="text-xs text-slate-400 font-semibold leading-relaxed">
+                Receive our compliance digests, infrastructure bulletins, and new security enhancements.
+              </p>
+              
+              {!newsletterSuccess ? (
+                <form 
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (newsletterEmail) {
+                      setNewsletterSuccess(true);
+                      setTimeout(() => {
+                        setNewsletterEmail('');
+                      }, 4000);
+                    }
+                  }}
+                  className="space-y-2 pt-1"
+                >
+                  <div className="relative">
+                    <input 
+                      type="email" 
+                      required
+                      placeholder="business@company.com" 
+                      value={newsletterEmail}
+                      onChange={(e) => setNewsletterEmail(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-800 text-xs text-slate-100 placeholder:text-slate-500 focus:placeholder:text-slate-600 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/15 p-3 rounded-xl transition-all font-semibold"
+                    />
+                    <button 
+                      type="submit"
+                      className="absolute right-1.5 top-1.5 p-1.5 rounded-lg bg-blue-600 hover:bg-blue-750 text-white transition-colors cursor-pointer"
+                    >
+                      <Send className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="p-3 bg-blue-950/40 border border-blue-900/50 rounded-xl space-y-1"
+                >
+                  <p className="text-[11px] font-bold text-blue-400 uppercase tracking-wide font-mono">Secured Transmission</p>
+                  <p className="text-[10.5px] text-slate-300 font-semibold leading-normal">
+                    Email registered. Our compliance team has queued your credentials.
+                  </p>
+                </motion.div>
+              )}
             </div>
 
           </div>
 
-          <div className="pt-8 text-center text-xs text-slate-500 flex flex-col sm:flex-row justify-between items-center gap-4 font-semibold">
-            <p>&copy; 2026 Cloud File Manager Int. All S3 allocations reserved.</p>
-            <div className="flex space-x-6">
+          {/* Trusted Badges certifications bar */}
+          <div className="py-8 border-b border-slate-850 flex flex-wrap justify-center items-center gap-6 md:gap-12" id="corporate-badges-row">
+            <span className="text-[10px] uppercase font-mono font-bold tracking-widest text-slate-500 leading-none">Security Accreditations</span>
+            <div className="flex flex-wrap justify-center items-center gap-6">
+              <span className="text-[10px] uppercase font-mono font-bold text-slate-400 bg-slate-900/60 border border-slate-800/80 px-3.5 py-1.5 rounded-lg">
+                SOC 2 TYPE II AUDITED
+              </span>
+              <span className="text-[10px] uppercase font-mono font-bold text-slate-400 bg-slate-900/60 border border-slate-800/80 px-3.5 py-1.5 rounded-lg">
+                GDPR HARBOR CERTIFIED
+              </span>
+              <span className="text-[10px] uppercase font-mono font-bold text-slate-400 bg-slate-900/60 border border-slate-800/80 px-3.5 py-1.5 rounded-lg">
+                HIPAA SAFEGUARD ALIGNED
+              </span>
+              <span className="text-[10px] uppercase font-mono font-bold text-slate-400 bg-slate-900/60 border border-slate-800/80 px-3.5 py-1.5 rounded-lg">
+                ISO/IEC 27001 PROTOCOL
+              </span>
+            </div>
+          </div>
+
+          {/* Bottom Copyright & SLA items */}
+          <div className="pt-8 text-xs text-slate-500 flex flex-col md:flex-row justify-between items-center gap-4 font-semibold">
+            <div className="flex flex-col md:items-start text-center md:text-left gap-1">
+              <p>&copy; 2026 CloudFile Manager International. All S3 allocations fully reserved.</p>
+              <p className="text-[10px] text-slate-600 font-mono">
+                System cryptographic signing key: <span className="text-slate-500">SHA-256 (KMS Managed Core)</span>
+              </p>
+            </div>
+            
+            <div className="flex space-x-6 text-slate-450">
               <a href="#" className="hover:text-white transition-colors">Privacy Protocol</a>
+              <span className="text-slate-700">·</span>
               <a href="#" className="hover:text-white transition-colors">Service SLA Bounds</a>
-              <a href="#" className="hover:text-white transition-colors">Authorized Security</a>
+              <span className="text-slate-700">·</span>
+              <a href="#" className="hover:text-white transition-colors">Security Disclosures</a>
             </div>
           </div>
 
