@@ -7,6 +7,7 @@ import {
   Play, Lock, Loader2, PlayCircle, ToggleLeft, Activity, Trash, Sparkles
 } from 'lucide-react';
 import { CloudFile, SharedUser, ShareLink } from '../types.js';
+import FilePreviewModal from './FilePreviewModal.js';
 
 interface MyFilesViewProps {
   files: CloudFile[];
@@ -15,6 +16,9 @@ interface MyFilesViewProps {
   selectedFolderId: string | null;
   onSelectFolder: (folderId: string | null) => void;
   onTrackActivity: () => void;
+  uploadQueue: any[];
+  onUploadFiles: (files: FileList | File[]) => void;
+  onClearCompletedUploads: () => void;
 }
 
 export default function MyFilesView({ 
@@ -23,7 +27,10 @@ export default function MyFilesView({
   token,
   selectedFolderId,
   onSelectFolder,
-  onTrackActivity
+  onTrackActivity,
+  uploadQueue,
+  onUploadFiles,
+  onClearCompletedUploads
 }: MyFilesViewProps) {
   
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -37,6 +44,27 @@ export default function MyFilesView({
   const [newFolderName, setNewFolderName] = useState('');
   const [selectedFile, setSelectedFile] = useState<CloudFile | null>(null);
   const [previewFile, setPreviewFile] = useState<CloudFile | null>(null);
+  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; file: CloudFile } | null>(null);
+  const [copyToast, setCopyToast] = useState<string | null>(null);
+
+  const handleContextMenu = (e: React.MouseEvent, item: CloudFile) => {
+    e.preventDefault();
+    setSelectedFile(item);
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      file: item
+    });
+  };
+
+  const handleCopyLink = (file: CloudFile) => {
+    const origin = window.location.origin;
+    const link = `${origin}/api/files/download/${file.id}?token=${token}`;
+    navigator.clipboard.writeText(link).then(() => {
+      setCopyToast(`Direct link to "${file.name}" copied to clipboard.`);
+      setTimeout(() => setCopyToast(null), 3000);
+    }).catch(e => console.error(e));
+  };
   
   const [activeContextId, setActiveContextId] = useState<string | null>(null);
   const [loadingActionId, setLoadingActionId] = useState<string | null>(null);
@@ -59,8 +87,6 @@ export default function MyFilesView({
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dragCounterRef = useRef(0);
-
-  const [uploadQueue, setUploadQueue] = useState<any[]>([]);
 
   // Keep preview file data in sync with changes in the active workspace
   useEffect(() => {
@@ -408,66 +434,14 @@ export default function MyFilesView({
     dragCounterRef.current = 0;
 
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      handleFilesUpload(e.dataTransfer.files);
+      onUploadFiles(e.dataTransfer.files);
     }
   };
 
   const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      handleFilesUpload(e.target.files);
+      onUploadFiles(e.target.files);
     }
-  };
-
-  const handleFilesUpload = async (items: FileList) => {
-    const queueList = [...uploadQueue];
-
-    for (let i = 0; i < items.length; i++) {
-      const element = items[i];
-      const trackingId = 'q-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7);
-      
-      const newQueueItem = {
-        id: trackingId,
-        name: element.name,
-        size: element.size,
-        progress: 10,
-        status: 'uploading',
-        part: element
-      };
-
-      queueList.push(newQueueItem);
-      setUploadQueue([...queueList]);
-
-      const formData = new FormData();
-      formData.append('file', element);
-      if (selectedFolderId) {
-        formData.append('parentId', selectedFolderId);
-      }
-
-      try {
-        const response = await fetch('/api/files/upload', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`
-          },
-          body: formData
-        });
-
-        if (!response.ok) {
-          const errData = await response.json();
-          throw new Error(errData.error || 'Upload error');
-        }
-
-        setUploadQueue(prev => prev.map(item => item.id === trackingId ? { ...item, progress: 100, status: 'completed' } : item));
-        onRefresh();
-        onTrackActivity();
-      } catch (err: any) {
-        setUploadQueue(prev => prev.map(item => item.id === trackingId ? { ...item, status: 'error', progress: 0, errorMsg: err.message } : item));
-      }
-    }
-  };
-
-  const handleClearCompletedUploads = () => {
-    setUploadQueue(uploadQueue.filter(item => item.status === 'uploading'));
   };
 
   return (
@@ -619,7 +593,7 @@ export default function MyFilesView({
               <p className="font-semibold text-slate-100 uppercase tracking-wider font-mono text-[10px]">Synchronizer Queue monitor</p>
             </div>
             <button 
-              onClick={handleClearCompletedUploads}
+              onClick={onClearCompletedUploads}
               className="text-blue-400 font-bold hover:underline"
             >
               Clear Completed
@@ -683,27 +657,32 @@ export default function MyFilesView({
               return (
                 <div 
                   key={item.id}
-                  className="bg-white border border-slate-200/50 hover:border-blue-200 hover:shadow-xl hover:shadow-slate-100/60 hover:-translate-y-0.5 rounded-2xl p-5 transition-all relative flex flex-col justify-between h-44 cursor-pointer"
-                  onDoubleClick={() => item.isFolder && onSelectFolder(item.id)}
-                  onClick={(e) => {
-                    const target = e.target as HTMLElement;
-                    if (target.closest('.relative') || target.closest('button')) return;
+                  onContextMenu={(e) => handleContextMenu(e, item)}
+                  className={`border hover:shadow-xl hover:shadow-slate-100/60 hover:-translate-y-0.5 rounded-2xl p-5 transition-all relative flex flex-col justify-between h-44 cursor-pointer ${
+                    selectedFile?.id === item.id 
+                      ? 'bg-blue-50/40 border-blue-500 shadow-md ring-2 ring-blue-500/10' 
+                      : 'bg-white border-slate-200/50'
+                  }`}
+                  onDoubleClick={(e) => {
+                    e.stopPropagation();
                     if (item.isFolder) {
                       onSelectFolder(item.id);
                     } else {
                       setPreviewFile(item);
                     }
                   }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const target = e.target as HTMLElement;
+                    if (target.closest('.relative') || target.closest('button')) return;
+                    setSelectedFile(item);
+                  }}
                 >
                   <div className="flex items-start justify-between">
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (item.isFolder) {
-                          onSelectFolder(item.id);
-                        } else {
-                          setPreviewFile(item);
-                        }
+                        setSelectedFile(item);
                       }}
                       className="p-3 rounded-xl bg-slate-50 border border-slate-100 text-slate-600 hover:text-blue-600 transition-colors cursor-pointer"
                     >
@@ -791,11 +770,7 @@ export default function MyFilesView({
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (item.isFolder) {
-                          onSelectFolder(item.id);
-                        } else {
-                          setPreviewFile(item);
-                        }
+                        setSelectedFile(item);
                       }}
                       className="font-display font-semibold text-slate-900 text-sm hover:text-blue-600 text-left truncate block w-full outline-none cursor-pointer"
                     >
@@ -829,27 +804,31 @@ export default function MyFilesView({
                   return (
                     <tr 
                       key={item.id} 
-                      className="hover:bg-slate-50/70 transition-colors group cursor-pointer"
-                      onDoubleClick={() => item.isFolder && onSelectFolder(item.id)}
-                      onClick={(e) => {
-                        const target = e.target as HTMLElement;
-                        if (target.closest('.relative') || target.closest('button') || target.closest('a')) return;
+                      className={`transition-colors group cursor-pointer ${
+                        selectedFile?.id === item.id 
+                          ? 'bg-blue-50/60 font-bold border-l-4 border-l-blue-500' 
+                          : 'hover:bg-slate-50/70 border-l-4 border-l-transparent'
+                      }`}
+                      onDoubleClick={(e) => {
+                        e.stopPropagation();
                         if (item.isFolder) {
                           onSelectFolder(item.id);
                         } else {
                           setPreviewFile(item);
                         }
                       }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const target = e.target as HTMLElement;
+                        if (target.closest('.relative') || target.closest('button') || target.closest('a')) return;
+                        setSelectedFile(item);
+                      }}
                     >
                       <td className="px-6 py-4 flex items-center space-x-3.5 w-1/3">
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (item.isFolder) {
-                              onSelectFolder(item.id);
-                            } else {
-                              setPreviewFile(item);
-                            }
+                            setSelectedFile(item);
                           }}
                           className="p-2 bg-slate-50 border border-slate-100 rounded-xl text-slate-500 group-hover:text-blue-600 transition-colors cursor-pointer"
                         >
@@ -858,11 +837,7 @@ export default function MyFilesView({
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (item.isFolder) {
-                              onSelectFolder(item.id);
-                            } else {
-                              setPreviewFile(item);
-                            }
+                            setSelectedFile(item);
                           }}
                           className="font-semibold text-slate-900 hover:text-blue-600 truncate max-w-sm text-left block outline-none cursor-pointer"
                         >
@@ -1248,226 +1223,165 @@ export default function MyFilesView({
 
       {/* 8. Modal: Elegant File Inspector Preview */}
       <AnimatePresence>
-        {previewFile && (
-          <div className="fixed inset-0 bg-slate-900/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm overflow-y-auto">
-            <div className="fixed inset-0" onClick={() => setPreviewFile(null)} />
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.95, y: 15 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 15 }}
-              transition={{ duration: 0.2 }}
-              className="bg-white rounded-[28px] border border-slate-200/80 max-w-2xl w-full overflow-hidden shadow-2xl relative z-10 flex flex-col md:flex-row h-auto max-h-[90vh] md:max-h-[85vh] text-slate-800"
+        {contextMenu && (
+          <>
+            {/* Click outside backdrop */}
+            <div 
+              className="fixed inset-0 z-45" 
+              onClick={() => setContextMenu(null)}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                setContextMenu(null);
+              }}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              transition={{ duration: 0.12 }}
+              style={{ top: contextMenu.y, left: contextMenu.x }}
+              className="fixed z-50 bg-slate-900 border border-slate-800 text-slate-100 rounded-2xl p-2 shadow-2xl w-48 font-sans"
+              id="custom-ctx-menu"
             >
-              {/* Left Side: Art & Icon Container */}
-              <div className={`md:w-5/12 flex flex-col justify-between p-6 ${
-                previewFile.isFolder ? 'bg-blue-50/40 border-r border-slate-100' :
-                previewFile.mimeType.toLowerCase().startsWith('image/') ? 'bg-cyan-50/30 border-r border-slate-100' :
-                previewFile.mimeType.toLowerCase().includes('/pdf') ? 'bg-red-50/30 border-r border-slate-100' :
-                previewFile.mimeType.toLowerCase().startsWith('video/') ? 'bg-purple-50/30 border-r border-slate-100' :
-                previewFile.mimeType.toLowerCase().startsWith('audio/') ? 'bg-pink-50/30 border-r border-slate-100' :
-                previewFile.mimeType.toLowerCase().includes('zip') || previewFile.mimeType.toLowerCase().includes('tar') || previewFile.mimeType.toLowerCase().includes('rar') ? 'bg-amber-50/30 border-r border-slate-100' :
-                'bg-slate-50/50 border-r border-slate-100'
-              }`}>
-                {/* Header badge */}
-                <div className="flex items-center justify-between">
-                  <span className="text-[10px] uppercase font-mono font-bold tracking-wider text-slate-400 bg-white/80 border border-slate-200/40 px-2.5 py-1 rounded-full shadow-sm font-semibold">
-                    {previewFile.isFolder ? 'Directory' : 'File Metadata'}
-                  </span>
-                  {previewFile.isStarred && (
-                    <span className="flex items-center gap-1 text-[10px] font-bold text-amber-600 bg-amber-50/60 border border-amber-200/50 px-2 py-0.5 rounded-full font-semibold">
-                      <Star className="w-3 h-3 fill-current text-amber-500" /> Starred
-                    </span>
-                  )}
-                </div>
-
-                {/* Big Beautiful Dynamic Placeholder Icon Representation */}
-                <div className="py-8 flex flex-col items-center justify-center space-y-4">
-                  <div className={`p-6 rounded-2xl shadow-xl shadow-slate-200/30 transition-all ${
-                    previewFile.isFolder ? 'bg-white border border-blue-100 text-blue-600' :
-                    previewFile.mimeType.toLowerCase().startsWith('image/') ? 'bg-white border border-cyan-100 text-cyan-500' :
-                    previewFile.mimeType.toLowerCase().includes('/pdf') ? 'bg-white border border-red-100 text-red-500' :
-                    previewFile.mimeType.toLowerCase().startsWith('video/') ? 'bg-white border border-purple-100 text-purple-500' :
-                    previewFile.mimeType.toLowerCase().startsWith('audio/') ? 'bg-white border border-pink-100 text-pink-500' :
-                    previewFile.mimeType.toLowerCase().includes('zip') || previewFile.mimeType.toLowerCase().includes('tar') || previewFile.mimeType.toLowerCase().includes('rar') ? 'bg-white border border-amber-100 text-amber-500' :
-                    'bg-white border border-slate-200 text-slate-500'
-                  }`}>
-                    {previewFile.isFolder ? (
-                      <Folder className="w-12 h-12 text-blue-600 fill-blue-500/5" />
-                    ) : (
-                      previewFile.mimeType.toLowerCase().startsWith('image/') ? (
-                        <Image className="w-12 h-12 text-cyan-500" />
-                      ) : previewFile.mimeType.toLowerCase().includes('/pdf') ? (
-                        <FileText className="w-12 h-12 text-red-500" />
-                      ) : previewFile.mimeType.toLowerCase().startsWith('video/') ? (
-                        <Film className="w-12 h-12 text-purple-500" />
-                      ) : previewFile.mimeType.toLowerCase().startsWith('audio/') ? (
-                        <Music className="w-12 h-12 text-pink-500" />
-                      ) : previewFile.mimeType.toLowerCase().includes('zip') || previewFile.mimeType.toLowerCase().includes('tar') || previewFile.mimeType.toLowerCase().includes('rar') || previewFile.mimeType.toLowerCase().includes('archive') ? (
-                        <Archive className="w-12 h-12 text-amber-500" />
-                      ) : (
-                        <File className="w-12 h-12 text-slate-500" />
-                      )
-                    )}
-                  </div>
-                  <div className="text-center space-y-1">
-                    <span className="text-[10px] uppercase font-mono font-extrabold tracking-widest text-slate-400 block">Format Index</span>
-                    <span className="text-xs font-bold text-slate-700 capitalize">
-                      {previewFile.isFolder ? 'Container Directory' : previewFile.name.substring(previewFile.name.lastIndexOf('.') + 1).toUpperCase() + ' Source'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* S3 Security Badge information placeholder */}
-                <div className="border border-dashed border-slate-200/80 bg-white/70 rounded-2xl p-3.5 space-y-1">
-                  <div className="flex items-center gap-1.5 text-slate-700 font-bold text-[10px]">
-                    <ShieldAlert className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                    <span>AWS KMS SHA-256</span>
-                  </div>
-                  <p className="text-[9.5px] text-slate-450 leading-relaxed font-semibold">
-                    Continuous server-side encryption with AWS managed encryption keys protects active assets.
-                  </p>
-                </div>
+              <div className="px-3 py-1.5 border-b border-slate-850/80 mb-1 max-w-[170px] truncate">
+                <p className="text-[10px] uppercase font-bold tracking-wider text-slate-500 font-mono">Operations</p>
+                <p className="text-xs font-bold text-slate-200 truncate pr-0.5" title={contextMenu.file.name}>{contextMenu.file.name}</p>
               </div>
-
-              {/* Right Side: Metadata list & Actions */}
-              <div className="flex-1 flex flex-col justify-between p-6 sm:p-8 space-y-6">
-                
-                {/* Header Close Panel */}
-                <div className="flex items-start justify-between gap-4">
-                  <div className="space-y-1 flex-1 min-w-0">
-                    <h3 className="font-display font-bold text-slate-900 text-sm leading-snug break-all truncate" title={previewFile.name}>
-                      {previewFile.name}
-                    </h3>
-                    <p className="text-xs text-slate-400 font-semibold truncate">
-                      ID Index: <span className="font-mono text-[10.5px] text-slate-500 font-medium">{previewFile.id}</span>
-                    </p>
-                  </div>
-                  <button 
-                    onClick={() => setPreviewFile(null)}
-                    className="p-1 px-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 cursor-pointer transition-all"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-                {/* Properties detailed grid */}
-                <div className="grid grid-cols-2 gap-x-5 gap-y-4 text-xs">
-                  <div className="space-y-1">
-                    <span className="text-[10px] uppercase font-mono font-bold tracking-wider text-slate-400 block">Storage Size</span>
-                    <span className="font-semibold text-slate-800 block">
-                      {previewFile.isFolder ? '--' : formatBytes(previewFile.size)}
-                    </span>
-                  </div>
-
-                  <div className="space-y-1">
-                    <span className="text-[10px] uppercase font-mono font-bold tracking-wider text-slate-400 block">Type Stream</span>
-                    <span className="font-semibold text-slate-800 block truncate" title={previewFile.mimeType}>
-                      {previewFile.isFolder ? 'System Folder' : previewFile.mimeType}
-                    </span>
-                  </div>
-
-                  <div className="space-y-1">
-                    <span className="text-[10px] uppercase font-mono font-bold tracking-wider text-slate-400 block">Workspace Directory</span>
-                    <span className="font-semibold text-slate-800 block truncate">
-                      {previewFile.parentId ? (initialFiles.find(f => f.id === previewFile.parentId)?.name || 'Subfolder') : 'S3 Root Workspace'}
-                    </span>
-                  </div>
-
-                  <div className="space-y-1">
-                    <span className="text-[10px] uppercase font-mono font-bold tracking-wider text-slate-400 block">Permission Scope</span>
-                    <span className="font-semibold text-slate-800 block">
-                      {previewFile.sharedWith.length > 0 ? `${previewFile.sharedWith.length} Users` : 'Dedicated Private'}
-                    </span>
-                  </div>
-
-                  <div className="space-y-1">
-                    <span className="text-[10px] uppercase font-mono font-bold tracking-wider text-slate-400 block">Timeline Created</span>
-                    <span className="font-semibold text-slate-850 text-[11px] block">
-                      {new Date(previewFile.createdAt).toLocaleString()}
-                    </span>
-                  </div>
-
-                  <div className="space-y-1">
-                    <span className="text-[10px] uppercase font-mono font-bold tracking-wider text-slate-400 block">Ownership Authority</span>
-                    <span className="font-semibold text-slate-850 text-[11px] block truncate" title={`${previewFile.ownerName} (${previewFile.ownerEmail})`}>
-                      {previewFile.ownerName || 'Console Admin'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Collaborators list */}
-                <div className="border-t border-slate-100 pt-5">
-                  {previewFile.sharedWith.length > 0 ? (
-                    <div className="space-y-2">
-                      <span className="text-[10px] uppercase font-mono font-bold tracking-wider text-slate-400 block">Collaborator Network</span>
-                      <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
-                        {previewFile.sharedWith.map((su, sidx) => (
-                          <span key={sidx} className="inline-flex items-center gap-1.5 bg-blue-50/70 border border-blue-100/50 px-2.5 py-1 rounded-full text-xs font-bold text-blue-700">
-                            <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-                            <span className="max-w-[120px] truncate">{su.email}</span>
-                            <span className="opacity-60 text-[9.5px] uppercase font-mono">({su.permission})</span>
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-1 bg-slate-50 border border-slate-105 p-3.5 rounded-2xl">
-                      <span className="text-[10px] uppercase font-mono font-bold tracking-wider text-slate-400 block">Sharing Scope Status</span>
-                      <span className="inline-flex items-center gap-1.5 text-slate-500 text-xs font-semibold">
-                        <Lock className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <span>Private Access (Only owner can read & download representational model)</span>
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Bottom Interactive control action row */}
-                <div className="flex space-x-2.5 pt-5 border-t border-slate-150">
-                  <button
-                    onClick={() => handleToggleStar(previewFile.id)}
-                    className="px-4 py-3 bg-slate-50 hover:bg-[#FFFDF5] text-slate-655 hover:text-amber-500 active:scale-[0.97] border border-slate-200/50 hover:border-amber-200 rounded-2xl transition-all cursor-pointer flex items-center justify-center gap-1.5 font-bold text-xs"
-                    title="Toggle Favorite Star"
-                  >
-                    <Star className={`w-4 h-4 ${previewFile.isStarred ? 'text-amber-500 fill-current' : ''}`} />
-                    <span>{previewFile.isStarred ? 'Starred' : 'Star'}</span>
-                  </button>
-
+              <div className="space-y-0.5 text-xs text-left">
+                {!contextMenu.file.isFolder && (
                   <button
                     onClick={() => {
-                      setShareFile(previewFile);
-                      setPreviewFile(null);
+                      setPreviewFile(contextMenu.file);
+                      setContextMenu(null);
                     }}
-                    className="p-3 bg-slate-50 hover:bg-slate-100 text-slate-650 hover:text-cyan-600 active:scale-[0.97] border border-slate-250/50 hover:border-cyan-200 rounded-2xl transition-all cursor-pointer flex items-center justify-center"
-                    title="Configure Share Settings"
+                    className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-slate-800 font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer text-left"
                   >
-                    <Share2 className="w-4 h-4 text-cyan-600" />
+                    <Eye className="w-3.5 h-3.5 text-blue-400" />
+                    <span>Quick Preview</span>
                   </button>
-
-                  {!previewFile.isFolder ? (
-                    <button
-                      onClick={() => handleDownload(previewFile)}
-                      className="flex-1 py-3 bg-blue-650 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 font-bold text-xs text-white rounded-2xl shadow-lg shadow-blue-500/10 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
-                    >
-                      <Download className="w-4 h-4" /> Download File
-                    </button>
-                  ) : (
-                    <button
-                      onClick={() => {
-                        onSelectFolder(previewFile.id);
-                        setPreviewFile(null);
-                      }}
-                      className="flex-1 py-3 bg-blue-650 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 font-bold text-xs text-white rounded-2xl shadow-lg shadow-blue-500/10 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98]"
-                    >
-                      <Folder className="w-4 h-4" /> Open Folder
-                    </button>
-                  )}
-                </div>
-
+                )}
+                {contextMenu.file.isFolder && (
+                  <button
+                    onClick={() => {
+                      onSelectFolder(contextMenu.file.id);
+                      setContextMenu(null);
+                    }}
+                    className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-slate-800 font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer text-left"
+                  >
+                    <Folder className="w-3.5 h-3.5 text-blue-400" />
+                    <span>Open Folder</span>
+                  </button>
+                )}
+                {!contextMenu.file.isFolder && (
+                  <button
+                    onClick={() => {
+                      handleDownload(contextMenu.file);
+                      setContextMenu(null);
+                    }}
+                    className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-slate-800 font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer text-left"
+                  >
+                    <Download className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Download</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => {
+                    handleToggleStar(contextMenu.file.id);
+                    setContextMenu(null);
+                  }}
+                  className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-slate-800 font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer text-left"
+                >
+                  <Star className={`w-3.5 h-3.5 ${contextMenu.file.isStarred ? 'text-amber-500 fill-current' : 'text-amber-400'}`} />
+                  <span>{contextMenu.file.isStarred ? 'Unstar Item' : 'Star Item'}</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setRenameId(contextMenu.file.id);
+                    setRenameValue(contextMenu.file.name);
+                    setContextMenu(null);
+                  }}
+                  className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-slate-800 font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer text-left"
+                >
+                  <Edit3 className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>Rename</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setShareFile(contextMenu.file);
+                    setContextMenu(null);
+                  }}
+                  className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-slate-800 font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer text-left"
+                >
+                  <Share2 className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Manage Access</span>
+                </button>
+                <button
+                  onClick={() => {
+                    setMoveId(contextMenu.file.id);
+                    setTargetParentId(contextMenu.file.parentId || 'null');
+                    setContextMenu(null);
+                  }}
+                  className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-slate-800 font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer text-left"
+                >
+                  <Move className="w-3.5 h-3.5 text-teal-400" />
+                  <span>Move & Relocate</span>
+                </button>
+                {!contextMenu.file.isFolder && (
+                  <button
+                    onClick={() => {
+                      handleCopyLink(contextMenu.file);
+                      setContextMenu(null);
+                    }}
+                    className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-slate-800 font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer text-left"
+                  >
+                    <Plus className="w-3.5 h-3.5 text-emerald-400" />
+                    <span>Copy Link</span>
+                  </button>
+                )}
+                <div className="border-t border-slate-850/85 my-1" />
+                <button
+                  onClick={() => {
+                    handleDeleteFolderOrFile(contextMenu.file);
+                    setContextMenu(null);
+                  }}
+                  className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-red-950/50 hover:text-red-350 text-red-100 font-semibold transition-colors cursor-pointer text-left"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                  <span>Delete</span>
+                </button>
               </div>
             </motion.div>
-          </div>
+          </>
         )}
       </AnimatePresence>
+
+      {/* Copy notification toast */}
+      <AnimatePresence>
+        {copyToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 30, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            className="fixed bottom-6 left-6 bg-slate-900 border border-slate-800 text-white rounded-xl p-3 px-5 shadow-2xl z-50 flex items-center space-x-2.5 max-w-sm"
+          >
+            <span className="h-2 w-2 rounded-full bg-blue-500"></span>
+            <p className="text-xs font-semibold">{copyToast}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* 8. Beautiful New Integrated FilePreviewModal */}
+      {previewFile && (
+        <FilePreviewModal 
+          file={previewFile}
+          onClose={() => setPreviewFile(null)}
+          token={token}
+          onDownload={handleDownload}
+          onToggleStar={handleToggleStar}
+          allFiles={initialFiles}
+          onNavigateFile={(nxt) => setPreviewFile(nxt)}
+        />
+      )}
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Cloud, HardDrive, Share2, Star, Trash2, Clock, Settings, HelpCircle, LogOut, 
@@ -338,15 +338,108 @@ export default function App() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
   };
 
+  // Centralized upload queue state
+  const [uploadQueue, setUploadQueue] = useState<any[]>([]);
+  const [successToast, setSuccessToast] = useState<string | null>(null);
+  const globalFileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleClearCompletedUploads = () => {
+    setUploadQueue(prev => prev.filter(q => q.status === 'uploading'));
+  };
+
+  const triggerGlobalUpload = () => {
+    if (globalFileInputRef.current) {
+      globalFileInputRef.current.value = '';
+      globalFileInputRef.current.click();
+    }
+  };
+
+  const handleGlobalFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      handleFilesUpload(e.target.files);
+    }
+  };
+
+  const handleFilesUpload = async (items: FileList | File[]) => {
+    const queueList = [...uploadQueue];
+
+    for (let i = 0; i < items.length; i++) {
+      const element = items[i];
+      const trackingId = 'q-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7);
+      
+      const newQueueItem = {
+        id: trackingId,
+        name: element.name,
+        size: element.size,
+        progress: 10,
+        status: 'uploading',
+        part: element
+      };
+
+      queueList.push(newQueueItem);
+      setUploadQueue([...queueList]);
+
+      const formData = new FormData();
+      formData.append('file', element);
+      if (selectedFolderId) {
+        formData.append('parentId', selectedFolderId);
+      }
+
+      // Simulate smooth progress meter ticks
+      let simulateProgress = 10;
+      const progressTimer = setInterval(() => {
+        if (simulateProgress < 85) {
+          simulateProgress += 15;
+          setUploadQueue(prev => prev.map(item => item.id === trackingId ? { ...item, progress: simulateProgress } : item));
+        }
+      }, 250);
+
+      try {
+        const response = await fetch('/api/files/upload', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`
+          },
+          body: formData
+        });
+
+        clearInterval(progressTimer);
+
+        if (!response.ok) {
+          const errData = await response.json();
+          throw new Error(errData.error || 'Upload failed');
+        }
+
+        setUploadQueue(prev => prev.map(item => item.id === trackingId ? { ...item, progress: 100, status: 'completed' } : item));
+        
+        // Trigger success toast
+        setSuccessToast(`Successfully uploaded ${element.name}`);
+        setTimeout(() => setSuccessToast(null), 4000);
+
+        // Refresh all collections in background to update stats instantly!
+        fetchFiles();
+        fetchActivities();
+        fetchNotifications();
+        if (token) {
+          fetchMe(token);
+        }
+
+      } catch (err: any) {
+        clearInterval(progressTimer);
+        setUploadQueue(prev => prev.map(item => item.id === trackingId ? { ...item, status: 'error', progress: 0, errorMsg: err.message } : item));
+      }
+    }
+  };
+
   const navigationMenu = [
-    { id: 'dashboard', label: 'Dashboard', icon: <LayoutGrid className="w-4.5 h-4.5" /> },
-    { id: 'files', label: 'My Files', icon: <Folder className="w-4.5 h-4.5" /> },
-    { id: 'shared', label: 'Shared with me', icon: <Users className="w-4.5 h-4.5" /> },
-    { id: 'recent', label: 'Recent', icon: <Clock className="w-4.5 h-4.5" /> },
-    { id: 'trash', label: 'Trash', icon: <Trash2 className="w-4.5 h-4.5" /> },
-    { id: 'storage', label: 'Subscription Vault', icon: <Sparkles className="w-4.5 h-4.5" /> },
-    { id: 'help', label: 'Compliance Center', icon: <Shield className="w-4.5 h-4.5" /> },
-    { id: 'settings', label: 'Settings', icon: <Settings className="w-4.5 h-4.5" /> }
+    { id: 'dashboard', label: 'Dashboard', icon: <LayoutGrid className="w-4 h-4" /> },
+    { id: 'files', label: 'My Files', icon: <Folder className="w-4 h-4" /> },
+    { id: 'shared', label: 'Shared with me', icon: <Users className="w-4 h-4" /> },
+    { id: 'recent', label: 'Recent', icon: <Clock className="w-4 h-4" /> },
+    { id: 'starred', label: 'Starred', icon: <Star className="w-4 h-4" /> },
+    { id: 'trash', label: 'Trash', icon: <Trash2 className="w-4 h-4" /> },
+    { id: 'storage', label: 'Subscription Vault', icon: <Sparkles className="w-4 h-4" /> },
+    { id: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" /> }
   ];
 
   if (!isAuthenticated) {
@@ -359,36 +452,36 @@ export default function App() {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <div className="h-full w-full max-h-screen max-w-screen overflow-hidden bg-[#F4F7FB] flex p-0 md:p-4 text-slate-800 font-sans relative" id="applet-console-root">
+    <div className="h-screen w-full overflow-hidden bg-[#F4F7FB] flex p-0 md:p-4 text-slate-800 font-sans relative" id="applet-console-root">
       
       {/* 1. ULTRA PREMIUM SIDEBAR NAVIGATION */}
-      <aside className={`fixed inset-y-0 left-0 bg-gradient-to-b from-[#005AE2] via-[#004CC9] to-[#00389C] text-white z-50 w-72 flex flex-col justify-between transform transition-all duration-200 pointer-events-auto overflow-hidden h-full ${
+      <aside className={`fixed inset-y-0 left-0 bg-gradient-to-b from-[#005AE2] via-[#004CC9] to-[#00389C] text-white z-50 w-72 flex flex-col transform transition-all duration-200 pointer-events-auto overflow-hidden h-full ${
         sidebarOpen ? 'translate-x-0' : '-translate-x-full'
       } md:static md:translate-x-0 md:flex-shrink-0 md:h-full md:rounded-[24px] border border-white/10 shadow-2xl md:mr-2`}>
         
-        <div className="flex-1 flex flex-col pt-8 pb-4 overflow-y-auto scrollbar-none">
-          {/* Elegant Reference Logo Section */}
-          <div className="flex items-center justify-between px-6 pb-6 border-b border-white/10">
-            <div className="flex items-center text-white">
-              <div className="w-[48px] h-[48px] bg-white rounded-full flex items-center justify-center shrink-0 shadow-lg shadow-blue-950/20 mr-3">
-                <Cloud className="w-5.5 h-5.5 text-[#005AE2] fill-[#005AE2]/10" />
-              </div>
-              <div className="flex flex-col leading-tight">
-                <span className="font-display font-extrabold text-[17px] tracking-tight text-white leading-none">CloudFile</span>
-                <span className="text-[11px] text-blue-200/70 font-medium tracking-wide block mt-1">Enterprise Cloud</span>
-              </div>
+        {/* TOP: Brand Logo & Title */}
+        <div className="flex-shrink-0 flex items-center justify-between px-6 pt-5 pb-4 border-b border-white/10">
+          <div className="flex items-center text-white">
+            <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shrink-0 shadow-lg shadow-blue-950/20 mr-3">
+              <Cloud className="w-5 h-5 text-[#005AE2] fill-[#005AE2]/10" />
             </div>
-            
-            <button 
-              onClick={() => setSidebarOpen(false)}
-              className="p-1.5 rounded-full text-white/70 hover:bg-white/15 hover:text-white md:hidden cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
+            <div className="flex flex-col leading-tight">
+              <span className="font-display font-bold text-[16px] tracking-tight text-white leading-none">CloudFile</span>
+              <span className="text-[10px] text-blue-200/75 font-medium tracking-wide block mt-1">Enterprise Cloud</span>
+            </div>
           </div>
+          
+          <button 
+            onClick={() => setSidebarOpen(false)}
+            className="p-1.5 rounded-full text-white/70 hover:bg-white/15 hover:text-white md:hidden cursor-pointer"
+          >
+            <X className="w-4.5 h-4.5" />
+          </button>
+        </div>
 
-          {/* Premium Rounded Active Pill Menu */}
-          <nav className="mt-8 flex-1 px-4 space-y-1.5">
+        {/* CENTER: Scrollable Navigation Menu */}
+        <div className="flex-1 overflow-y-auto scrollbar-none py-3 px-3">
+          <nav className="space-y-1">
             {navigationMenu.map((item) => {
               const isActive = activeView === item.id;
               return (
@@ -400,87 +493,91 @@ export default function App() {
                     setSelectedFolderId(null); 
                     setSidebarOpen(false); 
                   }}
-                  className={`w-full flex items-center px-5 py-3.5 rounded-full transition-all duration-200 gap-3 text-xs font-semibold leading-none cursor-pointer group ${
+                  className={`w-full flex items-center px-4 py-2 rounded-full transition-all duration-200 gap-3 text-xs font-semibold leading-none cursor-pointer group ${
                     isActive 
-                      ? 'bg-white text-[#005AE2] shadow-lg shadow-blue-950/15 font-bold border-none' 
+                      ? 'bg-white text-[#005AE2] shadow-md shadow-blue-950/15 font-bold border-none' 
                       : 'text-white/85 hover:bg-white/8 hover:text-white'
                   }`}
                 >
                   <span className={`transition-transform duration-200 shrink-0 ${isActive ? 'text-[#005AE2]' : 'text-white/70 group-hover:text-white'}`}>
                     {item.icon}
                   </span>
-                  <span className="tracking-wide text-[13px]">{item.label}</span>
+                  <span className="tracking-wide text-[12.5px]">{item.label}</span>
                 </button>
               );
             })}
           </nav>
         </div>
 
-        {/* Beautiful Storage section matching reference image */}
-        <div className="px-6 py-5 border-t border-white/10 space-y-3">
-          <span className="text-xs font-semibold text-blue-200/80 block">Storage</span>
-          <div className="flex items-center gap-1.5 text-xs text-white/85">
-            <span className="font-bold text-white">{user ? formatBytes(user.storageUsed) : '0 B'}</span>
-            <span className="text-blue-100/70">of {user ? formatBytes(user.storageLimit) : '200 GB'} used</span>
-          </div>
-          <div className="w-full bg-black/20 h-1.5 rounded-full overflow-hidden p-0">
-            <div 
-              className="bg-cyan-400 h-full rounded-full transition-all duration-500 shadow-sm" 
-              style={{ width: `${user ? Math.min(100, (user.storageUsed / user.storageLimit) * 100) : 0}%` }}
-            />
-          </div>
-          <button
-            id="sidebar-upgrade-link-btn"
-            onClick={() => setActiveView('storage')}
-            className="w-full mt-2 py-2.5 bg-white/10 hover:bg-white/15 active:scale-95 border border-white/15 text-white text-xs font-bold rounded-full transition-all cursor-pointer text-center shadow-lg shadow-black/5"
-          >
-            Upgrade Storage
-          </button>
-        </div>
-
-        {/* Corporate bottom profile exactly as Reference Image */}
-        <div className="px-6 pb-6 pt-4 border-t border-white/10 space-y-4">
-          <button 
-            onClick={() => setActiveView('settings')}
-            className="w-full flex items-center justify-between bg-white/10 hover:bg-white/15 p-3 rounded-2xl border border-white/10 text-left transition-all duration-200 group shadow-lg shadow-black/5 cursor-pointer"
-          >
-            <div className="flex items-center gap-3 truncate">
-              <div className="h-9 w-9 rounded-full bg-white flex items-center justify-center shrink-0 text-[#005AE2] font-display font-extrabold text-xs shadow-md border border-white/20">
-                {getInitials(user?.name || '')}
-              </div>
-              <div className="truncate flex-1">
-                <span className="font-bold text-white text-xs block truncate leading-tight">{user?.name || 'FastFlickFusion'}</span>
-                <span className="text-[10px] text-blue-200/70 block truncate leading-none mt-0.5">{user?.email || 'fastflickfusion@gmail.com'}</span>
-              </div>
+        {/* BOTTOM: Fixed, Pinned Content (Storage & Account Profile) */}
+        <div className="flex-shrink-0">
+          {/* Storage Section */}
+          <div className="px-6 py-3.5 border-t border-white/10 space-y-2">
+            <span className="text-[10px] font-semibold text-blue-200/80 block uppercase tracking-wider">Storage Usage</span>
+            <div className="flex items-center justify-between text-xs text-white/85">
+              <span className="font-bold text-white">{user ? formatBytes(user.storageUsed) : '0 B'}</span>
+              <span className="text-blue-100/70">of {user ? formatBytes(user.storageLimit) : '200 GB'}</span>
             </div>
-            <ChevronDown className="w-4 h-4 text-white/55 transition-transform duration-200 group-hover:translate-y-0.5 ml-2" />
-          </button>
+            <div className="w-full bg-black/20 h-1.5 rounded-full overflow-hidden">
+              <div 
+                className="bg-cyan-400 h-full rounded-full transition-all duration-500 shadow-sm" 
+                style={{ width: `${user ? Math.min(100, (user.storageUsed / user.storageLimit) * 100) : 0}%` }}
+              />
+            </div>
+            <button
+              id="sidebar-upgrade-link-btn"
+              onClick={() => setActiveView('storage')}
+              className="w-full py-2 bg-white/10 hover:bg-white/15 active:scale-95 border border-white/15 text-white text-[11px] font-bold rounded-full transition-all cursor-pointer text-center shadow"
+            >
+              Upgrade Storage
+            </button>
+          </div>
 
-          <div className="flex items-center justify-around px-1 pt-3 border-t border-white/10 text-white/70">
+          {/* User Account Card */}
+          <div className="px-6 pb-5 pt-3.5 border-t border-white/10 space-y-3">
             <button 
-              id="footer-shortcut-settings"
               onClick={() => setActiveView('settings')}
-              title="Settings"
-              className="p-2 rounded-full text-white/75 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+              className="w-full flex items-center justify-between bg-white/10 hover:bg-white/15 p-2 rounded-2xl border border-white/10 text-left transition-all duration-200 group shadow-lg shadow-black/5 cursor-pointer"
             >
-              <Settings className="w-5 h-5" />
+              <div className="flex items-center gap-2.5 truncate">
+                <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center shrink-0 text-[#005AE2] font-display font-extrabold text-xs shadow border border-white/20">
+                  {getInitials(user?.name || '')}
+                </div>
+                <div className="truncate flex-1">
+                  <span className="font-bold text-white text-xs block truncate leading-tight">{user?.name || 'FastFlickFusion'}</span>
+                  <span className="text-[10px] text-blue-200/70 block truncate leading-none mt-0.5">{user?.email || 'fastflickfusion@gmail.com'}</span>
+                </div>
+              </div>
+              <ChevronDown className="w-3.5 h-3.5 text-white/55 transition-transform duration-200 group-hover:translate-y-0.5 ml-1 flex-shrink-0" />
             </button>
-            <button 
-              id="footer-shortcut-help"
-              onClick={() => setActiveView('help')}
-              title="Compliance & Support"
-              className="p-2 rounded-full text-white/75 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
-            >
-              <HelpCircle className="w-5 h-5" />
-            </button>
-            <button 
-              id="footer-shortcut-logout"
-              onClick={handleLogout}
-              title="Sign Out Securely"
-              className="p-2 rounded-full text-white/75 hover:bg-red-500/20 hover:text-red-200 transition-all cursor-pointer"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
+
+            {/* Bottom Action Icons */}
+            <div className="flex items-center justify-around px-1 pt-2.5 border-t border-white/10 text-white/70">
+              <button 
+                id="footer-shortcut-settings"
+                onClick={() => setActiveView('settings')}
+                title="Settings"
+                className="p-1.5 rounded-full text-white/75 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+              >
+                <Settings className="w-4.5 h-4.5" />
+              </button>
+              <button 
+                id="footer-shortcut-help"
+                onClick={() => setActiveView('help')}
+                title="Compliance & Support"
+                className="p-1.5 rounded-full text-white/75 hover:text-white hover:bg-white/10 transition-all cursor-pointer"
+              >
+                <HelpCircle className="w-4.5 h-4.5" />
+              </button>
+              <button 
+                id="footer-shortcut-logout"
+                onClick={handleLogout}
+                title="Sign Out Securely"
+                className="p-1.5 rounded-full text-white/75 hover:bg-red-500/20 hover:text-red-200 transition-all cursor-pointer"
+              >
+                <LogOut className="w-4.5 h-4.5" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -656,7 +753,7 @@ export default function App() {
                     user={user}
                     files={files}
                     activities={activities}
-                    onUploadClick={() => setActiveView('files')}
+                    onUploadClick={triggerGlobalUpload}
                     onCreateFolderClick={() => setActiveView('files')}
                     onNavigateView={(v) => setActiveView(v)}
                     onSelectFolder={setSelectedFolderId}
@@ -671,6 +768,9 @@ export default function App() {
                     selectedFolderId={selectedFolderId}
                     onSelectFolder={setSelectedFolderId}
                     onTrackActivity={() => { fetchActivities(); fetchNotifications(); fetchMe(token!); }}
+                    uploadQueue={uploadQueue}
+                    onUploadFiles={handleFilesUpload}
+                    onClearCompletedUploads={handleClearCompletedUploads}
                   />
                 )}
 
@@ -702,6 +802,81 @@ export default function App() {
         </main>
 
       </div>
+
+      {/* Hidden file input for central global uploads */}
+      <input 
+        type="file" 
+        multiple 
+        ref={globalFileInputRef} 
+        onChange={handleGlobalFileInputChange} 
+        className="hidden" 
+      />
+
+      {/* Elegant Real-time Floating Upload Queue monitor */}
+      {uploadQueue.length > 0 && (
+        <div className="fixed bottom-6 right-6 bg-slate-900 border border-slate-800 text-slate-100 rounded-2xl p-4.5 space-y-3 shadow-2xl z-50 w-72 max-w-full sm:w-80" id="central-uploader-monitor">
+          <div className="flex items-center justify-between text-xs pb-2 border-b border-slate-850">
+            <div className="flex items-center space-x-2">
+              <span className="flex h-2 w-2 rounded-full bg-blue-500 animate-pulse"></span>
+              <p className="font-semibold text-slate-100 uppercase tracking-wider font-mono text-[10px]">Uploading {uploadQueue.filter(q => q.status === 'uploading').length} item(s)</p>
+            </div>
+            <button 
+              onClick={handleClearCompletedUploads}
+              className="text-blue-400 font-bold hover:underline cursor-pointer"
+            >
+              Clear Completed
+            </button>
+          </div>
+          <div className="space-y-2 max-h-36 overflow-y-auto pr-1">
+            {uploadQueue.map(item => (
+              <div key={item.id} className="flex items-center justify-between text-xs bg-slate-800/40 p-2.5 rounded-xl border border-slate-800/60">
+                <div className="flex items-center space-x-2.5 w-3/4">
+                  <FileText className="w-4 h-4 text-blue-400 flex-shrink-0" />
+                  <div className="truncate text-left">
+                    <p className="font-semibold text-slate-200 truncate pr-1" title={item.name}>{item.name}</p>
+                    <span className="text-[9.5px] text-slate-500 font-mono font-bold leading-none">{formatBytes(item.size)}</span>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-2 flex-shrink-0">
+                  {item.status === 'uploading' && (
+                    <span className="text-blue-400 font-mono font-bold animate-pulse text-[11px]">{item.progress}%</span>
+                  )}
+                  {item.status === 'completed' && (
+                    <span className="text-emerald-400 font-mono font-bold text-[11px]">Done</span>
+                  )}
+                  {item.status === 'error' && (
+                    <span className="text-red-400 font-mono font-bold text-[11px]" title={item.errorMsg}>Error</span>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Elegant Success Toast Overlay */}
+      <AnimatePresence>
+        {successToast && (
+          <motion.div 
+            initial={{ opacity: 0, y: 50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.9 }}
+            className="fixed bottom-6 left-6 bg-slate-900 border border-slate-850/80 text-white rounded-2xl p-4.5 px-5 shadow-2xl z-50 flex items-center space-x-3 max-w-sm"
+            id="success-upload-toast"
+          >
+            <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+            <div className="text-left">
+              <p className="text-xs font-bold text-white uppercase tracking-wider font-sans leading-none mb-1">Upload Completed</p>
+              <p className="text-[11px] text-slate-350 font-semibold leading-relaxed truncate max-w-[200px]" title={successToast}>
+                {successToast}
+              </p>
+            </div>
+            <button onClick={() => setSuccessToast(null)} className="text-slate-500 hover:text-slate-300 transition-colors p-1 rounded-full hover:bg-slate-800 cursor-pointer">
+              <X className="w-3.5 h-3.5" />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );
