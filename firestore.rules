@@ -14,7 +14,7 @@ service cloud.firestore {
       allow read: if isServerAgent() || (
         request.auth != null && (
           resource.data.ownerId == request.auth.uid ||
-          request.auth.token.email in resource.data.get('sharedWithEmails', [])
+          ('sharedWithEmails' in resource.data && request.auth.token.email in resource.data.sharedWithEmails)
         )
       );
       
@@ -23,7 +23,7 @@ service cloud.firestore {
           (resource == null && request.resource.data.ownerId == request.auth.uid) ||
           (resource != null && (
             resource.data.ownerId == request.auth.uid ||
-            request.auth.token.email in resource.data.get('sharedWithEmails', [])
+            ('sharedWithEmails' in resource.data && request.auth.token.email in resource.data.sharedWithEmails)
           ))
         )
       );

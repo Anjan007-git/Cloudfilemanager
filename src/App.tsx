@@ -18,6 +18,7 @@ import MyFilesView from './components/MyFilesView.js';
 import StorageView from './components/StorageView.js';
 import SettingsView from './components/SettingsView.js';
 import HelpCenterView from './components/HelpCenterView.js';
+import ErrorBoundary from './components/ErrorBoundary.js';
 import { CloudFile, Activity, SystemNotification, UserProfile } from './types.js';
 
 export default function App() {
@@ -888,31 +889,35 @@ export default function App() {
                 className="max-w-7xl mx-auto"
               >
                 {activeView === 'dashboard' && (
-                  <DashboardView 
-                    user={user}
-                    files={files}
-                    activities={activities}
-                    onUploadClick={triggerGlobalUpload}
-                    onCreateFolderClick={() => setActiveView('files')}
-                    onNavigateView={(v) => setActiveView(v)}
-                    onSelectFolder={setSelectedFolderId}
-                    token={token!}
-                    onRefresh={fetchFiles}
-                  />
+                  <ErrorBoundary areaName="Dashboard" onReset={fetchFiles}>
+                    <DashboardView 
+                      user={user}
+                      files={files}
+                      activities={activities}
+                      onUploadClick={triggerGlobalUpload}
+                      onCreateFolderClick={() => setActiveView('files')}
+                      onNavigateView={(v) => setActiveView(v)}
+                      onSelectFolder={setSelectedFolderId}
+                      token={token!}
+                      onRefresh={fetchFiles}
+                    />
+                  </ErrorBoundary>
                 )}
 
                 {['files', 'shared', 'starred', 'recent', 'trash'].includes(activeView) && (
-                  <MyFilesView 
-                    files={files}
-                    onRefresh={fetchFiles}
-                    token={token!}
-                    selectedFolderId={selectedFolderId}
-                    onSelectFolder={setSelectedFolderId}
-                    onTrackActivity={() => { fetchActivities(); fetchNotifications(); fetchMe(token!); }}
-                    uploadQueue={uploadQueue}
-                    onUploadFiles={handleFilesUpload}
-                    onClearCompletedUploads={handleClearCompletedUploads}
-                  />
+                  <ErrorBoundary areaName="Files Workspace" onReset={fetchFiles}>
+                    <MyFilesView 
+                      files={files}
+                      onRefresh={fetchFiles}
+                      token={token!}
+                      selectedFolderId={selectedFolderId}
+                      onSelectFolder={setSelectedFolderId}
+                      onTrackActivity={() => { fetchActivities(); fetchNotifications(); fetchMe(token!); }}
+                      uploadQueue={uploadQueue}
+                      onUploadFiles={handleFilesUpload}
+                      onClearCompletedUploads={handleClearCompletedUploads}
+                    />
+                  </ErrorBoundary>
                 )}
 
                 {activeView === 'storage' && (

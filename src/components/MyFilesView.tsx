@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { CloudFile, SharedUser, ShareLink } from '../types.js';
 import FilePreviewModal from './FilePreviewModal.js';
+import ErrorBoundary from './ErrorBoundary.js';
 
 interface MyFilesViewProps {
   files: CloudFile[];
@@ -1383,15 +1384,17 @@ export default function MyFilesView({
 
       {/* 8. Beautiful New Integrated FilePreviewModal */}
       {previewFile && (
-        <FilePreviewModal 
-          file={previewFile}
-          onClose={() => setPreviewFile(null)}
-          token={token}
-          onDownload={handleDownload}
-          onToggleStar={handleToggleStar}
-          allFiles={initialFiles}
-          onNavigateFile={(nxt) => setPreviewFile(nxt)}
-        />
+        <ErrorBoundary areaName="File Previewer" onReset={() => setPreviewFile(null)}>
+          <FilePreviewModal 
+            file={previewFile}
+            onClose={() => setPreviewFile(null)}
+            token={token}
+            onDownload={handleDownload}
+            onToggleStar={handleToggleStar}
+            allFiles={initialFiles}
+            onNavigateFile={(nxt) => setPreviewFile(nxt)}
+          />
+        </ErrorBoundary>
       )}
     </div>
   );
