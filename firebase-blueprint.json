@@ -1,29 +1,74 @@
 {
   "entities": {
-    "User": {
-      "title": "User Profile",
-      "description": "Enterprise cloud file manager user profile.",
+    "File": {
+      "title": "CloudFileMetadata",
+      "description": "Metadata for files, folders, and shared assets stored in S3 and Firestore.",
       "type": "object",
       "properties": {
-        "uid": { "type": "string" },
-        "fullName": { "type": "string" },
-        "email": { "type": "string" },
-        "createdAt": { "type": "string" },
-        "updatedAt": { "type": "string" },
-        "plan": { "type": "string" },
-        "storageUsed": { "type": "number" },
-        "storageLimit": { "type": "number" },
-        "totalFiles": { "type": "number" },
-        "downloads": { "type": "number" },
-        "sharedFiles": { "type": "number" }
+        "ownerId": {
+          "type": "string",
+          "description": "The unique ID of the user owning this file or folder."
+        },
+        "fileName": {
+          "type": "string",
+          "description": "The name of the S3 key object filename."
+        },
+        "originalName": {
+          "type": "string",
+          "description": "The client-provided or display name of the uploaded file."
+        },
+        "fileSize": {
+          "type": "number",
+          "description": "Size of the uploaded file asset in bytes."
+        },
+        "mimeType": {
+          "type": "string",
+          "description": "The IANA media mime-type or 'folder' key status indicator."
+        },
+        "s3Key": {
+          "type": "string",
+          "description": "The actual full key pointing inside the target AWS S3 user bucket folder."
+        },
+        "createdAt": {
+          "type": "string",
+          "description": "ISO 8601 creation timestamp string."
+        },
+        "updatedAt": {
+          "type": "string",
+          "description": "ISO 8601 last modification timestamp string."
+        },
+        "starred": {
+          "type": "boolean",
+          "description": "Indicates whether this item has been marked as high-priority starred favorites."
+        },
+        "trashed": {
+          "type": "boolean",
+          "description": "Indicates whether the asset sits in the active user Trash bin collection."
+        },
+        "folderId": {
+          "type": "string",
+          "description": "Owner ID folder parent category path for nested navigation tree nodes."
+        }
       },
-      "required": ["uid", "fullName", "email"]
+      "required": [
+        "ownerId",
+        "fileName",
+        "originalName",
+        "fileSize",
+        "mimeType",
+        "s3Key",
+        "createdAt",
+        "updatedAt",
+        "starred",
+        "trashed",
+        "folderId"
+      ]
     }
   },
   "firestore": {
-    "users/{userId}": {
-      "schema": "User",
-      "description": "Profiles for authenticated cloud storage users containing active subscription and metrics data."
+    "/files/{fileId}": {
+      "schema": "File",
+      "description": "Individual files and nested folders records database collection index."
     }
   }
 }

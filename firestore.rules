@@ -1,12 +1,36 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /users/{userId} {
-      allow read: if request.auth != null && request.auth.uid == userId;
-      allow write: if request.auth != null && request.auth.uid == userId;
+    // Helper to check if signed-in user is the backend server agent
+    function isServerAgent() {
+      return request.auth != null && request.auth.token.email == 'server-agent@app.com';
     }
+
+    match /users/{userId} {
+      allow read, write: if isServerAgent() || (request.auth != null && request.auth.uid == userId);
+    }
+
+    match /files/{fileId} {
+      allow read: if isServerAgent() || (
+        request.auth != null && (
+          resource.data.ownerId == request.auth.uid ||
+          request.auth.token.email in resource.data.get('sharedWithEmails', [])
+        )
+      );
+      
+      allow write: if isServerAgent() || (
+        request.auth != null && (
+          (resource == null && request.resource.data.ownerId == request.auth.uid) ||
+          (resource != null && (
+            resource.data.ownerId == request.auth.uid ||
+            request.auth.token.email in resource.data.get('sharedWithEmails', [])
+          ))
+        )
+      );
+    }
+
     match /test/{docId} {
-      allow read: if true;
+      allow read, write: if true;
     }
   }
 }
