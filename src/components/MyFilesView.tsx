@@ -400,7 +400,7 @@ export default function MyFilesView({
       alert('Bulk directory zip downloading complies with Pro membership tier.');
       return;
     }
-    const downloadUrl = `/api/files/download/${file.id}?token=${token}`;
+    const downloadUrl = `/api/files/download/${file.id}?token=${token}&download=true`;
     window.open(downloadUrl, '_blank');
   };
 

@@ -117,7 +117,7 @@ export default function DashboardView({
   // Operations and Handlers
   const handleDownload = (file: CloudFile) => {
     if (!token) return;
-    const downloadUrl = `/api/files/download/${file.id}?token=${token}`;
+    const downloadUrl = `/api/files/download/${file.id}?token=${token}&download=true`;
     const link = document.createElement('a');
     link.href = downloadUrl;
     link.setAttribute('download', file.name);
@@ -1107,10 +1107,10 @@ export default function DashboardView({
 
               {/* Main Premium Card Modal */}
               <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 15 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 15 }}
-                transition={{ type: "spring", duration: 0.4 }}
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ type: "tween", ease: "easeOut", duration: 0.12 }}
                 className="relative w-full max-w-4xl bg-white rounded-[24px] shadow-[0_24px_60px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden z-10 flex flex-col max-h-[85vh]"
                 id="preview-modal-card"
               >

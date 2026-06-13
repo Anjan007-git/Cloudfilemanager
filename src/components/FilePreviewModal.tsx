@@ -221,10 +221,10 @@ export default function FilePreviewModal({
 
       {/* Main Container */}
       <motion.div 
-        initial={{ opacity: 0, scale: 0.95, y: 15 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.95, y: 15 }}
-        transition={{ duration: 0.23, type: "spring", stiffness: 150, damping: 20 }}
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.98 }}
+        transition={{ type: "tween", ease: "easeOut", duration: 0.12 }}
         className="bg-white border border-slate-250/80 border-slate-200 rounded-3xl max-w-5xl w-full h-[85vh] overflow-hidden shadow-2xl relative z-10 flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >

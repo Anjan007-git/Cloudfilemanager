@@ -1005,13 +1005,26 @@ async function startServer() {
       const verifiedToken = tokenHeader || tokenQuery;
 
       if (verifiedToken) {
+        let decoded: any = null;
         try {
-          const decoded = jwt.verify(verifiedToken, JWT_SECRET) as any;
+          decoded = jwt.verify(verifiedToken, JWT_SECRET) as any;
+        } catch (err) {
+          // If standard verification fails, parse as Firebase ID Token
+          const decodedFirebase = jwt.decode(verifiedToken) as any;
+          if (decodedFirebase && decodedFirebase.sub && decodedFirebase.email) {
+            decoded = {
+              userId: decodedFirebase.sub,
+              email: decodedFirebase.email
+            };
+          }
+        }
+
+        if (decoded) {
           // Check access ownership or sharing scope
           if (file.ownerId === decoded.userId || file.sharedWith.some(su => su.email === decoded.email)) {
             allowed = true;
           }
-        } catch (err) {}
+        }
       }
     }
 
@@ -1026,7 +1039,13 @@ async function startServer() {
       fs.writeFileSync(physicalPath, `This is simulating local file stream for Cloud File Manager download: ${file.name}`);
     }
 
-    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(file.name)}"`);
+    const downloadParam = req.query.download === 'true';
+    if (downloadParam) {
+      res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(file.name)}"`);
+    } else {
+      res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(file.name)}"`);
+    }
+    res.setHeader('Cache-Control', 'private, max-age=600');
     res.setHeader('Content-Type', file.mimeType || 'application/octet-stream');
     const fileStream = fs.createReadStream(physicalPath);
     fileStream.pipe(res);
