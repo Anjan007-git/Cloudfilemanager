@@ -586,38 +586,49 @@ export default function MyFilesView({
 
       {/* 2. Upload queues drawer */}
       {uploadQueue.length > 0 && (
-        <div className="bg-slate-900 border border-slate-800 text-slate-200 rounded-2xl p-4.5 space-y-3 shadow-xl">
-          <div className="flex items-center justify-between text-xs pb-2 border-b border-slate-800">
-            <div className="flex items-center space-x-2">
-              <span className="flex h-2 w-2 rounded-full bg-blue-500 animate-pulse"></span>
-              <p className="font-semibold text-slate-100 uppercase tracking-wider font-mono text-[10px]">Synchronizer Queue monitor</p>
+        <div className="bg-white border border-slate-200 text-slate-700 rounded-3xl p-5 space-y-4 shadow-xl">
+          <div className="flex items-center justify-between pb-2.5 border-b border-slate-150">
+            <div className="flex items-center space-x-2.5">
+              <span className={`flex h-2.5 w-2.5 rounded-full ${uploadQueue.some(q => q.status === 'uploading') ? 'bg-blue-600 animate-pulse' : 'bg-emerald-500'}`}></span>
+              <p className="font-display font-semibold text-slate-800 text-sm">
+                {uploadQueue.some(q => q.status === 'uploading') ? 'Uploading files' : 'Upload completed'}
+              </p>
             </div>
             <button 
               onClick={onClearCompletedUploads}
-              className="text-blue-400 font-bold hover:underline"
+              className="text-slate-400 hover:text-slate-600 p-1.5 hover:bg-slate-50 rounded-lg transition-all cursor-pointer"
+              title="Close Queue Monitor"
             >
-              Clear Completed
+              <X className="w-4 h-4 font-bold" />
             </button>
           </div>
           <div className="space-y-2 max-h-36 overflow-y-auto pr-2">
             {uploadQueue.map(item => (
-              <div key={item.id} className="flex items-center justify-between text-xs bg-slate-800/40 p-3 rounded-xl border border-slate-800/60">
+              <div key={item.id} className="flex items-center justify-between text-xs bg-slate-50 hover:bg-slate-100/60 p-3 rounded-2xl border border-slate-100/80 transition-all hover:shadow-xs">
                 <div className="flex items-center space-x-3 w-2/3">
-                  <FileText className="w-4.5 h-4.5 text-blue-400 flex-shrink-0" />
-                  <div className="truncate">
-                    <p className="font-semibold text-slate-200 truncate">{item.name}</p>
-                    <span className="text-[10px] text-slate-500 font-mono">{formatBytes(item.size)}</span>
+                  <div className="p-2 bg-white rounded-xl border border-slate-200/50 text-blue-500 shadow-xs">
+                    <FileText className="w-4 h-4 flex-shrink-0" />
+                  </div>
+                  <div className="truncate text-left space-y-0.5">
+                    <p className="font-semibold text-slate-800 truncate pr-1" title={item.name}>{item.name}</p>
+                    <span className="text-[10px] text-slate-400 font-medium font-sans block">{formatBytes(item.size)}</span>
                   </div>
                 </div>
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-2 flex-shrink-0">
                   {item.status === 'uploading' && (
-                    <span className="text-blue-400 font-mono font-bold animate-pulse">{item.progress}%</span>
+                    <span className="text-blue-600 bg-blue-50 border border-blue-100 font-semibold px-2 py-0.5 rounded-full text-[10px] animate-pulse">
+                      {item.progress}%
+                    </span>
                   )}
                   {item.status === 'completed' && (
-                    <span className="text-emerald-400 font-mono font-semibold">Completed</span>
+                    <span className="text-emerald-600 bg-emerald-50 border border-emerald-100 font-semibold px-2.5 py-0.5 rounded-full text-[9.5px] flex items-center gap-1.5">
+                      ✓ Uploaded
+                    </span>
                   )}
                   {item.status === 'error' && (
-                    <span className="text-red-400 font-mono font-semibold" title={item.errorMsg}>Error</span>
+                    <span className="text-red-600 bg-red-50 border border-red-100 font-semibold px-2.5 py-0.5 rounded-full text-[9.5px]" title={item.errorMsg}>
+                      ⚠ Error
+                    </span>
                   )}
                 </div>
               </div>
@@ -1240,12 +1251,12 @@ export default function MyFilesView({
               exit={{ opacity: 0, scale: 0.95 }}
               transition={{ duration: 0.12 }}
               style={{ top: contextMenu.y, left: contextMenu.x }}
-              className="fixed z-50 bg-slate-900 border border-slate-800 text-slate-100 rounded-2xl p-2 shadow-2xl w-48 font-sans"
+              className="fixed z-50 bg-white border border-slate-200 text-slate-800 rounded-2xl p-2.5 shadow-2xl w-52 font-sans"
               id="custom-ctx-menu"
             >
-              <div className="px-3 py-1.5 border-b border-slate-850/80 mb-1 max-w-[170px] truncate">
-                <p className="text-[10px] uppercase font-bold tracking-wider text-slate-500 font-mono">Operations</p>
-                <p className="text-xs font-bold text-slate-200 truncate pr-0.5" title={contextMenu.file.name}>{contextMenu.file.name}</p>
+              <div className="px-3 py-2 border-b border-slate-100 mb-1 max-w-[190px] truncate animate-pulse">
+                <p className="text-[10px] uppercase font-bold tracking-wider text-slate-400 font-sans">Operations</p>
+                <p className="text-xs font-bold text-slate-750 truncate pr-0.5" title={contextMenu.file.name}>{contextMenu.file.name}</p>
               </div>
               <div className="space-y-0.5 text-xs text-left">
                 {!contextMenu.file.isFolder && (
@@ -1254,9 +1265,9 @@ export default function MyFilesView({
                       setPreviewFile(contextMenu.file);
                       setContextMenu(null);
                     }}
-                    className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-slate-800 font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer text-left"
+                    className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-slate-50 font-semibold text-slate-650 hover:text-slate-900 transition-colors cursor-pointer text-left"
                   >
-                    <Eye className="w-3.5 h-3.5 text-blue-400" />
+                    <Eye className="w-3.5 h-3.5 text-blue-500" />
                     <span>Quick Preview</span>
                   </button>
                 )}
@@ -1266,9 +1277,9 @@ export default function MyFilesView({
                       onSelectFolder(contextMenu.file.id);
                       setContextMenu(null);
                     }}
-                    className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-slate-800 font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer text-left"
+                    className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-slate-50 font-semibold text-slate-650 hover:text-slate-900 transition-colors cursor-pointer text-left"
                   >
-                    <Folder className="w-3.5 h-3.5 text-blue-400" />
+                    <Folder className="w-3.5 h-3.5 text-blue-500" />
                     <span>Open Folder</span>
                   </button>
                 )}
@@ -1278,9 +1289,9 @@ export default function MyFilesView({
                       handleDownload(contextMenu.file);
                       setContextMenu(null);
                     }}
-                    className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-slate-800 font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer text-left"
+                    className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-slate-50 font-semibold text-slate-650 hover:text-slate-900 transition-colors cursor-pointer text-left"
                   >
-                    <Download className="w-3.5 h-3.5 text-emerald-400" />
+                    <Download className="w-3.5 h-3.5 text-emerald-500" />
                     <span>Download</span>
                   </button>
                 )}
@@ -1289,7 +1300,7 @@ export default function MyFilesView({
                     handleToggleStar(contextMenu.file.id);
                     setContextMenu(null);
                   }}
-                  className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-slate-800 font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer text-left"
+                  className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-slate-50 font-semibold text-slate-650 hover:text-slate-900 transition-colors cursor-pointer text-left"
                 >
                   <Star className={`w-3.5 h-3.5 ${contextMenu.file.isStarred ? 'text-amber-500 fill-current' : 'text-amber-400'}`} />
                   <span>{contextMenu.file.isStarred ? 'Unstar Item' : 'Star Item'}</span>
@@ -1300,9 +1311,9 @@ export default function MyFilesView({
                     setRenameValue(contextMenu.file.name);
                     setContextMenu(null);
                   }}
-                  className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-slate-800 font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer text-left"
+                  className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-slate-50 font-semibold text-slate-650 hover:text-slate-900 transition-colors cursor-pointer text-left"
                 >
-                  <Edit3 className="w-3.5 h-3.5 text-indigo-400" />
+                  <Edit3 className="w-3.5 h-3.5 text-indigo-500" />
                   <span>Rename</span>
                 </button>
                 <button
@@ -1310,9 +1321,9 @@ export default function MyFilesView({
                     setShareFile(contextMenu.file);
                     setContextMenu(null);
                   }}
-                  className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-slate-800 font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer text-left"
+                  className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-slate-50 font-semibold text-slate-650 hover:text-slate-900 transition-colors cursor-pointer text-left"
                 >
-                  <Share2 className="w-3.5 h-3.5 text-cyan-400" />
+                  <Share2 className="w-3.5 h-3.5 text-cyan-500" />
                   <span>Manage Access</span>
                 </button>
                 <button
@@ -1321,9 +1332,9 @@ export default function MyFilesView({
                     setTargetParentId(contextMenu.file.parentId || 'null');
                     setContextMenu(null);
                   }}
-                  className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-slate-800 font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer text-left"
+                  className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-slate-50 font-semibold text-slate-650 hover:text-slate-900 transition-colors cursor-pointer text-left"
                 >
-                  <Move className="w-3.5 h-3.5 text-teal-400" />
+                  <Move className="w-3.5 h-3.5 text-teal-500" />
                   <span>Move & Relocate</span>
                 </button>
                 {!contextMenu.file.isFolder && (
@@ -1332,19 +1343,19 @@ export default function MyFilesView({
                       handleCopyLink(contextMenu.file);
                       setContextMenu(null);
                     }}
-                    className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-slate-800 font-semibold text-slate-300 hover:text-white transition-colors cursor-pointer text-left"
+                    className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-slate-50 font-semibold text-slate-650 hover:text-slate-900 transition-colors cursor-pointer text-left"
                   >
-                    <Plus className="w-3.5 h-3.5 text-emerald-400" />
+                    <Plus className="w-3.5 h-3.5 text-emerald-500" />
                     <span>Copy Link</span>
                   </button>
                 )}
-                <div className="border-t border-slate-850/85 my-1" />
+                <div className="border-t border-slate-100 my-1" />
                 <button
                   onClick={() => {
                     handleDeleteFolderOrFile(contextMenu.file);
                     setContextMenu(null);
                   }}
-                  className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-red-950/50 hover:text-red-350 text-red-100 font-semibold transition-colors cursor-pointer text-left"
+                  className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-xl hover:bg-red-50 text-red-600 font-semibold transition-colors cursor-pointer text-left"
                 >
                   <Trash2 className="w-3.5 h-3.5 text-red-500" />
                   <span>Delete</span>
@@ -1362,10 +1373,10 @@ export default function MyFilesView({
             initial={{ opacity: 0, y: 30, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
-            className="fixed bottom-6 left-6 bg-slate-900 border border-slate-800 text-white rounded-xl p-3 px-5 shadow-2xl z-50 flex items-center space-x-2.5 max-w-sm"
+            className="fixed bottom-6 left-6 bg-white border border-slate-200 text-slate-800 rounded-2xl p-4 px-5 shadow-2xl z-50 flex items-center space-x-3.5 max-w-sm font-sans"
           >
             <span className="h-2 w-2 rounded-full bg-blue-500"></span>
-            <p className="text-xs font-semibold">{copyToast}</p>
+            <p className="text-xs font-semibold text-slate-700">{copyToast}</p>
           </motion.div>
         )}
       </AnimatePresence>

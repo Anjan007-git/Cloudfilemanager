@@ -191,7 +191,7 @@ export default function FilePreviewModal({
 
   return (
     <div 
-      className="fixed inset-0 bg-slate-950/90 z-50 flex items-center justify-center p-4 backdrop-blur-md overflow-hidden font-sans"
+      className="fixed inset-0 bg-slate-900/40 z-50 flex items-center justify-center p-4 backdrop-blur-sm overflow-hidden font-sans"
       id="file-preview-modal-root"
     >
       {/* Background close overlay */}
@@ -201,10 +201,10 @@ export default function FilePreviewModal({
       {prevFile && (
         <button
           onClick={() => onNavigateFile(prevFile)}
-          className="absolute left-4 sm:left-8 z-50 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md transition-all active:scale-95 cursor-pointer border border-white/5 shadow-2xl hidden md:flex"
+          className="absolute left-4 sm:left-8 z-50 p-3 rounded-full bg-white hover:bg-slate-50 text-slate-700 shadow-lg border border-slate-200 transition-all active:scale-95 cursor-pointer hidden md:flex"
           title={`Prev: ${prevFile.name}`}
         >
-          <ChevronLeft className="w-6 h-6" />
+          <ChevronLeft className="w-5 h-5" />
         </button>
       )}
 
@@ -212,10 +212,10 @@ export default function FilePreviewModal({
       {nextFile && (
         <button
           onClick={() => onNavigateFile(nextFile)}
-          className="absolute right-4 sm:right-8 z-50 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white backdrop-blur-md transition-all active:scale-95 cursor-pointer border border-white/5 shadow-2xl hidden md:flex"
+          className="absolute right-4 sm:right-8 z-50 p-3 rounded-full bg-white hover:bg-slate-50 text-slate-700 shadow-lg border border-slate-200 transition-all active:scale-95 cursor-pointer hidden md:flex"
           title={`Next: ${nextFile.name}`}
         >
-          <ChevronRight className="w-6 h-6" />
+          <ChevronRight className="w-5 h-5" />
         </button>
       )}
 
@@ -225,14 +225,14 @@ export default function FilePreviewModal({
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 15 }}
         transition={{ duration: 0.23, type: "spring", stiffness: 150, damping: 20 }}
-        className="bg-slate-900 border border-slate-800 rounded-3xl max-w-5xl w-full h-[85vh] overflow-hidden shadow-2xl relative z-10 flex flex-col"
+        className="bg-white border border-slate-250/80 border-slate-200 rounded-3xl max-w-5xl w-full h-[85vh] overflow-hidden shadow-2xl relative z-10 flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         
         {/* Top Header Control Bar */}
-        <div className="px-6 py-4 border-b border-slate-800 flex items-center justify-between shrink-0 bg-slate-900/60 backdrop-blur-lg">
-          <div className="flex items-center space-x-3 min-w-0">
-            <span className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-xl text-blue-400">
+        <div className="px-6 py-4.5 border-b border-slate-200/60 flex items-center justify-between shrink-0 bg-white">
+          <div className="flex items-center space-x-3.5 min-w-0">
+            <span className="p-2.5 bg-blue-50 border border-blue-100 rounded-xl text-blue-600 block shrink-0">
               {file.mimeType.toLowerCase().startsWith('image/') ? <Image className="w-5 h-5" /> :
                file.mimeType.toLowerCase().includes('pdf') ? <FileText className="w-5 h-5" /> :
                file.mimeType.toLowerCase().startsWith('video/') ? <Film className="w-5 h-5" /> :
@@ -240,11 +240,11 @@ export default function FilePreviewModal({
                file.mimeType.toLowerCase().includes('zip') ? <Archive className="w-5 h-5" /> :
                <File className="w-5 h-5" />}
             </span>
-            <div className="truncate text-left">
-              <h3 className="font-display font-semibold text-white text-sm truncate leading-snug" title={file.name}>
+            <div className="truncate text-left leading-tight">
+              <h3 className="font-display font-black text-slate-900 text-sm truncate" title={file.name}>
                 {file.name}
               </h3>
-              <p className="text-[10px] text-slate-450 font-mono font-bold uppercase tracking-wider">
+              <p className="text-[10px] text-slate-400 font-mono font-bold tracking-wider mt-0.5">
                 {formatBytes(file.size)} • {file.mimeType}
               </p>
             </div>
@@ -256,7 +256,7 @@ export default function FilePreviewModal({
               className={`p-2.5 rounded-xl border transition-all active:scale-95 cursor-pointer ${
                 file.isStarred 
                   ? 'bg-amber-500/10 border-amber-500/20 text-amber-500 hover:bg-amber-500/20' 
-                  : 'bg-slate-800 border-slate-750 text-slate-400 hover:text-white hover:border-slate-700'
+                  : 'bg-white border-slate-200 text-slate-450 hover:text-slate-700 hover:bg-slate-50'
               }`}
               title="Toggle Star"
             >
@@ -265,7 +265,7 @@ export default function FilePreviewModal({
 
             <button
               onClick={() => onDownload(file)}
-              className="p-2.5 rounded-xl bg-slate-800 border border-slate-755 text-slate-350 hover:text-white hover:border-slate-700 transition-all active:scale-95 cursor-pointer"
+              className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-slate-705 hover:bg-slate-50 transition-all active:scale-95 cursor-pointer"
               title="Download File"
             >
               <Download className="w-4 h-4" />
@@ -274,18 +274,18 @@ export default function FilePreviewModal({
             {(file.mimeType.toLowerCase().includes('pdf') || file.mimeType.toLowerCase().startsWith('image/')) && (
               <button
                 onClick={handlePrint}
-                className="p-2.5 rounded-xl bg-slate-800 border border-slate-755 text-slate-350 hover:text-white hover:border-slate-700 transition-all active:scale-95 cursor-pointer"
+                className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-slate-705 hover:bg-slate-50 transition-all active:scale-95 cursor-pointer"
                 title="Print File"
               >
                 <Printer className="w-4 h-4" />
               </button>
             )}
 
-            <div className="h-6 w-px bg-slate-800" />
+            <div className="h-6 w-px bg-slate-200" />
 
             <button 
               onClick={onClose}
-              className="p-2.5 rounded-xl bg-slate-800 border border-slate-755 text-slate-400 hover:text-white hover:border-slate-750 hover:bg-red-500/10 cursor-pointer transition-all"
+              className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-slate-500 hover:text-slate-800 hover:bg-slate-100 cursor-pointer transition-all active:scale-95"
               title="Close Preview"
             >
               <X className="w-4 h-4" />
@@ -293,8 +293,8 @@ export default function FilePreviewModal({
           </div>
         </div>
 
-        {/* Inner Content Area - Flex-1 to adjust space dynamically */}
-        <div className="flex-1 overflow-auto flex items-center justify-center p-6 bg-slate-950 relative">
+        {/* Inner Content Area - Flex-1 to adjust space dynamically with soft premium secondary background */}
+        <div className="flex-1 overflow-auto flex items-center justify-center p-6 bg-slate-50/50 relative">
           
           {/* IMAGE PREVIEW */}
           {file.mimeType.toLowerCase().startsWith('image/') && (
@@ -307,36 +307,36 @@ export default function FilePreviewModal({
                   src={fileUrl} 
                   alt={file.name} 
                   referrerPolicy="no-referrer"
-                  className="max-w-[70vw] max-h-[55h] object-contain rounded-2xl shadow-2xl border border-white/5"
+                  className="max-w-[70vw] max-h-[55vh] object-contain rounded-2xl shadow-xl border border-slate-200 bg-white"
                 />
               </motion.div>
 
               {/* Float controls for Images */}
-              <div className="absolute bottom-4 bg-slate-900/80 border border-slate-800 backdrop-blur-lg rounded-full px-4 py-2 flex items-center space-x-3.5 shadow-xl text-slate-300">
-                <button onClick={() => setZoomLevel(prev => Math.max(0.4, prev - 0.2))} className="hover:text-white cursor-pointer"><ZoomOut className="w-4 h-4" /></button>
+              <div className="absolute bottom-4 bg-white/95 border border-slate-200/80 backdrop-blur-md rounded-full px-4 py-2 flex items-center space-x-3.5 shadow-lg text-slate-600">
+                <button onClick={() => setZoomLevel(prev => Math.max(0.4, prev - 0.2))} className="hover:text-slate-900 cursor-pointer"><ZoomOut className="w-4 h-4" /></button>
                 <span className="text-[10px] font-mono font-bold tracking-wider">{Math.round(zoomLevel * 100)}%</span>
-                <button onClick={() => setZoomLevel(prev => Math.min(3, prev + 0.2))} className="hover:text-white cursor-pointer"><ZoomIn className="w-4 h-4" /></button>
-                <div className="h-4 w-px bg-slate-805" />
-                <button onClick={() => setRotation(prev => (prev + 90) % 360)} className="hover:text-white cursor-pointer" title="Rotate"><RotateCcw className="w-4 h-4" /></button>
-                <button onClick={() => { setZoomLevel(1); setRotation(0); }} className="hover:text-white text-xs font-bold cursor-pointer">Reset</button>
+                <button onClick={() => setZoomLevel(prev => Math.min(3, prev + 0.2))} className="hover:text-slate-900 cursor-pointer"><ZoomIn className="w-4 h-4" /></button>
+                <div className="h-4 w-px bg-slate-200" />
+                <button onClick={() => setRotation(prev => (prev + 90) % 360)} className="hover:text-slate-900 cursor-pointer" title="Rotate"><RotateCcw className="w-4 h-4" /></button>
+                <button onClick={() => { setZoomLevel(1); setRotation(0); }} className="hover:text-slate-900 text-xs font-bold cursor-pointer">Reset</button>
               </div>
             </div>
           )}
 
           {/* PDF PREVIEW */}
           {file.mimeType.toLowerCase().includes('pdf') && (
-            <div className="w-full h-full rounded-2xl overflow-hidden border border-slate-800">
+            <div className="w-full h-full rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
               <iframe 
                 src={`${fileUrl}#toolbar=1`} 
                 title={file.name}
-                className="w-full h-full bg-slate-900"
+                className="w-full h-full bg-slate-100"
               />
             </div>
           )}
 
           {/* VIDEO PREVIEW */}
           {file.mimeType.toLowerCase().startsWith('video/') && (
-            <div className="w-full max-w-3xl flex flex-col items-center justify-center bg-black rounded-2xl overflow-hidden border border-slate-800 shadow-2xl relative group">
+            <div className="w-full max-w-3xl flex flex-col items-center justify-center bg-slate-900 rounded-2xl overflow-hidden border border-slate-250 shadow-xl relative group">
               <video 
                 ref={mediaRef as any}
                 src={fileUrl}
@@ -347,18 +347,18 @@ export default function FilePreviewModal({
               />
               
               {/* Premium Video HUD Player Controls */}
-              <div className="absolute bottom-0 inset-x-0 bg-slate-900/90 border-t border-slate-800 p-4 space-y-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col">
+              <div className="absolute bottom-0 inset-x-0 bg-white/95 border-t border-slate-200 p-4 space-y-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col">
                 <div className="flex items-center space-x-3">
-                  <span className="text-[10px] font-mono font-bold text-slate-400">{formatTime(currentTime)}</span>
+                  <span className="text-[10px] font-mono font-bold text-slate-500">{formatTime(currentTime)}</span>
                   <input 
                     type="range"
                     min="0"
                     max={duration || 100}
                     value={currentTime}
                     onChange={handleSeekChange}
-                    className="flex-1 accent-blue-500 h-1 rounded-full cursor-pointer opacity-80 hover:opacity-100 bg-slate-800"
+                    className="flex-1 accent-blue-600 h-1 rounded-full cursor-pointer opacity-80 hover:opacity-100 bg-slate-200"
                   />
-                  <span className="text-[10px] font-mono font-bold text-slate-400">{formatTime(duration)}</span>
+                  <span className="text-[10px] font-mono font-bold text-slate-500">{formatTime(duration)}</span>
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -371,7 +371,7 @@ export default function FilePreviewModal({
                     </button>
 
                     <div className="flex items-center space-x-2">
-                      <button onClick={handleToggleMute} className="text-slate-400 hover:text-white cursor-pointer">
+                      <button onClick={handleToggleMute} className="text-slate-500 hover:text-slate-800 cursor-pointer">
                         {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
                       </button>
                       <input 
@@ -381,7 +381,7 @@ export default function FilePreviewModal({
                         step="0.05"
                         value={isMuted ? 0 : volume}
                         onChange={handleVolumeChange}
-                        className="w-20 accent-blue-500 h-1 rounded-full cursor-pointer bg-slate-800"
+                        className="w-20 accent-blue-600 h-1 rounded-full cursor-pointer bg-slate-200"
                       />
                     </div>
                   </div>
@@ -392,7 +392,7 @@ export default function FilePreviewModal({
                         mediaRef.current.requestFullscreen().catch(e => console.error(e));
                       }
                     }}
-                    className="text-slate-400 hover:text-white cursor-pointer"
+                    className="text-slate-500 hover:text-slate-800 cursor-pointer"
                     title="Fullscreen"
                   >
                     <Maximize2 className="w-4 h-4" />
@@ -404,7 +404,7 @@ export default function FilePreviewModal({
 
           {/* AUDIO PREVIEW */}
           {file.mimeType.toLowerCase().startsWith('audio/') && (
-            <div className="bg-slate-900 border border-slate-800 p-8 rounded-3xl w-full max-w-md shadow-2xl flex flex-col items-center space-y-6">
+            <div className="bg-white border border-slate-200 p-8 rounded-3xl w-full max-w-md shadow-xl flex flex-col items-center space-y-6">
               <audio 
                 ref={mediaRef as any}
                 src={fileUrl}
@@ -414,34 +414,34 @@ export default function FilePreviewModal({
                 className="hidden"
               />
 
-              <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-pink-500 to-rose-400 flex items-center justify-center text-white shadow-xl shadow-pink-500/10">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-500 flex items-center justify-center text-white shadow-lg shadow-blue-500/10">
                 <Music className="w-10 h-10" />
               </div>
 
-              <div className="text-center space-y-1 w-full">
+              <div className="text-center space-y-1.5 w-full">
                 <span className="text-[9px] uppercase font-mono tracking-widest text-slate-400 font-extrabold">Audio stream</span>
-                <h4 className="font-display font-bold text-white text-sm truncate" title={file.name}>{file.name}</h4>
-                <p className="text-[10px] text-slate-500 hover:text-slate-400 transition-colors font-mono font-bold leading-relaxed">{formatBytes(file.size)}</p>
+                <h4 className="font-display font-bold text-slate-900 text-sm truncate px-4" title={file.name}>{file.name}</h4>
+                <p className="text-[10px] text-slate-450 font-mono font-bold leading-relaxed">{formatBytes(file.size)}</p>
               </div>
 
               {/* Progress and controls */}
-              <div className="w-full space-y-2">
+              <div className="w-full space-y-3">
                 <div className="flex items-center space-x-3">
-                  <span className="text-[10px] font-mono font-bold text-slate-400">{formatTime(currentTime)}</span>
+                  <span className="text-[10px] font-mono font-bold text-slate-450">{formatTime(currentTime)}</span>
                   <input 
                     type="range"
                     min="0"
                     max={duration || 100}
                     value={currentTime}
                     onChange={handleSeekChange}
-                    className="flex-1 accent-pink-500 h-1 rounded-full cursor-pointer bg-slate-805"
+                    className="flex-1 accent-blue-600 h-1 bg-slate-100 rounded-full cursor-pointer"
                   />
-                  <span className="text-[10px] font-mono font-bold text-slate-400">{formatTime(duration)}</span>
+                  <span className="text-[10px] font-mono font-bold text-slate-450">{formatTime(duration)}</span>
                 </div>
 
                 <div className="flex items-center justify-between pt-2">
                   <div className="flex items-center space-x-2">
-                    <button onClick={handleToggleMute} className="text-slate-400 hover:text-white cursor-pointer">
+                    <button onClick={handleToggleMute} className="text-slate-450 hover:text-slate-700 cursor-pointer">
                       {isMuted ? <VolumeX className="w-4 h-3.5" /> : <Volume2 className="w-4 h-3.5" />}
                     </button>
                     <input 
@@ -451,13 +451,13 @@ export default function FilePreviewModal({
                       step="0.05"
                       value={isMuted ? 0 : volume}
                       onChange={handleVolumeChange}
-                      className="w-16 accent-pink-500 h-1 rounded-full cursor-pointer bg-slate-805"
+                      className="w-16 accent-blue-600 h-1 bg-slate-100 rounded-full cursor-pointer"
                     />
                   </div>
 
                   <button 
                     onClick={handlePlayPause}
-                    className="w-12 h-12 rounded-full bg-pink-500 hover:pink-600 text-white shadow-lg shadow-pink-500/20 active:scale-95 transition-all flex items-center justify-center cursor-pointer"
+                    className="w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-lg active:scale-95 transition-all flex items-center justify-center cursor-pointer"
                   >
                     {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5 fill-current" />}
                   </button>
@@ -470,20 +470,22 @@ export default function FilePreviewModal({
 
           {/* TEXT OR CODE PREVIEWS */}
           {(isTextType(file.mimeType) || isCodeType(file.name)) && (
-            <div className="w-full max-w-4xl h-full flex flex-col bg-[#0b0f19] border border-slate-800 rounded-2xl overflow-hidden shadow-2xl">
+            <div className="w-full max-w-4xl h-full flex flex-col bg-slate-50 border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
               {isTextLoading ? (
                 <div className="flex-1 flex flex-col items-center justify-center text-slate-400 space-y-3">
                   <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
                   <span className="text-xs font-mono font-bold uppercase tracking-wider">Parsing file nodes...</span>
                 </div>
               ) : textError ? (
-                <div className="flex-1 flex flex-col items-center justify-center text-red-400 space-y-3 p-6 text-center">
+                <div className="flex-1 flex flex-col items-center justify-center text-red-500 space-y-3 p-6 text-center">
                   <AlertCircle className="w-8 h-8" />
                   <p className="text-xs font-bold font-mono uppercase tracking-wider">{textError}</p>
                 </div>
               ) : (
                 <div className="flex-1 overflow-auto text-left leading-relaxed">
-                  {renderCodeFormatted()}
+                  <pre className="font-mono text-xs text-slate-800 bg-white p-6 rounded-2xl overflow-auto w-full leading-relaxed border border-slate-200 max-h-[50vh] text-left">
+                    <code>{textContent}</code>
+                  </pre>
                 </div>
               )}
             </div>
@@ -495,48 +497,48 @@ export default function FilePreviewModal({
            !file.mimeType.toLowerCase().startsWith('video/') && 
            !file.mimeType.toLowerCase().startsWith('audio/') && 
            !(isTextType(file.mimeType) || isCodeType(file.name)) && (
-            <div className="bg-slate-900 border border-slate-800 p-8 sm:p-10 rounded-3xl w-full max-w-md shadow-2xl space-y-6 text-center">
-              <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-slate-500 to-slate-750 flex items-center justify-center text-white shadow-xl mx-auto">
+            <div className="bg-white border border-slate-200 p-8 sm:p-10 rounded-3xl w-full max-w-md shadow-xl space-y-6 text-center">
+              <div className="w-16 h-16 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400 mx-auto shadow-sm">
                 {file.mimeType.toLowerCase().includes('zip') ? (
-                  <Archive className="w-10 h-10 text-amber-400" />
+                  <Archive className="w-8 h-8 text-amber-500" />
                 ) : (
-                  <File className="w-10 h-10 text-blue-400" />
+                  <File className="w-8 h-8 text-blue-500" />
                 )}
               </div>
 
-              <div className="space-y-2">
+              <div className="space-y-2 px-2">
                 <span className="text-[9px] uppercase font-mono tracking-widest text-slate-400 font-extrabold block">Resource Information</span>
-                <h4 className="font-display font-bold text-white text-base truncate" title={file.name}>{file.name}</h4>
-                <p className="text-xs font-medium text-slate-400 leading-relaxed font-sans">
-                  Inline viewport rendering is not supported for this complex document protocol. Direct extraction download is recommended.
+                <h4 className="font-display font-bold text-slate-900 text-sm truncate" title={file.name}>{file.name}</h4>
+                <p className="text-[11px] font-medium text-slate-450 leading-relaxed font-sans">
+                  Inline viewport rendering is not supported for this document protocol. Direct download is recommended.
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 text-left p-4.5 bg-slate-950/60 rounded-2xl text-[11px] font-semibold border border-slate-805">
+              <div className="grid grid-cols-2 gap-4 text-left p-4 bg-slate-50 rounded-2xl text-[11px] font-semibold border border-slate-100">
                 <div className="space-y-1">
-                  <span className="text-[9px] font-mono tracking-wide uppercase text-slate-500 block">Class format</span>
-                  <span className="text-slate-300 block truncate">{file.mimeType}</span>
+                  <span className="text-[9px] font-mono tracking-wide uppercase text-slate-400 block font-bold">Class format</span>
+                  <span className="text-slate-700 block truncate">{file.mimeType}</span>
                 </div>
                 <div className="space-y-1">
-                  <span className="text-[9px] font-mono tracking-wide uppercase text-slate-500 block">Index weight</span>
-                  <span className="text-slate-300 block">{formatBytes(file.size)}</span>
+                  <span className="text-[9px] font-mono tracking-wide uppercase text-slate-400 block font-bold">Index weight</span>
+                  <span className="text-slate-700 block">{formatBytes(file.size)}</span>
                 </div>
-                <div className="space-y-1 pt-1 border-t border-slate-800">
-                  <span className="text-[9px] font-mono tracking-wide uppercase text-slate-500 block">Owner UUID</span>
-                  <span className="text-slate-300 block truncate">{file.ownerName || 'Console Admin'}</span>
+                <div className="space-y-1 pt-1.5 border-t border-slate-150">
+                  <span className="text-[9px] font-mono tracking-wide uppercase text-slate-400 block font-bold">Owner UUID</span>
+                  <span className="text-slate-700 block truncate">{file.ownerName || 'Console Admin'}</span>
                 </div>
-                <div className="space-y-1 pt-1 border-t border-slate-800">
-                  <span className="text-[9px] font-mono tracking-wide uppercase text-slate-500 block">Timestamp</span>
-                  <span className="text-slate-300 block">{new Date(file.createdAt).toLocaleDateString()}</span>
+                <div className="space-y-1 pt-1.5 border-t border-slate-150">
+                  <span className="text-[9px] font-mono tracking-wide uppercase text-slate-400 block font-bold">Timestamp</span>
+                  <span className="text-slate-700 block">{new Date(file.createdAt).toLocaleDateString()}</span>
                 </div>
               </div>
 
               <button
                 onClick={() => onDownload(file)}
-                className="w-full py-4 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-500/10 cursor-pointer active:scale-95 transition-all text-center flex items-center justify-center gap-2"
+                className="w-full py-3.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-2xl shadow-md cursor-pointer active:scale-95 transition-all text-center flex items-center justify-center gap-2"
               >
                 <Download className="w-4 h-4" />
-                Download to Local Machine
+                Download File
               </button>
             </div>
           )}
@@ -544,15 +546,15 @@ export default function FilePreviewModal({
         </div>
 
         {/* Bottom Metadata & Info Footer Panel */}
-        <div className="px-6 py-4.5 border-t border-slate-800 bg-slate-900/60 backdrop-blur-lg flex items-center justify-between text-xs shrink-0 text-slate-400">
+        <div className="px-6 py-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-xs shrink-0 text-slate-500">
           <div className="flex items-center space-x-2">
             <span className="flex h-2 w-2 rounded-full bg-emerald-500"></span>
-            <span className="font-semibold text-slate-300 font-sans">AWS S3 Multizone Sync Object Safe</span>
+            <span className="font-semibold text-slate-705 font-sans">S3 Multizone Synchronization Safe</span>
           </div>
 
           <div className="flex items-center space-x-4">
-            <p className="font-semibold text-slate-400">
-              Uploader: <span className="text-white font-bold">{file.ownerEmail}</span>
+            <p className="font-semibold text-slate-500">
+              Uploaded as: <span className="text-slate-800 font-bold">{file.ownerEmail}</span>
             </p>
           </div>
         </div>
