@@ -638,7 +638,7 @@ export default function App() {
       <div className="flex-1 flex flex-col overflow-hidden px-4 md:px-8">
         
         {/* Premium Redesigned Top Header Panel */}
-        <header className="py-4.5 flex items-center justify-between border-b border-slate-200/50 flex-shrink-0 gap-4 mt-2 mb-2 select-none">
+        <header className="py-3 flex items-center justify-between border-b border-slate-100 flex-shrink-0 gap-4 mt-1 mb-2 select-none">
           <div className="flex items-center gap-3.5 flex-1 min-w-0">
             {/* Mobile menu trigger */}
             <button 
@@ -651,7 +651,7 @@ export default function App() {
             {/* Global Workspace Search Bar */}
             <div className="relative flex-1 max-w-2xl">
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 font-bold" />
+                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                 <input 
                   type="text"
                   value={searchQuery}
@@ -661,7 +661,7 @@ export default function App() {
                   }}
                   onFocus={() => setShowSearchResults(true)}
                   placeholder="Search files and folders..."
-                  className="w-full pl-11 pr-16 py-3 bg-white border border-slate-200/75 rounded-2xl text-[13px] font-semibold focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500/15 shadow-sm transition-all text-slate-800 placeholder:text-slate-400"
+                  className="w-full pl-11 pr-16 py-2.5 bg-slate-50/60 hover:bg-slate-50 border border-slate-200/60 rounded-2xl text-[13px] font-semibold focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 shadow-sm transition-all text-slate-850 placeholder:text-slate-400/80"
                 />
                 <div className="absolute right-4.5 top-1/2 -translate-y-1/2 hidden sm:flex items-center space-x-1 pointer-events-none">
                   <kbd className="px-1.5 py-0.5 bg-slate-50 border border-slate-200 rounded-md font-mono text-[9px] font-bold text-slate-400/90 shadow-sm">⌘K</kbd>
