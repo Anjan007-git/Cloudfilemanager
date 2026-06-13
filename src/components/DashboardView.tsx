@@ -1,7 +1,9 @@
-import React from 'react';
-import { motion } from 'motion/react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
-  Folder, Cloud, Users, Share2, BarChart3, FileText, MoreVertical, X, Upload, ChevronRight, Settings, Trash2, Download, Music, Video, Code, ShieldCheck, Mail
+  Folder, Cloud, Users, Share2, BarChart3, FileText, MoreVertical, X, Upload, ChevronRight, Settings, 
+  Trash2, Download, Music, Video, Code, ShieldCheck, Mail, Star, Edit3, Copy, Move, Eye, Calendar, 
+  ExternalLink, Lock, Clipboard, Check, Loader2, HardDrive
 } from 'lucide-react';
 import { CloudFile, Activity, UserProfile } from '../types.js';
 
@@ -13,6 +15,8 @@ interface DashboardProps {
   onCreateFolderClick: () => void;
   onNavigateView: (view: string) => void;
   onSelectFolder: (folderId: string | null) => void;
+  token?: string;
+  onRefresh?: () => void;
 }
 
 export default function DashboardView({ 
@@ -22,8 +26,322 @@ export default function DashboardView({
   onUploadClick, 
   onCreateFolderClick, 
   onNavigateView,
-  onSelectFolder
+  onSelectFolder,
+  token,
+  onRefresh
 }: DashboardProps) {
+
+  // All premium interactive states for Recent Files and Actions
+  const [activeMenuFileId, setActiveMenuFileId] = useState<string | null>(null);
+  const [previewFile, setPreviewFile] = useState<CloudFile | null>(null);
+  const [shareFile, setShareFile] = useState<CloudFile | null>(null);
+  const [renameFile, setRenameFile] = useState<CloudFile | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [moveFile, setMoveFile] = useState<CloudFile | null>(null);
+  const [targetFolderId, setTargetFolderId] = useState<string | null>(null);
+
+  // Sharing states
+  const [newShareEmail, setNewShareEmail] = useState("");
+  const [newSharePerm, setNewSharePerm] = useState("view");
+  const [sharedEmailList, setSharedEmailList] = useState<{ email: string; permission: string }[]>([]);
+  const [isPublicLink, setIsPublicLink] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
+
+  // File loading states for text/code previewing
+  const [textContent, setTextContent] = useState<string>("");
+  const [loadingText, setLoadingText] = useState<boolean>(false);
+
+  // Custom visual toast alert system
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToastMessage = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => {
+      setToastMessage(prev => prev === msg ? null : prev);
+    }, 3000);
+  };
+
+  // Keyboard close listeners
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setActiveMenuFileId(null);
+        setPreviewFile(null);
+        setShareFile(null);
+        setRenameFile(null);
+        setMoveFile(null);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Text/code preview loader logic
+  useEffect(() => {
+    let active = true;
+    if (previewFile && !previewFile.isFolder) {
+      const mime = previewFile.mimeType.toLowerCase();
+      const name = previewFile.name.toLowerCase();
+      const textExtensions = ['.txt', '.js', '.ts', '.tsx', '.json', '.html', '.css', '.md', '.xml', '.py', '.cpp', '.java'];
+      const isTextFile = mime.startsWith('text/') || mime.includes('json') || mime.includes('xml') || textExtensions.some(ext => name.endsWith(ext));
+      
+      if (isTextFile && token) {
+        setLoadingText(true);
+        setTextContent("");
+        const fileUrl = `/api/files/download/${previewFile.id}?token=${token}`;
+        fetch(fileUrl)
+          .then(res => {
+            if (!res.ok) throw new Error("Preview source unavailable");
+            return res.text();
+          })
+          .then(text => {
+            if (active) {
+              setTextContent(text);
+              setLoadingText(false);
+            }
+          })
+          .catch(e => {
+            console.error(e);
+            if (active) {
+              setTextContent("The preview content is secure and couldn't be loaded directly. Please download the file to inspect the full contents.");
+              setLoadingText(false);
+            }
+          });
+      }
+    }
+    return () => {
+      active = false;
+    };
+  }, [previewFile, token]);
+
+  // Operations and Handlers
+  const handleDownload = (file: CloudFile) => {
+    if (!token) return;
+    const downloadUrl = `/api/files/download/${file.id}?token=${token}`;
+    const link = document.createElement('a');
+    link.href = downloadUrl;
+    link.setAttribute('download', file.name);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToastMessage("Downloading file...");
+  };
+
+  const handleToggleStar = async (file: CloudFile) => {
+    if (!token) return;
+    try {
+      const response = await fetch(`/api/files/toggle-star/${file.id}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        if (onRefresh) onRefresh();
+        showToastMessage(!file.isStarred ? "⭐ Item starred" : "✩ Item unstarred");
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActiveMenuFileId(null);
+    }
+  };
+
+  const handleDuplicate = async (file: CloudFile) => {
+    if (!token) return;
+    try {
+      const response = await fetch(`/api/files/duplicate/${file.id}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        if (onRefresh) onRefresh();
+        showToastMessage("📑 File duplicated successfully");
+      } else {
+        const err = await response.json();
+        alert(err.error || "Duplicate failed");
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActiveMenuFileId(null);
+    }
+  };
+
+  const handleMoveToTrash = async (file: CloudFile) => {
+    if (!token) return;
+    try {
+      const response = await fetch(`/api/files/delete/${file.id}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (response.ok) {
+        if (onRefresh) onRefresh();
+        showToastMessage(`🗑️ "${file.name}" moved to Trash`);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActiveMenuFileId(null);
+    }
+  };
+
+  const handleRenameSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!renameFile || !token || !renameValue.trim()) return;
+    try {
+      const response = await fetch(`/api/files/rename/${renameFile.id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ name: renameValue.trim() })
+      });
+      if (response.ok) {
+        if (onRefresh) onRefresh();
+        showToastMessage("✏️ File renamed successfully");
+        setRenameFile(null);
+      } else {
+        alert("Rename failed");
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActiveMenuFileId(null);
+    }
+  };
+
+  const handleMoveSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!moveFile || !token) return;
+    try {
+      const response = await fetch(`/api/files/move/${moveFile.id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ parentId: targetFolderId })
+      });
+      if (response.ok) {
+        if (onRefresh) onRefresh();
+        showToastMessage("📂 File moved successfully");
+        setMoveFile(null);
+      } else {
+        const err = await response.json();
+        alert(err.error || "Move failed");
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActiveMenuFileId(null);
+    }
+  };
+
+  const handleShareSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!shareFile || !token) return;
+    try {
+      const shareResp = await fetch(`/api/files/share/${shareFile.id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ sharedWith: sharedEmailList })
+      });
+
+      const linkPayload = {
+        isPublic: isPublicLink,
+        passwordEnabled: false,
+        password: null,
+        expiresAt: null
+      };
+
+      const linkResp = await fetch(`/api/files/share-link/${shareFile.id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(linkPayload)
+      });
+
+      if (shareResp.ok && linkResp.ok) {
+        if (onRefresh) onRefresh();
+        showToastMessage("🔗 Share settings updated");
+        setShareFile(null);
+      } else {
+        alert("Failed to update share settings");
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setActiveMenuFileId(null);
+    }
+  };
+
+  const handleOpenShareModal = (file: CloudFile) => {
+    setShareFile(file);
+    setSharedEmailList(file.sharedWith || []);
+    setIsPublicLink(file.shareLink?.isPublic || false);
+    setNewShareEmail("");
+    setLinkCopied(false);
+    setActiveMenuFileId(null);
+  };
+
+  const handleAddShareEmail = () => {
+    if (!newShareEmail.trim() || !newShareEmail.includes('@')) {
+      alert("Please supply a valid email address");
+      return;
+    }
+    const alreadyExists = sharedEmailList.some(item => item.email.toLowerCase() === newShareEmail.toLowerCase().trim());
+    if (alreadyExists) return;
+
+    setSharedEmailList([...sharedEmailList, { email: newShareEmail.toLowerCase().trim(), permission: newSharePerm }]);
+    setNewShareEmail("");
+  };
+
+  const handleRemoveShareEmail = (emailIdx: number) => {
+    setSharedEmailList(sharedEmailList.filter((_, idx) => idx !== emailIdx));
+  };
+
+  const copyShareLinkToClipboard = (fileId: string) => {
+    const rawLink = `${window.location.origin}/api/files/download/${fileId}?token=${token}`;
+    navigator.clipboard.writeText(rawLink).then(() => {
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    });
+  };
+
+  // CSV renderer
+  const renderCsvTable = (content: string) => {
+    const rows = content.split('\n').filter(row => row.trim()).slice(0, 15);
+    return (
+      <div className="overflow-x-auto w-full max-h-[40vh] border border-slate-100 rounded-xl" id="csv-preview-table-container">
+        <table className="w-full text-left border-collapse text-xs">
+          <thead>
+            <tr className="bg-slate-50 border-b border-slate-200">
+              {rows[0]?.split(',').map((header, idx) => (
+                <th key={idx} className="p-2 font-extrabold text-slate-700 border-r border-slate-200">{header}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.slice(1).map((row, rowIdx) => (
+              <tr key={rowIdx} className="border-b border-slate-100 hover:bg-slate-50">
+                {row.split(',').map((cell, cellIdx) => (
+                  <td key={cellIdx} className="p-2 text-slate-600 border-r border-slate-150 truncate max-w-[150px]">{cell}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {content.split('\n').length > 16 && (
+          <p className="text-[10px] text-slate-400 font-semibold p-2 text-center bg-slate-50/50">Showing first 15 rows</p>
+        )}
+      </div>
+    );
+  };
 
   // Real fallback avatars for collaborator styling
   const avatars = [
@@ -313,15 +631,14 @@ export default function DashboardView({
                   </div>
                 ) : (
                   <div className="divide-y divide-slate-50">
-                    {renderedRecentList.map((file) => (
+                    {renderedRecentList.map((file, fileIdx) => (
                       <div 
-                        key={file.id}
+                        key={`recent-file-${file.id}-${fileIdx}`}
                         onClick={() => {
-                          if (file.url) {
-                            window.open(file.url, '_blank');
-                          }
+                          setPreviewFile(file);
                         }}
                         className="py-3 px-2 rounded-2xl flex items-center justify-between group/file hover:bg-slate-50 transition-all duration-200 -mx-2 cursor-pointer"
+                        id={`recent-file-row-${file.id}`}
                       >
                         <div className="flex items-center gap-3.5 w-4/5 truncate">
                           {/* Intelligent type-specific rendering or dynamic thumbnail image */}
@@ -352,16 +669,126 @@ export default function DashboardView({
                             />
                           </div>
 
-                          <button 
-                            onClick={() => {
-                              if (file.url) {
-                                window.open(file.url, '_blank');
-                              }
-                            }}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all cursor-pointer"
-                          >
-                            <MoreVertical className="w-4 h-4 text-slate-400" />
-                          </button>
+                          {/* 3-Dot Dropdown / Context Menu Container */}
+                          <div className="relative">
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveMenuFileId(activeMenuFileId === file.id ? null : file.id);
+                              }}
+                              className="p-1.5 rounded-lg text-slate-400 hover:text-slate-705 hover:bg-slate-100 transition-all cursor-pointer relative"
+                              id={`three-dot-menu-toggle-${file.id}`}
+                            >
+                              <MoreVertical className="w-4 h-4 text-slate-400" />
+                            </button>
+
+                            <AnimatePresence>
+                              {activeMenuFileId === file.id && (
+                                <React.Fragment key={`recent-menu-frag-${file.id}`}>
+                                  {/* Invisible click outside overlay */}
+                                  <div 
+                                    className="fixed inset-0 z-40" 
+                                    onClick={(e) => { 
+                                      e.stopPropagation(); 
+                                      setActiveMenuFileId(null); 
+                                    }} 
+                                  />
+                                  <motion.div
+                                    key={`recent-menu-dropdown-${file.id}`}
+                                    initial={{ opacity: 0, scale: 0.95, y: -4 }}
+                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.95, y: -4 }}
+                                    transition={{ duration: 0.15 }}
+                                    className="absolute right-0 mt-1 w-52 bg-white border border-slate-100 rounded-[16px] shadow-[0_10px_35px_rgba(0,0,0,0.12)] py-1.5 z-50 text-left overflow-hidden"
+                                    onClick={(e) => e.stopPropagation()}
+                                    id={`context-menu-popover-${file.id}`}
+                                  >
+                                    <button
+                                      onClick={() => {
+                                        setPreviewFile(file);
+                                        setActiveMenuFileId(null);
+                                      }}
+                                      className="w-full px-3.5 py-2 text-xs font-bold text-slate-700 hover:text-blue-600 hover:bg-blue-50/50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                                    >
+                                      <Eye className="w-4.5 h-4.5 text-slate-400 stroke-[1.8]" />
+                                      <span>👁 Preview</span>
+                                    </button>
+
+                                    <button
+                                      onClick={() => {
+                                        handleDownload(file);
+                                        setActiveMenuFileId(null);
+                                      }}
+                                      className="w-full px-3.5 py-2 text-xs font-bold text-slate-700 hover:text-blue-600 hover:bg-blue-50/50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                                    >
+                                      <Download className="w-4.5 h-4.5 text-slate-400 stroke-[1.8]" />
+                                      <span>⬇ Download File</span>
+                                    </button>
+
+                                    <button
+                                      onClick={() => handleToggleStar(file)}
+                                      className="w-full px-3.5 py-2 text-xs font-bold text-slate-700 hover:text-blue-600 hover:bg-blue-50/50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                                    >
+                                      <Star className={`w-4.5 h-4.5 stroke-[1.8] ${file.isStarred ? 'text-amber-500 fill-amber-500' : 'text-slate-400'}`} />
+                                      <span>{file.isStarred ? '⭐ Unstar Item' : '⭐ Star Item'}</span>
+                                    </button>
+
+                                    <button
+                                      onClick={() => handleOpenShareModal(file)}
+                                      className="w-full px-3.5 py-2 text-xs font-bold text-slate-700 hover:text-blue-600 hover:bg-blue-50/50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                                    >
+                                      <Share2 className="w-4.5 h-4.5 text-slate-400 stroke-[1.8]" />
+                                      <span>🔗 Share</span>
+                                    </button>
+
+                                    <div className="h-[1px] bg-slate-50 my-1" />
+
+                                    <button
+                                      onClick={() => {
+                                        setRenameFile(file);
+                                        setRenameValue(file.name);
+                                        setActiveMenuFileId(null);
+                                      }}
+                                      className="w-full px-3.5 py-2 text-xs font-bold text-slate-700 hover:text-blue-600 hover:bg-blue-50/50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                                    >
+                                      <Edit3 className="w-4.5 h-4.5 text-slate-400 stroke-[1.8]" />
+                                      <span>✏ Rename</span>
+                                    </button>
+
+                                    <button
+                                      onClick={() => {
+                                        setMoveFile(file);
+                                        setTargetFolderId(file.parentId);
+                                        setActiveMenuFileId(null);
+                                      }}
+                                      className="w-full px-3.5 py-2 text-xs font-bold text-slate-700 hover:text-blue-600 hover:bg-blue-50/50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                                    >
+                                      <Move className="w-4.5 h-4.5 text-slate-400 stroke-[1.8]" />
+                                      <span>📂 Move</span>
+                                    </button>
+
+                                    <button
+                                      onClick={() => handleDuplicate(file)}
+                                      className="w-full px-3.5 py-2 text-xs font-bold text-slate-700 hover:text-blue-600 hover:bg-blue-50/50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                                    >
+                                      <Copy className="w-4.5 h-4.5 text-slate-400 stroke-[1.8]" />
+                                      <span>📑 Duplicate</span>
+                                    </button>
+
+                                    <div className="h-[1px] bg-slate-50 my-1" />
+
+                                    <button
+                                      onClick={() => handleMoveToTrash(file)}
+                                      className="w-full px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 flex items-center gap-2.5 transition-colors cursor-pointer"
+                                    >
+                                      <Trash2 className="w-4.5 h-4.5 text-rose-500 stroke-[1.8]" />
+                                      <span>🗑 Move to Trash</span>
+                                    </button>
+                                  </motion.div>
+                                </React.Fragment>
+                              )}
+                            </AnimatePresence>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -660,6 +1087,601 @@ export default function DashboardView({
         </div>
 
       </div>
+
+      {/* ================= PREMIUM ANCHORED MODALS & OVERLAYS ================= */}
+      <AnimatePresence>
+        {/* 1. PREMIUM FILE PREVIEW MODAL */}
+        {previewFile && (() => {
+          const securePreviewUrl = `/api/files/download/${previewFile.id}?token=${token}`;
+          return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-6" id="premium-preview-modal-root">
+              {/* Elegant blurred backdrop click-to-close */}
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setPreviewFile(null)}
+                className="absolute inset-0 bg-slate-900/40 backdrop-blur-md" 
+                id="preview-modal-backdrop"
+              />
+
+              {/* Main Premium Card Modal */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95, y: 15 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 15 }}
+                transition={{ type: "spring", duration: 0.4 }}
+                className="relative w-full max-w-4xl bg-white rounded-[24px] shadow-[0_24px_60px_rgba(0,0,0,0.15)] border border-slate-100 overflow-hidden z-10 flex flex-col max-h-[85vh]"
+                id="preview-modal-card"
+              >
+                {/* TOP HEADER PANEL */}
+                <div className="flex items-center justify-between px-6 py-4.5 border-b border-slate-100 bg-slate-50/50">
+                  <div className="flex items-center gap-3.5 truncate text-left">
+                    <div className="shrink-0 scale-90">
+                      {renderItemVisual(previewFile)}
+                    </div>
+                    <div className="truncate">
+                      <h3 className="font-bold text-slate-800 text-[14.5px] truncate" title={previewFile.name}>
+                        {previewFile.name}
+                      </h3>
+                      <p className="text-[10.5px] text-slate-400 font-semibold font-sans mt-0.5">
+                        {formatBytes(previewFile.size)} • Modified on {new Date(previewFile.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {previewFile.id && (
+                      <button
+                        onClick={() => window.open(securePreviewUrl, '_blank')}
+                        className="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all cursor-pointer flex items-center gap-1.5 text-xs font-bold"
+                        title="Open in new tab"
+                      >
+                        <ExternalLink className="w-4 h-4" />
+                        <span className="hidden sm:inline">New Tab</span>
+                      </button>
+                    )}
+                    <button
+                      onClick={() => setPreviewFile(null)}
+                      className="p-2 rounded-xl text-slate-400 hover:text-slate-705 hover:bg-slate-100 transition-all cursor-pointer"
+                      id="preview-modal-close-btn"
+                    >
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* MIDDLE PREVIEW AREA */}
+                <div className="flex-1 overflow-y-auto p-6 bg-slate-50/20 flex flex-col items-center justify-center min-h-[350px]">
+                  {(() => {
+                    const mime = previewFile.mimeType.toLowerCase();
+                    const name = previewFile.name.toLowerCase();
+
+                    // 1. Image Preview
+                    if (mime.startsWith('image/') || name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png') || name.endsWith('.webp') || name.endsWith('.gif') || name.endsWith('.svg')) {
+                      return (
+                        <div className="flex flex-col items-center justify-center space-y-4 w-full">
+                          <div className="overflow-auto max-h-[50vh] flex items-center justify-center p-2 rounded-2xl bg-white border border-slate-100/60 shadow-xs max-w-full">
+                            <img
+                              src={securePreviewUrl}
+                              alt={previewFile.name}
+                              referrerPolicy="no-referrer"
+                              className="max-h-[45vh] w-auto h-auto object-contain transition-transform duration-200"
+                              style={{ transform: `scale(${isPublicLink ? 1.2 : 1})` }} // simple visual scale support
+                            />
+                          </div>
+                          <p className="text-[10px] text-slate-400 font-bold tracking-wider uppercase">Responsive Web High-Quality preview</p>
+                        </div>
+                      );
+                    }
+
+                    // 2. PDF Preview
+                    if (mime.includes('pdf') || name.endsWith('.pdf')) {
+                      return (
+                        <div className="w-full h-[50vh] rounded-xl overflow-hidden border border-slate-150 shadow-xs bg-white">
+                          <iframe
+                            src={`${securePreviewUrl}#toolbar=1`}
+                            title={previewFile.name}
+                            className="w-full h-full border-0"
+                          />
+                        </div>
+                      );
+                    }
+
+                    // 3. Audio Preview
+                    if (mime.startsWith('audio/') || name.endsWith('.mp3') || name.endsWith('.wav') || name.endsWith('.m4a') || name.endsWith('.ogg')) {
+                      return (
+                        <div className="w-full max-w-md bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-center space-y-4">
+                          <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto border border-indigo-100">
+                            <Music className="w-6 h-6 animate-pulse" />
+                          </div>
+                          <div className="space-y-1">
+                            <p className="font-extrabold text-sm text-slate-800 truncate">{previewFile.name}</p>
+                            <p className="text-[11px] text-slate-400 font-bold tracking-tight">Audio Player Integration</p>
+                          </div>
+                          <audio src={securePreviewUrl} controls className="w-full mt-2" />
+                        </div>
+                      );
+                    }
+
+                    // 4. Video Preview
+                    if (mime.startsWith('video/') || name.endsWith('.mp4') || name.endsWith('.mkv') || name.endsWith('.mov') || name.endsWith('.webm')) {
+                      return (
+                        <div className="w-full max-w-2xl bg-black rounded-2xl overflow-hidden shadow-lg border border-slate-800">
+                          <video
+                            src={securePreviewUrl}
+                            controls
+                            className="w-full max-h-[50vh] bg-black"
+                            preload="metadata"
+                            playsInline
+                          />
+                        </div>
+                      );
+                    }
+
+                    // 5. Code & Text files (Live formatted view)
+                    const textExtensions = ['.txt', '.js', '.ts', '.tsx', '.json', '.html', '.css', '.md', '.xml', '.py', '.cpp', '.java'];
+                    const isTextFile = mime.startsWith('text/') || mime.includes('json') || mime.includes('xml') || textExtensions.some(ext => name.endsWith(ext));
+                    if (isTextFile) {
+                      if (loadingText) {
+                        return (
+                          <div className="flex flex-col items-center justify-center space-y-2 py-10">
+                            <Loader2 className="w-7 h-7 text-blue-600 animate-spin" />
+                            <p className="text-xs font-bold text-slate-500">Buffering document secure stream...</p>
+                          </div>
+                        );
+                      }
+
+                      if (name.endsWith('.csv')) {
+                        return renderCsvTable(textContent);
+                      }
+
+                      return (
+                        <div className="w-full rounded-xl border border-slate-150 shadow-xs bg-white text-left font-mono text-xs overflow-hidden max-h-[50vh] flex flex-col">
+                          <div className="bg-slate-50 px-4 py-2 border-b border-slate-100 flex items-center justify-between text-[11px] font-bold text-slate-500">
+                            <span>SYNTAX VIEWER</span>
+                            <span>{mime.toUpperCase()}</span>
+                          </div>
+                          <pre className="flex-1 overflow-auto p-4 bg-slate-55 bg-slate-50 text-slate-700 whitespace-pre scrollbar-thin font-mono leading-relaxed text-[11px] select-text">
+                            {textContent || "No text payload."}
+                          </pre>
+                        </div>
+                      );
+                    }
+
+                  // 6. Excel sheets panels
+                  if (name.endsWith('.xls') || name.endsWith('.xlsx')) {
+                    return (
+                      <div className="w-full max-w-md bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-center space-y-4">
+                        <div className="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto border border-emerald-100">
+                          <BarChart3 className="w-6 h-6" />
+                        </div>
+                        <div className="space-y-1">
+                          <p className="font-extrabold text-sm text-slate-800">{previewFile.name}</p>
+                          <p className="text-xs text-slate-400 font-medium">Microsoft Excel Spreadsheet Document</p>
+                        </div>
+                        <p className="text-[11px] text-slate-500 bg-slate-50 p-3 rounded-xl border border-slate-100">
+                          Interactive worksheets require Office Online permissions. Download this document to review and modify standard sheets.
+                        </p>
+                        <button
+                          onClick={() => handleDownload(previewFile)}
+                          className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
+                        >
+                          Download Excel Workbook
+                        </button>
+                      </div>
+                    );
+                  }
+
+                  // 7. Zip/Rar Archives listings
+                  if (name.endsWith('.zip') || name.endsWith('.rar') || name.endsWith('.tar') || name.endsWith('.7z')) {
+                    return (
+                      <div className="w-full max-w-md bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-center space-y-4">
+                        <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto border border-amber-100">
+                          <Folder className="w-6 h-6" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <p className="font-extrabold text-sm text-slate-800">{previewFile.name}</p>
+                          <p className="text-xs text-slate-400 font-medium">Compressed Archive Folder ({formatBytes(previewFile.size)})</p>
+                        </div>
+                        
+                        <div className="text-left text-[11px] space-y-2 border border-slate-100 rounded-xl p-3 bg-slate-50/50">
+                          <p className="font-bold text-slate-500 uppercase tracking-wider text-[9px]">Potential Archive Contents:</p>
+                          <div className="flex items-center justify-between text-slate-600">
+                            <span>📂 assets/</span>
+                            <span>Folder</span>
+                          </div>
+                          <div className="flex items-center justify-between text-slate-600">
+                            <span>📄 index.html</span>
+                            <span>12.4 KB</span>
+                          </div>
+                          <div className="flex items-center justify-between text-slate-600">
+                            <span>📄 package.json</span>
+                            <span>1.1 KB</span>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => handleDownload(previewFile)}
+                          className="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-705 text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
+                        >
+                          Download ZIP Archive
+                        </button>
+                      </div>
+                    );
+                  }
+
+                  // Default Unknown files layout
+                  return (
+                    <div className="w-full max-w-md bg-white p-6 rounded-2xl border border-slate-100 shadow-sm text-center space-y-4">
+                      <div className="w-14 h-14 bg-slate-50 text-slate-400 rounded-full flex items-center justify-center mx-auto border border-slate-100">
+                        <FileText className="w-6 h-6" />
+                      </div>
+                      <div className="space-y-1">
+                        <p className="font-extrabold text-sm text-slate-800 truncate">{previewFile.name}</p>
+                        <p className="text-xs text-slate-400 font-medium">Unknown Resource Type • {previewFile.mimeType || "application/octet-stream"}</p>
+                      </div>
+                      <p className="text-[11px] text-slate-400 leading-relaxed max-w-[280px] mx-auto font-semibold">
+                        This mime-type is fully supported for offline usage. Download the file below to open it inside local host applications.
+                      </p>
+                      <button
+                        onClick={() => handleDownload(previewFile)}
+                        className="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-sm transition-all cursor-pointer"
+                      >
+                        Download Resource
+                      </button>
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* BOTTOM FOOTER CONTROLS */}
+              <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/50 flex flex-wrap gap-2 items-center justify-between">
+                <button
+                  onClick={() => handleDownload(previewFile)}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-extrabold flex items-center gap-1.5 shadow-sm hover:shadow-md transition-all cursor-pointer"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download File</span>
+                </button>
+
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => handleOpenShareModal(previewFile)}
+                    className="px-3.5 py-2 hover:bg-slate-100 text-slate-600 rounded-xl text-xs font-bold border border-slate-150 transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Share2 className="w-3.5 h-3.5" />
+                    <span>Share Settings</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setRenameFile(previewFile);
+                      setRenameValue(previewFile.name);
+                      setPreviewFile(null);
+                    }}
+                    className="px-3.5 py-2 hover:bg-slate-100 text-slate-600 rounded-xl text-xs font-bold border border-slate-150 transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    <span>Rename</span>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      handleMoveToTrash(previewFile);
+                      setPreviewFile(null);
+                    }}
+                    className="px-3.5 py-2 hover:bg-rose-50 text-rose-600 rounded-xl text-xs font-bold border border-rose-100 transition-all cursor-pointer flex items-center gap-1.5"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-rose-500" />
+                    <span>Trash</span>
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+          );
+        })()}
+
+        {/* 2. PREMIUM SHARE DIALOG MODAL */}
+        {shareFile && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" id="share-modal-root">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShareFile(null)}
+              className="absolute inset-0 bg-slate-900/35 backdrop-blur-xs" 
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              className="relative w-full max-w-md bg-white rounded-[22px] shadow-[0_20px_50px_rgba(0,0,0,0.18)] border border-slate-100 overflow-hidden z-10 flex flex-col"
+            >
+              <form onSubmit={handleShareSubmit}>
+                {/* Header */}
+                <div className="px-5.5 py-4 border-b border-slate-50 bg-slate-50/20 flex items-center justify-between">
+                  <div className="flex items-center gap-2.5 text-left">
+                    <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center border border-blue-100">
+                      <Share2 className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-slate-800 text-sm">Share "{shareFile.name}"</h3>
+                      <p className="text-[10.5px] text-slate-400 font-semibold font-sans mt-0.5">Control audience permissions</p>
+                    </div>
+                  </div>
+                  <button type="button" onClick={() => setShareFile(null)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Body */}
+                <div className="p-5.5 space-y-4 text-left">
+                  {/* Share with email */}
+                  <div className="space-y-1.5">
+                    <label className="text-[10.5px] font-extrabold uppercase text-slate-400 tracking-wider">Add operator collaborator</label>
+                    <div className="flex gap-2">
+                      <div className="relative flex-1">
+                        <Mail className="absolute left-3.5 top-2.5 w-4 h-4 text-slate-400" />
+                        <input
+                          type="email"
+                          placeholder="collaborator@operator.com"
+                          value={newShareEmail}
+                          onChange={(e) => setNewShareEmail(e.target.value)}
+                          className="w-full pl-9.5 pr-3 py-2 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-blue-500 font-sans"
+                        />
+                      </div>
+                      <select
+                        value={newSharePerm}
+                        onChange={(e) => setNewSharePerm(e.target.value)}
+                        className="px-1.5 py-2 border border-slate-200 rounded-xl text-[11px] font-bold text-slate-600 focus:outline-none focus:border-blue-500 bg-white"
+                      >
+                        <option value="view">Viewer</option>
+                        <option value="edit">Editor</option>
+                      </select>
+                      <button
+                        type="button"
+                        onClick={handleAddShareEmail}
+                        className="px-3.5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-all cursor-pointer shrink-0"
+                      >
+                        Add
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* List of collaborators */}
+                  <div className="space-y-1.5">
+                    <span className="text-[10.5px] font-extrabold uppercase text-slate-400 tracking-wider">Collaborators list</span>
+                    <div className="border border-slate-100 rounded-xl bg-slate-50/30 p-2 max-h-[140px] overflow-y-auto divide-y divide-slate-100">
+                      {sharedEmailList.length === 0 ? (
+                        <p className="text-[11px] text-slate-400 py-3 text-center font-semibold font-sans">No private emails added</p>
+                      ) : (
+                        sharedEmailList.map((item, idx) => (
+                          <div key={idx} className="flex items-center justify-between py-1.5 first:pt-0 last:pb-0">
+                            <div className="truncate text-left font-semibold text-[11px] text-slate-700 font-sans">
+                              <span>{item.email}</span>
+                              <span className="text-[9px] px-1 py-0.5 rounded-md ml-1 bg-slate-100 text-slate-500 font-black tracking-wide font-sans">{item.permission.toUpperCase()}</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveShareEmail(idx)}
+                              className="text-[10px] text-slate-400 hover:text-rose-600 font-extrabold cursor-pointer hover:underline transition-colors font-sans"
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Public Link Generator */}
+                  <div className="p-3.5 rounded-xl border border-sky-100/50 bg-sky-50/25 flex flex-col gap-2">
+                    <div className="flex items-center justify-between">
+                      <div className="text-left">
+                        <p className="text-xs font-extrabold text-sky-950 flex items-center gap-1">
+                          <Lock className="w-3.5 h-3.5 text-sky-600" />
+                          <span>Generate Public Download Link</span>
+                        </p>
+                        <p className="text-[10.5px] text-sky-600 font-semibold font-sans mt-0.5">Allows direct downloading via a unique slug</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setIsPublicLink(!isPublicLink)}
+                        className={`w-10 h-5.5 rounded-full p-0.5 transition-colors focus:outline-none ${isPublicLink ? 'bg-sky-600' : 'bg-slate-200'}`}
+                        id="public-share-toggle-switch"
+                      >
+                        <div className={`w-4.5 h-4.5 bg-white rounded-full shadow-xs transform duration-200 ${isPublicLink ? 'translate-x-4.5' : ''}`} />
+                      </button>
+                    </div>
+
+                    {isPublicLink && (
+                      <div className="flex items-center gap-2 pt-1 border-t border-sky-100/40 mt-1">
+                        <div className="flex-1 bg-white px-2 py-1.5 border border-slate-150 rounded-lg text-[10.5px] text-slate-500 font-mono select-all truncate">
+                          {window.location.origin}/api/files/download/{shareFile.id}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => copyShareLinkToClipboard(shareFile.id)}
+                          className="p-2 bg-white hover:bg-slate-50 text-slate-500 border border-slate-200 rounded-lg shrink-0 transition-colors cursor-pointer"
+                        >
+                          {linkCopied ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Clipboard className="w-3.5 h-3.5" />}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="px-5.5 py-4 border-t border-slate-50 bg-slate-50/20 flex gap-2 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setShareFile(null)}
+                    className="px-4 py-2 hover:bg-slate-150 text-slate-600 rounded-xl text-xs font-bold transition-all cursor-pointer border border-transparent"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-extrabold transition-all cursor-pointer shadow-sm hover:shadow-md"
+                  >
+                    Save Changes
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+
+        {/* 3. PROFESSIONAL RENAME MODAL */}
+        {renameFile && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setRenameFile(null)}
+              className="absolute inset-0 bg-slate-900/30 backdrop-blur-xs" 
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              className="relative w-full max-w-sm bg-white rounded-[22px] shadow-[0_20px_50px_rgba(0,0,0,0.18)] border border-slate-100 overflow-hidden z-10 flex flex-col text-left"
+            >
+              <form onSubmit={handleRenameSubmit}>
+                <div className="px-5.5 py-4 border-b border-slate-50 bg-slate-50/20 flex items-center justify-between">
+                  <h3 className="font-bold text-slate-800 text-sm">Rename Item</h3>
+                  <button type="button" onClick={() => setRenameFile(null)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="p-5.5 space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider">File Name</label>
+                    <input
+                      type="text"
+                      value={renameValue}
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      required
+                      placeholder="Enter new name"
+                      className="w-full px-3.5 py-2 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-none focus:border-blue-500 font-sans"
+                    />
+                  </div>
+                </div>
+
+                <div className="px-5.5 py-4 border-t border-slate-50 bg-slate-50/20 flex gap-2 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setRenameFile(null)}
+                    className="px-4 py-2 hover:bg-slate-150 text-slate-600 rounded-xl text-xs font-bold border border-transparent cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-extrabold shadow-sm transition-all cursor-pointer"
+                  >
+                    Rename
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+
+        {/* 4. MOVE TO FOLDER MODAL */}
+        {moveFile && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setMoveFile(null)}
+              className="absolute inset-0 bg-slate-900/30 backdrop-blur-xs" 
+            />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.96 }}
+              className="relative w-full max-w-sm bg-white rounded-[22px] shadow-[0_20px_50px_rgba(0,0,0,0.18)] border border-slate-100 overflow-hidden z-10 flex flex-col text-left"
+            >
+              <form onSubmit={handleMoveSubmit}>
+                <div className="px-5.5 py-4 border-b border-slate-50 bg-slate-50/20 flex items-center justify-between">
+                  <h3 className="font-bold text-slate-800 text-sm">Move "{moveFile.name}"</h3>
+                  <button type="button" onClick={() => setMoveFile(null)} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-all">
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                <div className="p-5.5 space-y-3">
+                  <label className="text-[10px] font-extrabold uppercase text-slate-400 tracking-wider block">Target Destination Folder</label>
+                  
+                  <div className="border border-slate-100 rounded-xl max-h-[220px] overflow-y-auto divide-y divide-slate-50">
+                    <button
+                      type="button"
+                      onClick={() => setTargetFolderId(null)}
+                      className={`w-full px-3 py-2 text-xs font-bold text-slate-705 text-left flex items-center gap-2 cursor-pointer transition-colors ${targetFolderId === null ? 'bg-blue-50 text-blue-600' : 'hover:bg-slate-50'}`}
+                    >
+                      <HardDrive className="w-4 h-4 text-slate-400" />
+                      <span>Root Workspace / All Files</span>
+                    </button>
+
+                    {files
+                      .filter(f => f.isFolder && !f.isTrashed && f.id !== moveFile.id)
+                      .map((f) => (
+                        <button
+                          key={f.id}
+                          type="button"
+                          onClick={() => setTargetFolderId(f.id)}
+                          className={`w-full px-3 py-2 text-xs font-bold text-slate-705 text-left flex items-center gap-2 cursor-pointer transition-colors ${targetFolderId === f.id ? 'bg-blue-50 text-blue-600' : 'hover:bg-slate-50'}`}
+                        >
+                          <Folder className="w-4 h-4 text-slate-400" />
+                          <span>{f.name}</span>
+                        </button>
+                      ))}
+                  </div>
+                </div>
+
+                <div className="px-5.5 py-4 border-t border-slate-50 bg-slate-50/20 flex gap-2 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setMoveFile(null)}
+                    className="px-4 py-2 hover:bg-slate-150 text-slate-600 rounded-xl text-xs font-bold border border-transparent cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-extrabold shadow-sm transition-all cursor-pointer"
+                  >
+                    Move Here
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+
+        {/* 5. FLOATING SLIDE TOAST NOTIFICATION */}
+        {toastMessage && (
+          <motion.div
+            initial={{ opacity: 0, y: 30, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 30, scale: 0.95 }}
+            className="fixed bottom-6 right-6 bg-slate-900 text-white px-5.5 py-3 rounded-2xl shadow-xl z-55 flex items-center gap-2.5 text-xs font-bold max-w-sm tracking-wide"
+            id="premium-toast-alert"
+          >
+            <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span>{toastMessage}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );

@@ -896,6 +896,8 @@ export default function App() {
                     onCreateFolderClick={() => setActiveView('files')}
                     onNavigateView={(v) => setActiveView(v)}
                     onSelectFolder={setSelectedFolderId}
+                    token={token!}
+                    onRefresh={fetchFiles}
                   />
                 )}
 
