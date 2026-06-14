@@ -78,7 +78,13 @@ export function getApiUrl(path: string): string {
   
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   if (isVercel || isNotCloudRun) {
-    const apiBase = (import.meta as any).env.VITE_API_URL || 'https://ais-pre-3jurc4t4l3jgejtc77cjns-965251783867.asia-southeast1.run.app';
+    let apiBase = (import.meta as any).env.VITE_API_URL || 'https://ais-pre-3jurc4t4l3jgejtc77cjns-965251783867.asia-southeast1.run.app';
+    if (apiBase.endsWith('/')) {
+      apiBase = apiBase.slice(0, -1);
+    }
+    if (apiBase.startsWith('http://') && !apiBase.includes('localhost') && !apiBase.includes('127.0.0.1')) {
+      apiBase = apiBase.replace('http://', 'https://');
+    }
     return `${apiBase}${cleanPath}`;
   }
   return cleanPath;
