@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
-  Folder, Cloud, Users, Share2, BarChart3, FileText, MoreVertical, X, Upload, ChevronRight, Settings, 
+  Folder, Image, Cloud, Users, Share2, BarChart3, FileText, MoreVertical, X, Upload, ChevronRight, Settings, 
   Trash2, Download, Music, Video, Code, ShieldCheck, Mail, Star, Edit3, Copy, Move, Eye, Calendar, 
   ExternalLink, Lock, Clipboard, Check, Loader2, HardDrive
 } from 'lucide-react';
@@ -18,6 +18,131 @@ interface DashboardProps {
   token?: string;
   onRefresh?: () => void;
 }
+
+const FileItemVisual = ({ file }: { file: CloudFile }) => {
+  const [hasError, setHasError] = useState(false);
+  const mime = file.mimeType ? file.mimeType.toLowerCase() : '';
+  const name = file.name ? file.name.toLowerCase() : '';
+
+  const isImg = (mime.startsWith('image/') || name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png') || name.endsWith('.webp') || name.endsWith('.gif')) && file.url;
+
+  if (isImg && !hasError) {
+    return (
+      <div className="relative w-14 h-14 rounded-2xl border border-slate-200/60 bg-slate-50 shadow-[0_2px_8px_rgba(0,0,0,0.04)] shrink-0 select-none overflow-hidden flex items-center justify-center animate-fade-in" id={`thumbnail-img-container-${file.id}`}>
+        <img 
+          src={file.url} 
+          alt={file.name} 
+          referrerPolicy="no-referrer"
+          className="w-full h-full object-cover"
+          onError={() => setHasError(true)}
+          id={`thumbnail-img-ref-${file.id}`}
+        />
+        <span className="absolute bottom-[2px] right-[2px] px-1.5 py-0.5 rounded-md text-[7px] font-extrabold bg-emerald-600 text-white tracking-wider flex items-center justify-center shadow-3xs leading-none scale-90 select-none">
+          IMG
+        </span>
+      </div>
+    );
+  }
+
+  // If isImg but error, show placeholder
+  if (isImg && hasError) {
+    return (
+      <div className="w-14 h-14 rounded-2xl border border-slate-200 bg-slate-100 flex items-center justify-center shrink-0 shadow-3xs select-none" id={`thumbnail-img-placeholder-${file.id}`}>
+        <Image className="w-6 h-6 text-slate-400 stroke-[1.8]" />
+      </div>
+    );
+  }
+
+  // 2. If it's a video, render a native video preview thumbnail with an overlay play/video icon if URL is available
+  const isVideo = (mime.startsWith('video/') || name.endsWith('.mp4') || name.endsWith('.mkv') || name.endsWith('.mov')) && file.url;
+  if (isVideo) {
+    return (
+      <div className="relative w-14 h-14 rounded-2xl border border-slate-200/60 bg-slate-50 shadow-[0_2px_8px_rgba(0,0,0,0.04)] shrink-0 select-none overflow-hidden" id={`thumbnail-video-container-${file.id}`}>
+        <video 
+          src={file.url} 
+          className="w-full h-full object-cover" 
+          muted 
+          playsInline
+          preload="metadata"
+          id={`thumbnail-video-ref-${file.id}`}
+        />
+        <div className="absolute inset-y-0 inset-x-0 bg-black/25 flex items-center justify-center">
+          <Video className="w-4 h-4 text-white drop-shadow-md stroke-[2.2]" id={`thumbnail-video-icon-${file.id}`} />
+        </div>
+        <span className="absolute bottom-[2px] right-[2px] px-1.5 py-0.5 rounded-md text-[7px] font-extrabold bg-cyan-600 text-white tracking-wider flex items-center justify-center shadow-3xs leading-none scale-90 select-none">
+          VID
+        </span>
+      </div>
+    );
+  }
+
+  // Default icon styles using premium outline icons with soft backgrounds
+  let iconEl = <FileText className="w-6 h-6 stroke-[1.8]" id={`thumbnail-doc-icon-${file.id}`} />;
+  let iconStyles = "bg-blue-50/70 text-blue-600 border-blue-100/50";
+  let badgeText = "DOC";
+  let badgeBg = "bg-blue-600";
+
+  if (name.endsWith('.pdf') || mime.includes('pdf')) {
+    iconEl = <FileText className="w-6 h-6 stroke-[1.8]" id={`thumbnail-pdf-icon-${file.id}`} />;
+    iconStyles = "bg-red-50/70 text-red-600 border-red-100/50";
+    badgeText = "PDF";
+    badgeBg = "bg-red-600";
+  } else if (name.endsWith('.doc') || name.endsWith('.docx') || mime.includes('word') || mime.includes('document')) {
+    iconEl = <FileText className="w-6 h-6 stroke-[1.8]" id={`thumbnail-word-icon-${file.id}`} />;
+    iconStyles = "bg-blue-50/70 text-blue-600 border-blue-100/50";
+    badgeText = "DOC";
+    badgeBg = "bg-blue-600";
+  } else if (name.endsWith('.xls') || name.endsWith('.xlsx') || name.endsWith('.csv') || mime.includes('excel') || mime.includes('sheet') || mime.includes('csv')) {
+    iconEl = <BarChart3 className="w-6 h-6 stroke-[1.8]" id={`thumbnail-excel-icon-${file.id}`} />;
+    iconStyles = "bg-emerald-50/70 text-emerald-600 border-emerald-100/50";
+    badgeText = "XLS";
+    badgeBg = "bg-emerald-600";
+  } else if (name.endsWith('.ppt') || name.endsWith('.pptx') || mime.includes('presentation') || mime.includes('powerpoint')) {
+    iconEl = <FileText className="w-6 h-6 stroke-[1.8]" id={`thumbnail-ppt-icon-${file.id}`} />;
+    iconStyles = "bg-orange-50/70 text-orange-600 border-orange-100/50";
+    badgeText = "PPT";
+    badgeBg = "bg-orange-600";
+  } else if (name.endsWith('.zip') || name.endsWith('.rar') || name.endsWith('.tar') || name.endsWith('.7z') || mime.includes('zip') || mime.includes('compressed')) {
+    iconEl = <Folder className="w-6 h-6 stroke-[1.8]" id={`thumbnail-zip-icon-${file.id}`} />;
+    iconStyles = "bg-amber-50/70 text-amber-600 border-amber-100/50";
+    badgeText = "ZIP";
+    badgeBg = "bg-amber-600";
+  } else if (mime.startsWith('audio/') || name.endsWith('.mp3') || name.endsWith('.wav') || name.endsWith('.m4a')) {
+    iconEl = <Music className="w-6 h-6 stroke-[1.8]" id={`thumbnail-music-icon-${file.id}`} />;
+    iconStyles = "bg-indigo-50/70 text-indigo-600 border-indigo-100/50";
+    badgeText = "AUD";
+    badgeBg = "bg-indigo-600";
+  } else if (mime.startsWith('video/') || name.endsWith('.mp4') || name.endsWith('.mkv') || name.endsWith('.mov')) {
+    iconEl = <Video className="w-6 h-6 stroke-[1.8]" id={`thumbnail-vid-fallback-${file.id}`} />;
+    iconStyles = "bg-cyan-50/70 text-cyan-600 border-cyan-100/50";
+    badgeText = "VID";
+    badgeBg = "bg-cyan-600";
+  } else if (name.endsWith('.json') || mime.includes('json')) {
+    iconEl = <Code className="w-6 h-6 stroke-[1.8]" id={`thumbnail-json-icon-${file.id}`} />;
+    iconStyles = "bg-purple-50/70 text-purple-600 border-purple-100/50";
+    badgeText = "JSON";
+    badgeBg = "bg-purple-600";
+  } else if (name.endsWith('.txt') || mime.includes('text/plain')) {
+    iconEl = <FileText className="w-6 h-6 stroke-[1.8]" id={`thumbnail-txt-icon-${file.id}`} />;
+    iconStyles = "bg-slate-50 text-slate-600 border-slate-200";
+    badgeText = "TXT";
+    badgeBg = "bg-slate-600";
+  } else if (name.endsWith('.html') || name.endsWith('.js') || name.endsWith('.ts') || name.endsWith('.tsx') || name.endsWith('.css') || name.endsWith('.py') || name.endsWith('.cpp') || name.endsWith('.java')) {
+    iconEl = <Code className="w-6 h-6 stroke-[1.8]" id={`thumbnail-code-icon-${file.id}`} />;
+    iconStyles = "bg-violet-50/70 text-violet-600 border-violet-100/50";
+    badgeText = "CODE";
+    badgeBg = "bg-violet-600";
+  }
+
+  return (
+    <div className={`w-14 h-14 rounded-2xl border flex flex-col items-center justify-center shrink-0 shadow-3xs relative select-none ${iconStyles}`} id={`file-icon-badge-${file.id}`}>
+      {iconEl}
+      <span className={`absolute bottom-[2px] right-[2px] px-1 py-0.5 rounded-md text-[7px] font-extrabold ${badgeBg} text-white tracking-wider flex items-center justify-center shadow-3xs leading-none scale-90 select-none`} id={`file-icon-badge-text-${file.id}`}>
+        {badgeText}
+      </span>
+    </div>
+  );
+};
 
 export default function DashboardView({ 
   user, 
@@ -401,115 +526,7 @@ export default function DashboardView({
 
   // Intelligent file-type icon & real image thumbnail generator
   const renderItemVisual = (file: CloudFile) => {
-    const mime = file.mimeType.toLowerCase();
-    const name = file.name.toLowerCase();
-
-    // 1. If it's an image, render a beautiful real thumbnail
-    if ((mime.startsWith('image/') || name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png') || name.endsWith('.webp') || name.endsWith('.gif')) && file.url) {
-      return (
-        <div className="relative w-10 h-10 rounded-xl border border-slate-200/60 bg-slate-50 shadow-[0_2px_8px_rgba(0,0,0,0.04)] shrink-0 select-none overflow-hidden" id={`thumbnail-img-container-${file.id}`}>
-          <img 
-            src={file.url} 
-            alt={file.name} 
-            referrerPolicy="no-referrer"
-            className="w-full h-full object-cover animate-fade-in"
-            id={`thumbnail-img-ref-${file.id}`}
-          />
-          <span className="absolute bottom-[2px] right-[2px] px-1 py-0.5 rounded-md text-[7px] font-extrabold bg-emerald-600 text-white tracking-wider flex items-center justify-center shadow-3xs leading-none scale-90 select-none">
-            IMG
-          </span>
-        </div>
-      );
-    }
-
-    // 2. If it's a video, render a native video preview thumbnail with an overlay play/video icon if URL is available
-    if ((mime.startsWith('video/') || name.endsWith('.mp4') || name.endsWith('.mkv') || name.endsWith('.mov')) && file.url) {
-      return (
-        <div className="relative w-10 h-10 rounded-xl border border-slate-200/60 bg-slate-50 shadow-[0_2px_8px_rgba(0,0,0,0.04)] shrink-0 select-none overflow-hidden" id={`thumbnail-video-container-${file.id}`}>
-          <video 
-            src={file.url} 
-            className="w-full h-full object-cover" 
-            muted 
-            playsInline
-            preload="metadata"
-            id={`thumbnail-video-ref-${file.id}`}
-          />
-          <div className="absolute inset-x-0 inset-y-0 bg-black/25 flex items-center justify-center">
-            <Video className="w-3.5 h-3.5 text-white drop-shadow-md stroke-[2.2]" id={`thumbnail-video-icon-${file.id}`} />
-          </div>
-          <span className="absolute bottom-[2px] right-[2px] px-1 py-0.5 rounded-md text-[7px] font-extrabold bg-cyan-600 text-white tracking-wider flex items-center justify-center shadow-3xs leading-none scale-90 select-none">
-            VID
-          </span>
-        </div>
-      );
-    }
-
-    // Default icon styles
-    let iconEl = <FileText className="w-5 h-5 stroke-[1.8]" id={`thumbnail-doc-icon-${file.id}`} />;
-    let iconStyles = "bg-blue-50/70 text-blue-600 border-blue-100/50";
-    let badgeText = "DOC";
-    let badgeBg = "bg-blue-600";
-
-    if (name.endsWith('.pdf') || mime.includes('pdf')) {
-      iconEl = <FileText className="w-5 h-5 stroke-[1.8]" id={`thumbnail-pdf-icon-${file.id}`} />;
-      iconStyles = "bg-red-50/70 text-red-600 border-red-100/50";
-      badgeText = "PDF";
-      badgeBg = "bg-red-600";
-    } else if (name.endsWith('.doc') || name.endsWith('.docx') || mime.includes('word') || mime.includes('document')) {
-      iconEl = <FileText className="w-5 h-5 stroke-[1.8]" id={`thumbnail-word-icon-${file.id}`} />;
-      iconStyles = "bg-blue-50/70 text-blue-600 border-blue-100/50";
-      badgeText = "DOC";
-      badgeBg = "bg-blue-600";
-    } else if (name.endsWith('.xls') || name.endsWith('.xlsx') || name.endsWith('.csv') || mime.includes('excel') || mime.includes('sheet') || mime.includes('csv')) {
-      iconEl = <BarChart3 className="w-5 h-5 stroke-[1.8]" id={`thumbnail-excel-icon-${file.id}`} />;
-      iconStyles = "bg-emerald-50/70 text-emerald-600 border-emerald-100/50";
-      badgeText = "XLS";
-      badgeBg = "bg-emerald-600";
-    } else if (name.endsWith('.ppt') || name.endsWith('.pptx') || mime.includes('presentation') || mime.includes('powerpoint')) {
-      iconEl = <FileText className="w-5 h-5 stroke-[1.8]" id={`thumbnail-ppt-icon-${file.id}`} />;
-      iconStyles = "bg-orange-50/70 text-orange-600 border-orange-100/50";
-      badgeText = "PPT";
-      badgeBg = "bg-orange-600";
-    } else if (name.endsWith('.zip') || name.endsWith('.rar') || name.endsWith('.tar') || name.endsWith('.7z') || mime.includes('zip') || mime.includes('compressed')) {
-      iconEl = <Folder className="w-5 h-5 stroke-[1.8]" id={`thumbnail-zip-icon-${file.id}`} />;
-      iconStyles = "bg-amber-50/70 text-amber-600 border-amber-100/50";
-      badgeText = "ZIP";
-      badgeBg = "bg-amber-600";
-    } else if (mime.startsWith('audio/') || name.endsWith('.mp3') || name.endsWith('.wav') || name.endsWith('.m4a')) {
-      iconEl = <Music className="w-5 h-5 stroke-[1.8]" id={`thumbnail-music-icon-${file.id}`} />;
-      iconStyles = "bg-indigo-50/70 text-indigo-600 border-indigo-100/50";
-      badgeText = "AUD";
-      badgeBg = "bg-indigo-600";
-    } else if (mime.startsWith('video/') || name.endsWith('.mp4') || name.endsWith('.mkv') || name.endsWith('.mov')) {
-      iconEl = <Video className="w-5 h-5 stroke-[1.8]" id={`thumbnail-vid-fallback-${file.id}`} />;
-      iconStyles = "bg-cyan-50/70 text-cyan-600 border-cyan-100/50";
-      badgeText = "VID";
-      badgeBg = "bg-cyan-600";
-    } else if (name.endsWith('.json') || mime.includes('json')) {
-      iconEl = <Code className="w-5 h-5 stroke-[1.8]" id={`thumbnail-json-icon-${file.id}`} />;
-      iconStyles = "bg-purple-50/70 text-purple-600 border-purple-100/50";
-      badgeText = "JSON";
-      badgeBg = "bg-purple-600";
-    } else if (name.endsWith('.txt') || mime.includes('text/plain')) {
-      iconEl = <FileText className="w-5 h-5 stroke-[1.8]" id={`thumbnail-txt-icon-${file.id}`} />;
-      iconStyles = "bg-slate-50/70 text-slate-600 border-slate-150";
-      badgeText = "TXT";
-      badgeBg = "bg-slate-600";
-    } else if (name.endsWith('.html') || name.endsWith('.js') || name.endsWith('.ts') || name.endsWith('.tsx') || name.endsWith('.css') || name.endsWith('.py') || name.endsWith('.cpp') || name.endsWith('.java')) {
-      iconEl = <Code className="w-5 h-5 stroke-[1.8]" id={`thumbnail-code-icon-${file.id}`} />;
-      iconStyles = "bg-violet-50/70 text-violet-600 border-violet-100/50";
-      badgeText = "CODE";
-      badgeBg = "bg-violet-600";
-    }
-
-    return (
-      <div className={`w-10 h-10 rounded-xl border flex flex-col items-center justify-center shrink-0 shadow-3xs relative select-none ${iconStyles}`} id={`file-icon-badge-${file.id}`}>
-        {iconEl}
-        <span className={`absolute bottom-[2px] right-[2px] px-1 py-0.5 rounded-md text-[7px] font-extrabold ${badgeBg} text-white tracking-wider flex items-center justify-center shadow-3xs leading-none scale-90 select-none`} id={`file-icon-badge-text-${file.id}`}>
-          {badgeText}
-        </span>
-      </div>
-    );
+    return <FileItemVisual file={file} />;
   };
 
   // Recent files query
@@ -654,21 +671,8 @@ export default function DashboardView({
                           </div>
                         </div>
 
-                        {/* Right overlap elements: Avatars & Menu button */}
-                        <div className="flex items-center space-x-2.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-                          <div className="hidden sm:flex items-center -space-x-1.5 overflow-hidden">
-                            <img 
-                              src={avatars[file.id.charCodeAt(0) % avatars.length]} 
-                              className="w-5.5 h-5.5 rounded-full border border-white shadow-3xs object-cover" 
-                              alt="collab" 
-                            />
-                            <img 
-                              src={avatars[(file.id.charCodeAt(0) + 1) % avatars.length]} 
-                              className="w-5.5 h-5.5 rounded-full border border-white shadow-3xs object-cover" 
-                              alt="collab" 
-                            />
-                          </div>
-
+                        {/* Right elements: Menu button only */}
+                        <div className="flex items-center shrink-0" onClick={(e) => e.stopPropagation()}>
                           {/* 3-Dot Dropdown / Context Menu Container */}
                           <div className="relative">
                             <button 
