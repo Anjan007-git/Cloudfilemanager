@@ -4,6 +4,7 @@ import {
   User, Shield, Smartphone, Bell, Trash2, Key, ToggleLeft, Activity, Laptop, RefreshCw 
 } from 'lucide-react';
 import { UserProfile, UserSession } from '../types.js';
+import { apiFetch, getApiUrl } from '../firebase.js';
 
 interface SettingsViewProps {
   user: UserProfile;
@@ -58,7 +59,7 @@ export default function SettingsView({ user, token, onRefresh, onLogout }: Setti
 
   const fetchSessions = async () => {
     try {
-      const resp = await fetch('/api/auth/sessions', {
+      const resp = await apiFetch('/api/auth/sessions', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await resp.json();
@@ -76,7 +77,7 @@ export default function SettingsView({ user, token, onRefresh, onLogout }: Setti
     setFeedback(null);
 
     try {
-      const resp = await fetch('/api/auth/update-profile', {
+      const resp = await apiFetch('/api/auth/update-profile', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -102,7 +103,7 @@ export default function SettingsView({ user, token, onRefresh, onLogout }: Setti
     setFeedback(null);
 
     try {
-      const resp = await fetch('/api/auth/update-password', {
+      const resp = await apiFetch('/api/auth/update-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -129,7 +130,7 @@ export default function SettingsView({ user, token, onRefresh, onLogout }: Setti
     const nextStatus = !mfa;
 
     try {
-      const resp = await fetch('/api/auth/mfa', {
+      const resp = await apiFetch('/api/auth/mfa', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -152,7 +153,7 @@ export default function SettingsView({ user, token, onRefresh, onLogout }: Setti
 
   const handleRevokeSession = async (sessId: string) => {
     try {
-      const resp = await fetch(`/api/auth/sessions/${sessId}`, {
+      const resp = await apiFetch(`/api/auth/sessions/${sessId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -169,7 +170,7 @@ export default function SettingsView({ user, token, onRefresh, onLogout }: Setti
     if (!confirm('WARNING: Are you absolutely confident you seek to delete your whole Cloud File Manager workspace? This clears all uploaded folders, S3 sync indicators and subscription records permanently. This action is irreversible.')) return;
     
     try {
-      const resp = await fetch('/api/auth/delete-account', {
+      const resp = await apiFetch('/api/auth/delete-account', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });

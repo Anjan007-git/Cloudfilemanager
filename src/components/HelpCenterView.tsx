@@ -5,6 +5,7 @@ import {
   AlertCircle, CheckCircle2, ShieldCheck, Lock, FileText, Server, 
   Activity, Users, ArrowUpRight, HelpCircle as QuestionIcon, PlusCircle, Sparkles
 } from 'lucide-react';
+import { apiFetch, getApiUrl } from '../firebase.js';
 
 interface HelpCenterViewProps {
   token: string;
@@ -30,7 +31,7 @@ export default function HelpCenterView({ token }: HelpCenterViewProps) {
     if (!ticketSubject || !ticketMsg) return;
 
     try {
-      const response = await fetch('/api/help/support-ticket', {
+      const response = await apiFetch('/api/help/support-ticket', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

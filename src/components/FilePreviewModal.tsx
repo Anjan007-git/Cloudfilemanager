@@ -6,6 +6,7 @@ import {
   Image, Film, Music, Archive, File, Printer, Loader2, Sparkles, AlertCircle
 } from 'lucide-react';
 import { CloudFile } from '../types.js';
+import { apiFetch, getApiUrl } from '../firebase.js';
 
 interface FilePreviewModalProps {
   file: CloudFile;
@@ -38,6 +39,16 @@ export default function FilePreviewModal({
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
   const [activeViewer, setActiveViewer] = useState<'native' | 'google' | 'ms'>('native');
 
+  // PDF.js Engine States
+  const [pdfjsLoaded, setPdfjsLoaded] = useState<boolean>(false);
+  const [pdfDoc, setPdfDoc] = useState<any>(null);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [numPages, setNumPages] = useState<number>(0);
+  const [isPdfLoading, setIsPdfLoading] = useState<boolean>(false);
+  const [pdfError, setPdfError] = useState<string | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const pdfRenderTaskRef = useRef<any>(null);
+
   // Text/Code files content state
   const [textContent, setTextContent] = useState<string>('');
   const [isTextLoading, setIsTextLoading] = useState<boolean>(false);
@@ -51,7 +62,7 @@ export default function FilePreviewModal({
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
 
-  const fileUrl = `/api/files/download/${file.id}?token=${token}`;
+  const fileUrl = getApiUrl(`/api/files/download/${file.id}?token=${token}`);
 
   // Reset states on file change
   useEffect(() => {
@@ -70,6 +81,12 @@ export default function FilePreviewModal({
     const isOffice = mimeLower.includes('word') || mimeLower.includes('excel') || mimeLower.includes('powerpoint') || mimeLower.includes('sheet') || mimeLower.includes('presentation') ||
                      nameLower.endsWith('.doc') || nameLower.endsWith('.docx') || nameLower.endsWith('.xls') || nameLower.endsWith('.xlsx') || nameLower.endsWith('.ppt') || nameLower.endsWith('.pptx');
 
+    setPdfDoc(null);
+    setCurrentPage(1);
+    setNumPages(0);
+    setPdfError(null);
+    setIsPdfLoading(isPDF);
+
     if (isPDF) {
       setActiveViewer('native');
     } else if (isOffice) {
@@ -84,11 +101,122 @@ export default function FilePreviewModal({
     }
   }, [file.id]);
 
+  // Dynamically load PDF.js client renderer from Cloudflare CDN
+  useEffect(() => {
+    const nameLower = file.name.toLowerCase();
+    const mimeLower = file.mimeType.toLowerCase();
+    const isPDF = mimeLower.includes('pdf') || nameLower.endsWith('.pdf');
+    if (!isPDF) return;
+
+    if ((window as any).pdfjsLib) {
+      setPdfjsLoaded(true);
+      return;
+    }
+
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js';
+    script.async = true;
+    script.onload = () => {
+      const pdfjsLib = (window as any).pdfjsLib;
+      if (pdfjsLib) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
+        setPdfjsLoaded(true);
+      }
+    };
+    script.onerror = () => {
+      setPdfError('Failed to load local HTML5 PDF helper libraries from global CDN network.');
+      setIsPdfLoading(false);
+    };
+    document.body.appendChild(script);
+  }, [file.id]);
+
+  // Load PDF document nodes once script is injected
+  useEffect(() => {
+    const nameLower = file.name.toLowerCase();
+    const mimeLower = file.mimeType.toLowerCase();
+    const isPDF = mimeLower.includes('pdf') || nameLower.endsWith('.pdf');
+    if (!isPDF || !pdfjsLoaded) return;
+
+    let active = true;
+    setIsPdfLoading(true);
+    setPdfError(null);
+
+    const pdfjsLib = (window as any).pdfjsLib;
+    const loadingTask = pdfjsLib.getDocument(fileUrl);
+
+    loadingTask.promise.then((pdfDocumentInstance: any) => {
+      if (!active) return;
+      setPdfDoc(pdfDocumentInstance);
+      setNumPages(pdfDocumentInstance.numPages);
+      setCurrentPage(1);
+      setIsPdfLoading(false);
+    }).catch((err: any) => {
+      if (!active) return;
+      console.error('Core PDF.js integration parsed rejection:', err);
+      setPdfError('Encountered file decryption/corruption. Please download this file directly or open in a new tab.');
+      setIsPdfLoading(false);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [pdfjsLoaded, fileUrl, file.id]);
+
+  // Render current pdf page frame on physical context canvas
+  useEffect(() => {
+    if (!pdfDoc || !canvasRef.current) return;
+
+    let active = true;
+    const canvas = canvasRef.current;
+    const context = canvas.getContext('2d');
+    if (!context) return;
+
+    pdfDoc.getPage(currentPage).then((page: any) => {
+      if (!active) return;
+
+      // Cancel any ongoing render task to avoid frame interleaving
+      if (pdfRenderTaskRef.current) {
+        try {
+          pdfRenderTaskRef.current.cancel();
+        } catch (_) {}
+      }
+
+      const viewport = page.getViewport({ scale: 1.4 * zoomLevel });
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+
+      const renderContext = {
+        canvasContext: context,
+        viewport: viewport
+      };
+
+      const renderTask = page.render(renderContext);
+      pdfRenderTaskRef.current = renderTask;
+
+      renderTask.promise.then(() => {
+        if (active) {
+          pdfRenderTaskRef.current = null;
+        }
+      }).catch((err: any) => {
+        if (err.name === 'RenderingCancelledException') {
+          return;
+        }
+        console.error('PDF frame draw cycle failed:', err);
+      });
+    }).catch((err: any) => {
+      console.error('PDF.js segment read failure:', err);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [pdfDoc, currentPage, zoomLevel]);
+
   const loadTextContent = async () => {
     setIsTextLoading(true);
     setTextError(null);
     try {
-      const response = await fetch(fileUrl);
+      const response = await apiFetch(fileUrl);
       if (!response.ok) {
         throw new Error('Failed to fetch text content.');
       }
@@ -347,63 +475,129 @@ export default function FilePreviewModal({
 
           {/* PDF & OFFICE DOCUMENTS PREVIEW */}
           {isDocumentType(file.mimeType, file.name) && (
-            <div className="w-full h-full flex flex-col rounded-2xl overflow-hidden border border-slate-200 shadow-sm bg-white">
-              {/* Tab Selector */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between px-4 py-2 border-b border-slate-200 bg-slate-50 text-[11px] gap-3 font-sans shrink-0 text-left">
-                <div className="flex items-center space-x-2">
-                  <span className="font-bold text-slate-500">Preview Mode:</span>
-                  {(file.mimeType.toLowerCase().includes('pdf') || file.name.toLowerCase().endsWith('.pdf')) && (
-                    <button
-                      onClick={() => setActiveViewer('native')}
-                      className={`px-3 py-1 rounded-lg font-bold transition-all ${activeViewer === 'native' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-200'}`}
+            <div className="w-full h-full flex items-center justify-center p-4">
+              {file.name.toLowerCase().endsWith('.pdf') || file.mimeType.toLowerCase().includes('pdf') ? (
+                isPdfLoading ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-slate-400 space-y-3.5">
+                    <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                    <span className="text-xs font-mono font-bold uppercase tracking-wider text-slate-500">Decrypting & rendering PDF pages...</span>
+                  </div>
+                ) : pdfError ? (
+                  <div className="flex flex-col items-center justify-center p-8 bg-white border border-slate-200 rounded-3xl max-w-md shadow-sm space-y-5 text-center">
+                    <div className="w-14 h-14 rounded-full bg-red-50 border border-red-100 flex items-center justify-center text-red-500">
+                      <AlertCircle className="w-6 h-6" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <h4 className="font-display font-black text-slate-800 text-sm">Inline Preview Blocked</h4>
+                      <p className="text-xs text-slate-500 leading-relaxed">
+                        Browser sandbox security rules prevent inline document viewers from loading. Open the document inside a secure secondary tab to view natively.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3 w-full">
+                      <a 
+                        href={fileUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer text-center"
+                      >
+                        <Maximize2 className="w-3.5 h-3.5" /> Open in New Tab
+                      </a>
+                      <button 
+                        onClick={() => onDownload(file)}
+                        className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-705 font-bold text-xs rounded-xl transition-all border border-slate-200 flex items-center justify-center gap-2 cursor-pointer"
+                      >
+                        <Download className="w-3.5 h-3.5" /> Download PDF
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="relative flex flex-col items-center justify-center w-full max-h-[70vh] overflow-hidden">
+                    <div className="flex-1 w-full flex items-center justify-center overflow-auto p-2" style={{ maxHeight: '58vh' }}>
+                      <canvas 
+                        ref={canvasRef} 
+                        className="max-w-full h-auto shadow-xl rounded-xl bg-white border border-slate-200/80" 
+                      />
+                    </div>
+
+                    <div className="mt-4 flex items-center space-x-4 bg-white/95 border border-slate-200/80 backdrop-blur-md rounded-full px-5 py-2.5 shadow-lg text-slate-650 text-xs font-bold select-none shrink-0 border border-slate-200 shadow-slate-100">
+                      <button 
+                        disabled={currentPage <= 1}
+                        onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                        className="hover:text-slate-950 hover:bg-slate-100 p-1 rounded-lg disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed cursor-pointer transition-all active:scale-95"
+                        title="Previous Page"
+                      >
+                        <ChevronLeft className="w-4 h-4" />
+                      </button>
+                      
+                      <span className="font-mono text-xs uppercase tracking-wider text-slate-450 px-1 font-extrabold">
+                        Page <span className="text-slate-900 font-black">{currentPage}</span> of <span className="text-slate-800 font-bold">{numPages}</span>
+                      </span>
+
+                      <button 
+                        disabled={currentPage >= numPages}
+                        onClick={() => setCurrentPage(prev => Math.min(numPages, prev + 1))}
+                        className="hover:text-slate-950 hover:bg-slate-100 p-1 rounded-lg disabled:opacity-30 disabled:hover:bg-transparent disabled:cursor-not-allowed cursor-pointer transition-all active:scale-95"
+                        title="Next Page"
+                      >
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+
+                      <div className="h-4 w-px bg-slate-200" />
+
+                      <button 
+                        onClick={() => setZoomLevel(prev => Math.max(0.5, prev - 0.2))} 
+                        className="hover:text-slate-900 p-0.5 rounded cursor-pointer transition-all"
+                        title="Zoom Out"
+                      >
+                        <ZoomOut className="w-3.5 h-3.5" />
+                      </button>
+                      <span className="text-[10px] font-mono font-black text-slate-500 w-10 text-center">{Math.round(zoomLevel * 100)}%</span>
+                      <button 
+                        onClick={() => setZoomLevel(prev => Math.min(2.5, prev + 0.2))} 
+                        className="hover:text-slate-900 p-0.5 rounded cursor-pointer transition-all"
+                        title="Zoom In"
+                      >
+                        <ZoomIn className="w-3.5 h-3.5" />
+                      </button>
+                      
+                      <button 
+                        onClick={() => setZoomLevel(1)} 
+                        className="hover:text-blue-600 hover:underline text-[10px] uppercase font-bold tracking-wider px-1 cursor-pointer"
+                      >
+                        Reset
+                      </button>
+                    </div>
+                  </div>
+                )
+              ) : (
+                <div className="flex flex-col items-center justify-center p-8 bg-white border border-slate-200 rounded-3xl max-w-md shadow-lg space-y-5 text-center">
+                  <div className="w-14 h-14 rounded-full bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 shadow-inner">
+                    <FileText className="w-6 h-6 animate-pulse" />
+                  </div>
+                  <div className="space-y-1.5 px-1">
+                    <h4 className="font-display font-black text-slate-800 text-sm">{file.name}</h4>
+                    <p className="text-xs text-slate-500 leading-relaxed font-semibold">
+                      Sandbox nesting rules block iframe rendering of Office documents. Click below to view natively in a safe individual viewport or tab.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 w-full">
+                    <a 
+                      href={fileUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer text-center"
                     >
-                      Browser Native Frame
-                    </button>
-                  )}
-                  <button
-                    onClick={() => setActiveViewer('google')}
-                    className={`px-3 py-1 rounded-lg font-bold transition-all ${activeViewer === 'google' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-200'}`}
-                  >
-                    Google Web Viewer
-                  </button>
-                  {!(file.mimeType.toLowerCase().includes('pdf') || file.name.toLowerCase().endsWith('.pdf')) && (
-                    <button
-                      onClick={() => setActiveViewer('ms')}
-                      className={`px-3 py-1 rounded-lg font-bold transition-all ${activeViewer === 'ms' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-200'}`}
+                      <Maximize2 className="w-3.5 h-3.5" /> Open in New Tab
+                    </a>
+                    <button 
+                      onClick={() => onDownload(file)}
+                      className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 hover:text-slate-905 text-slate-700 font-bold text-xs rounded-xl transition-all border border-slate-200 flex items-center justify-center gap-2 cursor-pointer"
                     >
-                      Office Live Viewer
+                      <Download className="w-3.5 h-3.5" /> Download File
                     </button>
-                  )}
+                  </div>
                 </div>
-                <div className="text-[10px] text-slate-400 font-semibold">
-                  💡 Tip: Slow connection? Try another mode, Open in New Tab, or Download directly.
-                </div>
-              </div>
-              
-              {/* iframe Container */}
-              <div className="flex-1 bg-slate-50 relative min-h-[300px]">
-                {activeViewer === 'native' && (file.mimeType.toLowerCase().includes('pdf') || file.name.toLowerCase().endsWith('.pdf')) && (
-                  <iframe 
-                    src={`${fileUrl}#toolbar=1`} 
-                    title={file.name}
-                    className="w-full h-full border-0 absolute inset-0"
-                  />
-                )}
-                {activeViewer === 'google' && (
-                  <iframe 
-                    src={`https://docs.google.com/gview?url=${encodeURIComponent(window.location.origin + fileUrl)}&embedded=true`} 
-                    title={file.name}
-                    className="w-full h-full border-0 absolute inset-0 bg-white"
-                  />
-                )}
-                {activeViewer === 'ms' && (
-                  <iframe 
-                    src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(window.location.origin + fileUrl)}`} 
-                    title={file.name}
-                    className="w-full h-full border-0 absolute inset-0 bg-white"
-                  />
-                )}
-              </div>
+              )}
             </div>
           )}
 

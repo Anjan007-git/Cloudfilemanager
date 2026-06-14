@@ -5,6 +5,7 @@ import {
   TrendingUp, DownloadCloud, Landmark, FileText, Lock, Sparkles, Orbit, CheckCircle2
 } from 'lucide-react';
 import { UserProfile } from '../types.js';
+import { apiFetch, getApiUrl } from '../firebase.js';
 
 interface StorageViewProps {
   user: UserProfile;
@@ -23,7 +24,7 @@ export default function StorageView({ user, token, onRefresh }: StorageViewProps
 
   const fetchBillingHistory = async () => {
     try {
-      const response = await fetch('/api/billing/history', {
+      const response = await apiFetch('/api/billing/history', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -39,7 +40,7 @@ export default function StorageView({ user, token, onRefresh }: StorageViewProps
     setLoading(true);
     setSuccessMsg(null);
     try {
-      const response = await fetch('/api/billing/upgrade', {
+      const response = await apiFetch('/api/billing/upgrade', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -68,7 +69,7 @@ export default function StorageView({ user, token, onRefresh }: StorageViewProps
     setLoading(true);
     setSuccessMsg(null);
     try {
-      const response = await fetch('/api/billing/downgrade', {
+      const response = await apiFetch('/api/billing/downgrade', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

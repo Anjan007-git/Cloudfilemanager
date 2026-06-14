@@ -69,3 +69,46 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
   console.error('Firestore Error: ', JSON.stringify(errInfo));
   throw new Error(JSON.stringify(errInfo));
 }
+
+export function getApiUrl(path: string): string {
+  const isVercel = window.location.hostname.includes('vercel.app');
+  const isNotCloudRun = !window.location.hostname.endsWith('.run.app') && 
+                        window.location.hostname !== 'localhost' && 
+                        window.location.hostname !== '127.0.0.1';
+  
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  if (isVercel || isNotCloudRun) {
+    const apiBase = (import.meta as any).env.VITE_API_URL || 'https://ais-pre-3jurc4t4l3jgejtc77cjns-965251783867.asia-southeast1.run.app';
+    return `${apiBase}${cleanPath}`;
+  }
+  return cleanPath;
+}
+
+export async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
+  const url = getApiUrl(input);
+
+  const newInit: RequestInit = { ...(init || {}) };
+  const headers = new Headers(newInit.headers || {});
+  
+  if (!headers.has('Authorization')) {
+    const fbUser = auth.currentUser;
+    if (fbUser) {
+      try {
+        const idToken = await fbUser.getIdToken();
+        headers.set('Authorization', `Bearer ${idToken}`);
+      } catch (err) {
+        console.error('Could not fetch ID token for apiFetch', err);
+      }
+    } else {
+      const cachedToken = localStorage.getItem('cfm_token');
+      if (cachedToken) {
+        headers.set('Authorization', `Bearer ${cachedToken}`);
+      }
+    }
+  }
+  newInit.headers = headers;
+
+  return fetch(url, newInit);
+}
+
+

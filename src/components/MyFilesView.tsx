@@ -7,6 +7,7 @@ import {
   Play, Lock, Loader2, PlayCircle, ToggleLeft, Activity, Trash, Sparkles, RefreshCw
 } from 'lucide-react';
 import { CloudFile, SharedUser, ShareLink } from '../types.js';
+import { apiFetch, getApiUrl } from '../firebase.js';
 import FilePreviewModal from './FilePreviewModal.js';
 import ErrorBoundary from './ErrorBoundary.js';
 
@@ -199,7 +200,7 @@ export default function MyFilesView({
     if (!newFolderName.trim()) return;
 
     try {
-      const response = await fetch('/api/files/create-folder', {
+      const response = await apiFetch('/api/files/create-folder', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -225,7 +226,7 @@ export default function MyFilesView({
   const handleDuplicate = async (fileId: string) => {
     setLoadingActionId(fileId);
     try {
-      const response = await fetch(`/api/files/duplicate/${fileId}`, {
+      const response = await apiFetch(`/api/files/duplicate/${fileId}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -245,7 +246,7 @@ export default function MyFilesView({
 
   const handleToggleStar = async (fileId: string) => {
     try {
-      const response = await fetch(`/api/files/toggle-star/${fileId}`, {
+      const response = await apiFetch(`/api/files/toggle-star/${fileId}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -263,7 +264,7 @@ export default function MyFilesView({
     if (!moveId) return;
 
     try {
-      const response = await fetch(`/api/files/move/${moveId}`, {
+      const response = await apiFetch(`/api/files/move/${moveId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -292,7 +293,7 @@ export default function MyFilesView({
     if (!renameId || !renameValue.trim()) return;
 
     try {
-      const response = await fetch(`/api/files/rename/${renameId}`, {
+      const response = await apiFetch(`/api/files/rename/${renameId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -317,7 +318,7 @@ export default function MyFilesView({
     
     setLoadingActionId(item.id);
     try {
-      const response = await fetch(`/api/files/delete/${item.id}`, {
+      const response = await apiFetch(`/api/files/delete/${item.id}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -335,7 +336,7 @@ export default function MyFilesView({
   const handleRestore = async (item: CloudFile) => {
     setLoadingActionId(item.id);
     try {
-      const response = await fetch(`/api/files/restore/${item.id}`, {
+      const response = await apiFetch(`/api/files/restore/${item.id}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -355,7 +356,7 @@ export default function MyFilesView({
     
     setLoadingActionId(item.id);
     try {
-      const response = await fetch(`/api/files/delete/${item.id}`, {
+      const response = await apiFetch(`/api/files/delete/${item.id}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -374,7 +375,7 @@ export default function MyFilesView({
     if (!confirm('Are you sure you want to empty the Trash? All files inside will be permanently deleted.')) return;
     
     try {
-      const response = await fetch('/api/files/clear-trash', {
+      const response = await apiFetch('/api/files/clear-trash', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -426,7 +427,7 @@ export default function MyFilesView({
     if (!shareFile) return;
 
     try {
-      const shareResp = await fetch(`/api/files/share/${shareFile.id}`, {
+      const shareResp = await apiFetch(`/api/files/share/${shareFile.id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -444,7 +445,7 @@ export default function MyFilesView({
         expiresAt: expiresAtValue || null
       };
 
-      const linkResp = await fetch(`/api/files/share-link/${shareFile.id}`, {
+      const linkResp = await apiFetch(`/api/files/share-link/${shareFile.id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

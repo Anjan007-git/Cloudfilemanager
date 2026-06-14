@@ -6,6 +6,7 @@ import {
   ExternalLink, Lock, Clipboard, Check, Loader2, HardDrive
 } from 'lucide-react';
 import { CloudFile, Activity, UserProfile } from '../types.js';
+import { apiFetch, getApiUrl } from '../firebase.js';
 
 interface DashboardProps {
   user: UserProfile;
@@ -232,8 +233,8 @@ export default function DashboardView({
       if (isTextFile && token) {
         setLoadingText(true);
         setTextContent("");
-        const fileUrl = `/api/files/download/${previewFile.id}?token=${token}`;
-        fetch(fileUrl)
+        const fileUrl = getApiUrl(`/api/files/download/${previewFile.id}?token=${token}`);
+        apiFetch(fileUrl)
           .then(res => {
             if (!res.ok) throw new Error("Preview source unavailable");
             return res.text();
@@ -261,7 +262,7 @@ export default function DashboardView({
   // Operations and Handlers
   const handleDownload = (file: CloudFile) => {
     if (!token) return;
-    const downloadUrl = `/api/files/download/${file.id}?token=${token}&download=true`;
+    const downloadUrl = getApiUrl(`/api/files/download/${file.id}?token=${token}&download=true`);
     const link = document.createElement('a');
     link.href = downloadUrl;
     link.setAttribute('download', file.name);
@@ -274,7 +275,7 @@ export default function DashboardView({
   const handleToggleStar = async (file: CloudFile) => {
     if (!token) return;
     try {
-      const response = await fetch(`/api/files/toggle-star/${file.id}`, {
+      const response = await apiFetch(`/api/files/toggle-star/${file.id}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -292,7 +293,7 @@ export default function DashboardView({
   const handleDuplicate = async (file: CloudFile) => {
     if (!token) return;
     try {
-      const response = await fetch(`/api/files/duplicate/${file.id}`, {
+      const response = await apiFetch(`/api/files/duplicate/${file.id}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -313,7 +314,7 @@ export default function DashboardView({
   const handleMoveToTrash = async (file: CloudFile) => {
     if (!token) return;
     try {
-      const response = await fetch(`/api/files/delete/${file.id}`, {
+      const response = await apiFetch(`/api/files/delete/${file.id}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -332,7 +333,7 @@ export default function DashboardView({
     e.preventDefault();
     if (!renameFile || !token || !renameValue.trim()) return;
     try {
-      const response = await fetch(`/api/files/rename/${renameFile.id}`, {
+      const response = await apiFetch(`/api/files/rename/${renameFile.id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -358,7 +359,7 @@ export default function DashboardView({
     e.preventDefault();
     if (!moveFile || !token) return;
     try {
-      const response = await fetch(`/api/files/move/${moveFile.id}`, {
+      const response = await apiFetch(`/api/files/move/${moveFile.id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -385,7 +386,7 @@ export default function DashboardView({
     e.preventDefault();
     if (!shareFile || !token) return;
     try {
-      const shareResp = await fetch(`/api/files/share/${shareFile.id}`, {
+      const shareResp = await apiFetch(`/api/files/share/${shareFile.id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -401,7 +402,7 @@ export default function DashboardView({
         expiresAt: null
       };
 
-      const linkResp = await fetch(`/api/files/share-link/${shareFile.id}`, {
+      const linkResp = await apiFetch(`/api/files/share-link/${shareFile.id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

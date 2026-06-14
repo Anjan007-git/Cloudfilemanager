@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { auth, db, handleFirestoreError, OperationType } from './firebase.js';
+import { auth, db, handleFirestoreError, OperationType, apiFetch } from './firebase.js';
 import { doc, onSnapshot, setDoc, updateDoc, getDoc } from 'firebase/firestore';
 
 // Modular Visualizer Imports
@@ -172,7 +172,7 @@ export default function App() {
       else if (activeView === 'recent') url += 'sortBy=createdAt&sortOrder=desc';
       else url += `parentId=${selectedFolderId || 'null'}`;
 
-      const response = await fetch(url, {
+      const response = await apiFetch(url, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await response.json();
@@ -203,7 +203,7 @@ export default function App() {
 
         // Aggregate active files sizes and count metrics directly from the collection
         if (auth.currentUser) {
-          const allResp = await fetch('/api/files?all=true', {
+          const allResp = await apiFetch('/api/files?all=true', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           const allData = await allResp.json();
@@ -243,7 +243,7 @@ export default function App() {
   const fetchActivities = async () => {
     if (!token) return;
     try {
-      const resp = await fetch('/api/activity', {
+      const resp = await apiFetch('/api/activity', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await resp.json();
@@ -258,7 +258,7 @@ export default function App() {
   const fetchNotifications = async () => {
     if (!token) return;
     try {
-      const resp = await fetch('/api/notifications', {
+      const resp = await apiFetch('/api/notifications', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await resp.json();
@@ -293,7 +293,7 @@ export default function App() {
 
   const handleMarkNotificationRead = async (id: string) => {
     try {
-      const resp = await fetch(`/api/notifications/read/${id}`, {
+      const resp = await apiFetch(`/api/notifications/read/${id}`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -308,7 +308,7 @@ export default function App() {
 
   const handleMarkAllNotificationsRead = async () => {
     try {
-      const resp = await fetch('/api/notifications/read-all', {
+      const resp = await apiFetch('/api/notifications/read-all', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -323,7 +323,7 @@ export default function App() {
 
   const handleClearNotifications = async () => {
     try {
-      const resp = await fetch('/api/notifications/clear', {
+      const resp = await apiFetch('/api/notifications/clear', {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -341,7 +341,7 @@ export default function App() {
     if (!headerFolderName.trim()) return;
 
     try {
-      const response = await fetch('/api/files/create-folder', {
+      const response = await apiFetch('/api/files/create-folder', {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -438,7 +438,7 @@ export default function App() {
       }, 250);
 
       try {
-        const response = await fetch('/api/files/upload', {
+        const response = await apiFetch('/api/files/upload', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`
