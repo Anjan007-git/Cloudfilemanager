@@ -4,7 +4,7 @@ import {
   Folder, File, ChevronRight, Grid, List, MoreVertical, Star, Trash2, Download, 
   Share2, Edit3, Eye, FileText, Image, Film, Music, Archive, Move, Copy, Plus, 
   ArrowUp, Search, SlidersHorizontal, ChevronDown, Check, X, ShieldAlert, Key, FolderPlus,
-  Play, Lock, Loader2, PlayCircle, ToggleLeft, Activity, Trash, Sparkles
+  Play, Lock, Loader2, PlayCircle, ToggleLeft, Activity, Trash, Sparkles, RefreshCw
 } from 'lucide-react';
 import { CloudFile, SharedUser, ShareLink } from '../types.js';
 import FilePreviewModal from './FilePreviewModal.js';
@@ -20,6 +20,7 @@ interface MyFilesViewProps {
   uploadQueue: any[];
   onUploadFiles: (files: FileList | File[]) => void;
   onClearCompletedUploads: () => void;
+  activeView?: string;
 }
 
 export default function MyFilesView({ 
@@ -31,7 +32,8 @@ export default function MyFilesView({
   onTrackActivity,
   uploadQueue,
   onUploadFiles,
-  onClearCompletedUploads
+  onClearCompletedUploads,
+  activeView = 'files'
 }: MyFilesViewProps) {
   
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
@@ -122,6 +124,14 @@ export default function MyFilesView({
   };
 
   const currentFolderFiles = initialFiles.filter(item => {
+    if (activeView === 'trash') {
+      if (!item.isTrashed) return false;
+      if (searchQuery) {
+        return item.name.toLowerCase().includes(searchQuery.toLowerCase().trim());
+      }
+      return true;
+    }
+
     if (item.isTrashed) return false;
     
     if (searchQuery) {
@@ -165,6 +175,9 @@ export default function MyFilesView({
   });
 
   const getBreadcrumbs = () => {
+    if (activeView === 'trash') {
+      return [{ id: null, name: 'Trash Bin' }];
+    }
     const list: { id: string | null; name: string }[] = [{ id: null, name: 'S3 Root Workspace' }];
     let currId = selectedFolderId;
     
@@ -316,6 +329,60 @@ export default function MyFilesView({
     } finally {
       setLoadingActionId(null);
       setActiveContextId(null);
+    }
+  };
+
+  const handleRestore = async (item: CloudFile) => {
+    setLoadingActionId(item.id);
+    try {
+      const response = await fetch(`/api/files/restore/${item.id}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Failed to restore this element');
+      onRefresh();
+      onTrackActivity();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setLoadingActionId(null);
+      setActiveContextId(null);
+    }
+  };
+
+  const handleDeleteForever = async (item: CloudFile) => {
+    if (!confirm(`Are you sure you want to permanently delete "${item.name}"? This action cannot be undone.`)) return;
+    
+    setLoadingActionId(item.id);
+    try {
+      const response = await fetch(`/api/files/delete/${item.id}`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Failed to permanently delete this element');
+      onRefresh();
+      onTrackActivity();
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setLoadingActionId(null);
+      setActiveContextId(null);
+    }
+  };
+
+  const handleEmptyTrash = async () => {
+    if (!confirm('Are you sure you want to empty the Trash? All files inside will be permanently deleted.')) return;
+    
+    try {
+      const response = await fetch('/api/files/clear-trash', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if (!response.ok) throw new Error('Failed to empty the Trash');
+      onRefresh();
+      onTrackActivity();
+    } catch (err: any) {
+      alert(err.message);
     }
   };
 
@@ -538,30 +605,43 @@ export default function MyFilesView({
             <input 
               id="explorer-search"
               type="text" 
-              placeholder="Search active folder..."
+              placeholder={activeView === 'trash' ? "Search trash..." : "Search active folder..."}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 pr-4 py-2.5 border border-slate-200 bg-white rounded-xl text-xs font-semibold focus:outline-none focus:border-blue-600 transition-all text-slate-800 w-full sm:w-48 placeholder-slate-400 shadow-sm"
             />
           </div>
 
-          <button 
-            id="trigger-file-select"
-            onClick={() => fileInputRef.current?.click()}
-            className="inline-flex items-center space-x-2 px-4.5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 font-bold text-xs text-white rounded-2xl shadow-lg shadow-blue-500/10 cursor-pointer active:scale-95 transition-all"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Upload</span>
-          </button>
+          {activeView === 'trash' ? (
+            <button 
+              id="trigger-empty-trash"
+              onClick={handleEmptyTrash}
+              className="inline-flex items-center space-x-2 px-4.5 py-2.5 bg-red-600 hover:bg-red-700 font-bold text-xs text-white rounded-2xl cursor-pointer active:scale-95 transition-all shadow-lg shadow-red-500/10"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>Empty Trash</span>
+            </button>
+          ) : (
+            <>
+              <button 
+                id="trigger-file-select"
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex items-center space-x-2 px-4.5 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 font-bold text-xs text-white rounded-2xl shadow-lg shadow-blue-500/10 cursor-pointer active:scale-95 transition-all"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Upload</span>
+              </button>
 
-          <button 
-            id="trigger-folder-modal"
-            onClick={() => setIsNewFolderOpen(true)}
-            className="inline-flex items-center space-x-2 px-4.5 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 font-bold text-xs text-slate-700 rounded-2xl cursor-pointer active:scale-95 transition-all shadow-sm shadow-slate-100"
-          >
-            <FolderPlus className="w-4 h-4 text-slate-500" />
-            <span>Folder</span>
-          </button>
+              <button 
+                id="trigger-folder-modal"
+                onClick={() => setIsNewFolderOpen(true)}
+                className="inline-flex items-center space-x-2 px-4.5 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 font-bold text-xs text-slate-700 rounded-2xl cursor-pointer active:scale-95 transition-all shadow-sm shadow-slate-100"
+              >
+                <FolderPlus className="w-4 h-4 text-slate-500" />
+                <span>Folder</span>
+              </button>
+            </>
+          )}
 
           {/* Grid/List toggler */}
           <div className="flex bg-slate-100 border border-slate-200 rounded-2xl p-0.5 shadow-sm">
@@ -642,23 +722,33 @@ export default function MyFilesView({
       {filteredAndSortedFiles.length === 0 ? (
         <div className="bg-white rounded-3xl border border-dashed border-slate-200/80 p-20 text-center space-y-5 max-w-xl mx-auto my-12 shadow-sm" id="explorer-empty">
           <div className="shadow-xl shadow-slate-100 bg-slate-50 border border-slate-100 p-5 rounded-full inline-flex text-slate-400">
-            <Folder className="w-10 h-10 text-blue-600" />
+            {activeView === 'trash' ? (
+              <Trash2 className="w-10 h-10 text-slate-400" />
+            ) : (
+              <Folder className="w-10 h-10 text-blue-600" />
+            )}
           </div>
           <div className="space-y-1.5">
-            <h3 className="font-display font-medium text-slate-800 text-lg">Empty Cloud Directory</h3>
+            <h3 className="font-display font-medium text-slate-800 text-lg">
+              {activeView === 'trash' ? 'Trash is Empty' : 'Empty Cloud Directory'}
+            </h3>
             <p className="text-xs text-slate-500 max-w-sm mx-auto leading-relaxed">
-              No elements matches configured metrics. Drag and drop file representations to dispatch multi-part uploads inside S3 buckets.
+              {activeView === 'trash' 
+                ? 'Your trashed files and folders will appear here. Items can be restored or permanently deleted.' 
+                : 'No elements matches configured metrics. Drag and drop file representations to dispatch multi-part uploads inside S3 buckets.'}
             </p>
           </div>
-          <div className="pt-2">
-            <button 
-              onClick={() => fileInputRef.current?.click()}
-              className="inline-flex items-center space-x-1.5 px-5 py-3 bg-blue-650 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 font-bold text-xs text-white rounded-xl shadow-md transition-all cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Browse Machine files</span>
-            </button>
-          </div>
+          {activeView !== 'trash' && (
+            <div className="pt-2">
+              <button 
+                onClick={() => fileInputRef.current?.click()}
+                className="inline-flex items-center space-x-1.5 px-5 py-3 bg-blue-650 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 font-bold text-xs text-white rounded-xl shadow-md transition-all cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Browse Machine files</span>
+              </button>
+            </div>
+          )}
         </div>
       ) : (
         viewMode === 'grid' ? (
@@ -729,47 +819,60 @@ export default function MyFilesView({
                                 exit={{ opacity: 0, scale: 0.96, y: -5 }}
                                 className="absolute right-0 mt-1 w-44 bg-white border border-slate-200/80 shadow-xl rounded-xl p-1.5 z-50 text-xs text-slate-700 text-left font-semibold space-y-0.5"
                               >
-                                {item.isFolder ? (
-                                  <button onClick={(e) => { e.stopPropagation(); onSelectFolder(item.id); setActiveContextId(null); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 font-bold text-slate-800 flex items-center gap-2 cursor-pointer">
-                                    <Folder className="w-3.5 h-3.5 text-blue-500" /> Open Folder
-                                  </button>
+                                {activeView === 'trash' ? (
+                                  <>
+                                    <button onClick={(e) => { e.stopPropagation(); handleRestore(item); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-emerald-50 text-emerald-600 flex items-center gap-2 cursor-pointer">
+                                      <RefreshCw className="w-3.5 h-3.5 animate-spin-pulse" /> Restore Item
+                                    </button>
+                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteForever(item); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-red-50 text-red-600 flex items-center gap-2 cursor-pointer">
+                                      <Trash2 className="w-3.5 h-3.5" /> Delete Forever
+                                    </button>
+                                  </>
                                 ) : (
-                                  <button onClick={(e) => { e.stopPropagation(); handleDownload(item); setActiveContextId(null); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-blue-50 font-bold text-blue-600 flex items-center gap-2 cursor-pointer">
-                                    <Download className="w-3.5 h-3.5" /> Download File
-                                  </button>
+                                  <>
+                                    {item.isFolder ? (
+                                      <button onClick={(e) => { e.stopPropagation(); onSelectFolder(item.id); setActiveContextId(null); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 font-bold text-slate-800 flex items-center gap-2 cursor-pointer">
+                                        <Folder className="w-3.5 h-3.5 text-blue-500" /> Open Folder
+                                      </button>
+                                    ) : (
+                                      <button onClick={(e) => { e.stopPropagation(); handleDownload(item); setActiveContextId(null); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-blue-50 font-bold text-blue-600 flex items-center gap-2 cursor-pointer">
+                                        <Download className="w-3.5 h-3.5" /> Download File
+                                      </button>
+                                    )}
+
+                                    <button onClick={(e) => { e.stopPropagation(); setPreviewFile(item); setActiveContextId(null); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
+                                      <Eye className="w-3.5 h-3.5 text-blue-600" /> Preview Details
+                                    </button>
+
+                                    <button onClick={() => handleToggleStar(item.id)} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
+                                      <Star className="w-3.5 h-3.5 text-amber-500" /> Star Item
+                                    </button>
+
+                                    <button onClick={() => { handleOpenShare(item); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
+                                      <Share2 className="w-3.5 h-3.5 text-cyan-500" /> Share Config
+                                    </button>
+
+                                    <button onClick={() => { setRenameId(item.id); setRenameValue(item.name); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
+                                      <Edit3 className="w-3.5 h-3.5 text-slate-400" /> Rename
+                                    </button>
+
+                                    <button onClick={() => { setMoveId(item.id); setTargetParentId(item.parentId || 'null'); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
+                                      <Move className="w-3.5 h-3.5 text-slate-400" /> Relocate
+                                    </button>
+
+                                    {!item.isFolder && (
+                                      <button onClick={() => handleDuplicate(item.id)} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
+                                        <Copy className="w-3.5 h-3.5 text-purple-400" /> Duplicate
+                                      </button>
+                                    )}
+
+                                    <div className="border-t border-slate-100 my-1"></div>
+                                    
+                                    <button onClick={() => handleDeleteFolderOrFile(item)} className="w-full text-left px-3 py-2 rounded-lg hover:bg-red-50 text-red-600 flex items-center gap-2 cursor-pointer">
+                                      <Trash2 className="w-3.5 h-3.5" /> Direct Trash
+                                    </button>
+                                  </>
                                 )}
-
-                                <button onClick={(e) => { e.stopPropagation(); setPreviewFile(item); setActiveContextId(null); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
-                                  <Eye className="w-3.5 h-3.5 text-blue-600" /> Preview Details
-                                </button>
-
-                                <button onClick={() => handleToggleStar(item.id)} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
-                                  <Star className="w-3.5 h-3.5 text-amber-500" /> Star Item
-                                </button>
-
-                                <button onClick={() => { handleOpenShare(item); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
-                                  <Share2 className="w-3.5 h-3.5 text-cyan-500" /> Share Config
-                                </button>
-
-                                <button onClick={() => { setRenameId(item.id); setRenameValue(item.name); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
-                                  <Edit3 className="w-3.5 h-3.5 text-slate-400" /> Rename
-                                </button>
-
-                                <button onClick={() => { setMoveId(item.id); setTargetParentId(item.parentId || 'null'); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
-                                  <Move className="w-3.5 h-3.5 text-slate-400" /> Relocate
-                                </button>
-
-                                {!item.isFolder && (
-                                  <button onClick={() => handleDuplicate(item.id)} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
-                                    <Copy className="w-3.5 h-3.5 text-purple-400" /> Duplicate
-                                  </button>
-                                )}
-
-                                <div className="border-t border-slate-100 my-1"></div>
-                                
-                                <button onClick={() => handleDeleteFolderOrFile(item)} className="w-full text-left px-3 py-2 rounded-lg hover:bg-red-50 text-red-600 flex items-center gap-2 cursor-pointer">
-                                  <Trash2 className="w-3.5 h-3.5" /> Direct Trash
-                                </button>
                               </motion.div>
                             </>
                           )}
@@ -896,47 +999,60 @@ export default function MyFilesView({
                                 exit={{ opacity: 0, scale: 0.95, y: -5 }}
                                 className="absolute right-6 top-10 mt-1 w-44 bg-white border border-slate-200/80 shadow-xl rounded-xl p-1.5 z-50 text-xs text-slate-700 text-left font-semibold space-y-0.5"
                               >
-                                {item.isFolder ? (
-                                  <button onClick={(e) => { e.stopPropagation(); onSelectFolder(item.id); setActiveContextId(null); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 font-bold text-slate-800 flex items-center gap-2 cursor-pointer">
-                                    <Folder className="w-3.5 h-3.5 text-blue-500" /> Open Folder
-                                  </button>
+                                {activeView === 'trash' ? (
+                                  <>
+                                    <button onClick={(e) => { e.stopPropagation(); handleRestore(item); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-emerald-50 text-emerald-600 flex items-center gap-2 cursor-pointer">
+                                      <RefreshCw className="w-3.5 h-3.5 animate-spin-pulse" /> Restore Item
+                                    </button>
+                                    <button onClick={(e) => { e.stopPropagation(); handleDeleteForever(item); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-red-50 text-red-600 flex items-center gap-2 cursor-pointer">
+                                      <Trash2 className="w-3.5 h-3.5" /> Delete Forever
+                                    </button>
+                                  </>
                                 ) : (
-                                  <button onClick={(e) => { e.stopPropagation(); handleDownload(item); setActiveContextId(null); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-blue-50 font-bold text-blue-600 flex items-center gap-2 cursor-pointer">
-                                    <Download className="w-3.5 h-3.5" /> Download File
-                                  </button>
+                                  <>
+                                    {item.isFolder ? (
+                                      <button onClick={(e) => { e.stopPropagation(); onSelectFolder(item.id); setActiveContextId(null); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 font-bold text-slate-800 flex items-center gap-2 cursor-pointer">
+                                        <Folder className="w-3.5 h-3.5 text-blue-500" /> Open Folder
+                                      </button>
+                                    ) : (
+                                      <button onClick={(e) => { e.stopPropagation(); handleDownload(item); setActiveContextId(null); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-blue-50 font-bold text-blue-600 flex items-center gap-2 cursor-pointer">
+                                        <Download className="w-3.5 h-3.5" /> Download File
+                                      </button>
+                                    )}
+
+                                    <button onClick={(e) => { e.stopPropagation(); setPreviewFile(item); setActiveContextId(null); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
+                                      <Eye className="w-3.5 h-3.5 text-blue-600" /> Preview Details
+                                    </button>
+
+                                    <button onClick={() => handleToggleStar(item.id)} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
+                                      <Star className="w-3.5 h-3.5 text-amber-500" /> Star Item
+                                    </button>
+
+                                    <button onClick={() => { handleOpenShare(item); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
+                                      <Share2 className="w-3.5 h-3.5 text-cyan-500" /> Share Config
+                                    </button>
+
+                                    <button onClick={() => { setRenameId(item.id); setRenameValue(item.name); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
+                                      <Edit3 className="w-3.5 h-3.5 text-slate-400" /> Rename
+                                    </button>
+
+                                    <button onClick={() => { setMoveId(item.id); setTargetParentId(item.parentId || 'null'); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
+                                      <Move className="w-3.5 h-3.5 text-slate-400" /> Relocate
+                                    </button>
+
+                                    {!item.isFolder && (
+                                      <button onClick={() => handleDuplicate(item.id)} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
+                                        <Copy className="w-3.5 h-3.5 text-purple-400" /> Duplicate
+                                      </button>
+                                    )}
+
+                                    <div className="border-t border-slate-100 my-1"></div>
+                                    
+                                    <button onClick={() => handleDeleteFolderOrFile(item)} className="w-full text-left px-3 py-2 rounded-lg hover:bg-red-50 text-red-600 flex items-center gap-2 cursor-pointer">
+                                      <Trash2 className="w-3.5 h-3.5" /> Direct Trash
+                                    </button>
+                                  </>
                                 )}
-
-                                <button onClick={(e) => { e.stopPropagation(); setPreviewFile(item); setActiveContextId(null); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
-                                  <Eye className="w-3.5 h-3.5 text-blue-600" /> Preview Details
-                                </button>
-
-                                <button onClick={() => handleToggleStar(item.id)} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
-                                  <Star className="w-3.5 h-3.5 text-amber-500" /> Star Item
-                                </button>
-
-                                <button onClick={() => { handleOpenShare(item); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
-                                  <Share2 className="w-3.5 h-3.5 text-cyan-500" /> Share Config
-                                </button>
-
-                                <button onClick={() => { setRenameId(item.id); setRenameValue(item.name); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
-                                  <Edit3 className="w-3.5 h-3.5 text-slate-400" /> Rename
-                                </button>
-
-                                <button onClick={() => { setMoveId(item.id); setTargetParentId(item.parentId || 'null'); }} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
-                                  <Move className="w-3.5 h-3.5 text-slate-400" /> Relocate
-                                </button>
-
-                                {!item.isFolder && (
-                                  <button onClick={() => handleDuplicate(item.id)} className="w-full text-left px-3 py-2 rounded-lg hover:bg-slate-50 text-slate-800 flex items-center gap-2 cursor-pointer">
-                                    <Copy className="w-3.5 h-3.5 text-purple-400" /> Duplicate
-                                  </button>
-                                )}
-
-                                <div className="border-t border-slate-100 my-1"></div>
-                                
-                                <button onClick={() => handleDeleteFolderOrFile(item)} className="w-full text-left px-3 py-2 rounded-lg hover:bg-red-50 text-red-600 flex items-center gap-2 cursor-pointer">
-                                  <Trash2 className="w-3.5 h-3.5" /> Direct Trash
-                                </button>
                               </motion.div>
                             </>
                           )}

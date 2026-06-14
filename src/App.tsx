@@ -956,6 +956,7 @@ export default function App() {
                       uploadQueue={uploadQueue}
                       onUploadFiles={handleFilesUpload}
                       onClearCompletedUploads={handleClearCompletedUploads}
+                      activeView={activeView}
                     />
                   </ErrorBoundary>
                 )}
