@@ -177,11 +177,33 @@ export default function App() {
       });
       const data = await response.json();
       if (response.ok) {
-        setFiles(data.files || []);
+        setFiles(prev => {
+          const fetchedItemIds = new Set((data.files || []).map((f: CloudFile) => f.id));
+          const merged = [...(data.files || [])];
+          
+          prev.forEach(f => {
+            if (!fetchedItemIds.has(f.id)) {
+              const ageMs = Date.now() - new Date(f.createdAt).getTime();
+              const fileMatchesContext = 
+                (activeView === 'dashboard') ||
+                (activeView === 'recent') ||
+                (activeView === 'starred' && f.isStarred) ||
+                (activeView === 'trash' && f.isTrashed) ||
+                (activeView === 'shared' && f.ownerId !== (auth.currentUser?.uid || '')) ||
+                (activeView === 'files' && f.parentId === selectedFolderId);
+              
+              if (ageMs < 45000 && fileMatchesContext) {
+                merged.unshift(f);
+              }
+            }
+          });
+          
+          return merged;
+        });
 
         // Aggregate active files sizes and count metrics directly from the collection
         if (auth.currentUser) {
-          const allResp = await fetch('/api/files', {
+          const allResp = await fetch('/api/files?all=true', {
             headers: { 'Authorization': `Bearer ${token}` }
           });
           const allData = await allResp.json();
@@ -191,6 +213,16 @@ export default function App() {
             const computedStorageUsed = activeFiles.reduce((acc, f) => acc + (f.size || 0), 0);
             const computedTotalFiles = activeFiles.length;
             const computedSharedFiles = allFilesList.filter(f => !f.isTrashed && (f.sharedWith?.length > 0 || f.shareLink?.isPublic)).length;
+
+            setUser(prev => {
+              if (!prev) return null;
+              return {
+                ...prev,
+                storageUsed: computedStorageUsed,
+                totalFiles: computedTotalFiles,
+                sharedFiles: computedSharedFiles
+              };
+            });
 
             const userDocRef = doc(db, 'users', auth.currentUser.uid);
             await updateDoc(userDocRef, {
@@ -416,16 +448,24 @@ export default function App() {
 
         clearInterval(progressTimer);
 
+        const resData = await response.json();
         if (!response.ok) {
-          const errData = await response.json();
-          throw new Error(errData.error || 'Upload failed');
+          throw new Error(resData.error || 'Upload failed');
         }
+        const uploadedFile = resData.file;
 
         setUploadQueue(prev => prev.map(item => item.id === trackingId ? { ...item, progress: 100, status: 'completed' } : item));
         
         // Trigger success toast
         setSuccessToast(`Successfully uploaded ${element.name}`);
         setTimeout(() => setSuccessToast(null), 4000);
+
+        if (uploadedFile) {
+          setFiles(prev => {
+            if (prev.some(f => f.id === uploadedFile.id)) return prev;
+            return [uploadedFile, ...prev];
+          });
+        }
 
         // Refresh all collections in background to update stats instantly!
         fetchFiles();

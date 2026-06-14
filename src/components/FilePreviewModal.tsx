@@ -36,6 +36,7 @@ export default function FilePreviewModal({
   const [zoomLevel, setZoomLevel] = useState<number>(1);
   const [rotation, setRotation] = useState<number>(0);
   const [isFullscreen, setIsFullscreen] = useState<boolean>(false);
+  const [activeViewer, setActiveViewer] = useState<'native' | 'google' | 'ms'>('native');
 
   // Text/Code files content state
   const [textContent, setTextContent] = useState<string>('');
@@ -62,6 +63,20 @@ export default function FilePreviewModal({
     setIsPlaying(false);
     setCurrentTime(0);
     setDuration(0);
+
+    const nameLower = file.name.toLowerCase();
+    const mimeLower = file.mimeType.toLowerCase();
+    const isPDF = mimeLower.includes('pdf') || nameLower.endsWith('.pdf');
+    const isOffice = mimeLower.includes('word') || mimeLower.includes('excel') || mimeLower.includes('powerpoint') || mimeLower.includes('sheet') || mimeLower.includes('presentation') ||
+                     nameLower.endsWith('.doc') || nameLower.endsWith('.docx') || nameLower.endsWith('.xls') || nameLower.endsWith('.xlsx') || nameLower.endsWith('.ppt') || nameLower.endsWith('.pptx');
+
+    if (isPDF) {
+      setActiveViewer('native');
+    } else if (isOffice) {
+      setActiveViewer('ms');
+    } else {
+      setActiveViewer('google');
+    }
 
     const isTextOrCode = isTextType(file.mimeType) || isCodeType(file.name);
     if (isTextOrCode) {
@@ -95,6 +110,13 @@ export default function FilePreviewModal({
   const isCodeType = (name: string) => {
     const ext = name.substring(name.lastIndexOf('.') + 1).toLowerCase();
     return ['js', 'ts', 'jsx', 'tsx', 'html', 'css', 'py', 'java', 'c', 'cpp', 'sh', 'sql', 'go', 'rs'].includes(ext);
+  };
+
+  const isDocumentType = (mime: string, name: string) => {
+    const m = mime.toLowerCase();
+    const n = name.toLowerCase();
+    return m.includes('pdf') || m.includes('word') || m.includes('document') || m.includes('excel') || m.includes('sheet') || m.includes('powerpoint') || m.includes('presentation') ||
+           n.endsWith('.pdf') || n.endsWith('.doc') || n.endsWith('.docx') || n.endsWith('.xls') || n.endsWith('.xlsx') || n.endsWith('.ppt') || n.endsWith('.pptx');
   };
 
   const formatBytes = (bytes: number, decimals = 1) => {
@@ -323,14 +345,65 @@ export default function FilePreviewModal({
             </div>
           )}
 
-          {/* PDF PREVIEW */}
-          {file.mimeType.toLowerCase().includes('pdf') && (
-            <div className="w-full h-full rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
-              <iframe 
-                src={`${fileUrl}#toolbar=1`} 
-                title={file.name}
-                className="w-full h-full bg-slate-100"
-              />
+          {/* PDF & OFFICE DOCUMENTS PREVIEW */}
+          {isDocumentType(file.mimeType, file.name) && (
+            <div className="w-full h-full flex flex-col rounded-2xl overflow-hidden border border-slate-200 shadow-sm bg-white">
+              {/* Tab Selector */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between px-4 py-2 border-b border-slate-200 bg-slate-50 text-[11px] gap-3 font-sans shrink-0 text-left">
+                <div className="flex items-center space-x-2">
+                  <span className="font-bold text-slate-500">Preview Mode:</span>
+                  {(file.mimeType.toLowerCase().includes('pdf') || file.name.toLowerCase().endsWith('.pdf')) && (
+                    <button
+                      onClick={() => setActiveViewer('native')}
+                      className={`px-3 py-1 rounded-lg font-bold transition-all ${activeViewer === 'native' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-200'}`}
+                    >
+                      Browser Native Frame
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setActiveViewer('google')}
+                    className={`px-3 py-1 rounded-lg font-bold transition-all ${activeViewer === 'google' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-200'}`}
+                  >
+                    Google Web Viewer
+                  </button>
+                  {!(file.mimeType.toLowerCase().includes('pdf') || file.name.toLowerCase().endsWith('.pdf')) && (
+                    <button
+                      onClick={() => setActiveViewer('ms')}
+                      className={`px-3 py-1 rounded-lg font-bold transition-all ${activeViewer === 'ms' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-200'}`}
+                    >
+                      Office Live Viewer
+                    </button>
+                  )}
+                </div>
+                <div className="text-[10px] text-slate-400 font-semibold">
+                  💡 Tip: Slow connection? Try another mode, Open in New Tab, or Download directly.
+                </div>
+              </div>
+              
+              {/* iframe Container */}
+              <div className="flex-1 bg-slate-50 relative min-h-[300px]">
+                {activeViewer === 'native' && (file.mimeType.toLowerCase().includes('pdf') || file.name.toLowerCase().endsWith('.pdf')) && (
+                  <iframe 
+                    src={`${fileUrl}#toolbar=1`} 
+                    title={file.name}
+                    className="w-full h-full border-0 absolute inset-0"
+                  />
+                )}
+                {activeViewer === 'google' && (
+                  <iframe 
+                    src={`https://docs.google.com/gview?url=${encodeURIComponent(window.location.origin + fileUrl)}&embedded=true`} 
+                    title={file.name}
+                    className="w-full h-full border-0 absolute inset-0 bg-white"
+                  />
+                )}
+                {activeViewer === 'ms' && (
+                  <iframe 
+                    src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(window.location.origin + fileUrl)}`} 
+                    title={file.name}
+                    className="w-full h-full border-0 absolute inset-0 bg-white"
+                  />
+                )}
+              </div>
             </div>
           )}
 
@@ -496,7 +569,8 @@ export default function FilePreviewModal({
            !file.mimeType.toLowerCase().includes('pdf') && 
            !file.mimeType.toLowerCase().startsWith('video/') && 
            !file.mimeType.toLowerCase().startsWith('audio/') && 
-           !(isTextType(file.mimeType) || isCodeType(file.name)) && (
+           !(isTextType(file.mimeType) || isCodeType(file.name)) &&
+           !isDocumentType(file.mimeType, file.name) && (
             <div className="bg-white border border-slate-200 p-8 sm:p-10 rounded-3xl w-full max-w-md shadow-xl space-y-6 text-center">
               <div className="w-16 h-16 rounded-full bg-slate-50 border border-slate-200 flex items-center justify-center text-slate-400 mx-auto shadow-sm">
                 {file.mimeType.toLowerCase().includes('zip') ? (

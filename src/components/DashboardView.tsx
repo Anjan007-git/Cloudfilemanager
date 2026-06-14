@@ -175,6 +175,25 @@ export default function DashboardView({
   // File loading states for text/code previewing
   const [textContent, setTextContent] = useState<string>("");
   const [loadingText, setLoadingText] = useState<boolean>(false);
+  const [activeViewer, setActiveViewer] = useState<'native' | 'google' | 'ms'>('native');
+
+  useEffect(() => {
+    if (previewFile) {
+      const nameLower = previewFile.name.toLowerCase();
+      const mimeLower = previewFile.mimeType.toLowerCase();
+      const isPDF = mimeLower.includes('pdf') || nameLower.endsWith('.pdf');
+      const isOffice = mimeLower.includes('word') || mimeLower.includes('excel') || mimeLower.includes('powerpoint') || mimeLower.includes('sheet') || mimeLower.includes('presentation') ||
+                       nameLower.endsWith('.doc') || nameLower.endsWith('.docx') || nameLower.endsWith('.xls') || nameLower.endsWith('.xlsx') || nameLower.endsWith('.ppt') || nameLower.endsWith('.pptx');
+
+      if (isPDF) {
+        setActiveViewer('native');
+      } else if (isOffice) {
+        setActiveViewer('ms');
+      } else {
+        setActiveViewer('google');
+      }
+    }
+  }, [previewFile]);
 
   // Custom visual toast alert system
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -1179,15 +1198,68 @@ export default function DashboardView({
                       );
                     }
 
-                    // 2. PDF Preview
-                    if (mime.includes('pdf') || name.endsWith('.pdf')) {
+                    // 2. PDF & Office Document Previews
+                    const isDoc = mime.includes('pdf') || mime.includes('word') || mime.includes('document') || mime.includes('excel') || mime.includes('sheet') || mime.includes('powerpoint') || mime.includes('presentation') ||
+                                  name.endsWith('.pdf') || name.endsWith('.doc') || name.endsWith('.docx') || name.endsWith('.xls') || name.endsWith('.xlsx') || name.endsWith('.ppt') || name.endsWith('.pptx');
+                    if (isDoc) {
                       return (
-                        <div className="w-full h-[50vh] rounded-xl overflow-hidden border border-slate-150 shadow-xs bg-white">
-                          <iframe
-                            src={`${securePreviewUrl}#toolbar=1`}
-                            title={previewFile.name}
-                            className="w-full h-full border-0"
-                          />
+                        <div className="w-full flex flex-col rounded-xl overflow-hidden border border-slate-150 shadow-xs bg-white h-[55vh]">
+                          {/* Viewer Switcher Tabs */}
+                          <div className="flex flex-col sm:flex-row sm:items-center justify-between px-4 py-2 border-b border-slate-150 bg-slate-50 text-[11px] gap-3 font-sans shrink-0 text-left">
+                            <div className="flex items-center space-x-2">
+                              <span className="font-bold text-slate-500">Preview Mode:</span>
+                              {(mime.includes('pdf') || name.endsWith('.pdf')) && (
+                                <button
+                                  onClick={() => setActiveViewer('native')}
+                                  className={`px-3 py-1 rounded-lg font-bold transition-all ${activeViewer === 'native' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-200'}`}
+                                >
+                                  Browser Native Frame
+                                </button>
+                              )}
+                              <button
+                                onClick={() => setActiveViewer('google')}
+                                className={`px-3 py-1 rounded-lg font-bold transition-all ${activeViewer === 'google' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-200'}`}
+                              >
+                                Google Web Viewer
+                              </button>
+                              {!(mime.includes('pdf') || name.endsWith('.pdf')) && (
+                                <button
+                                  onClick={() => setActiveViewer('ms')}
+                                  className={`px-3 py-1 rounded-lg font-bold transition-all ${activeViewer === 'ms' ? 'bg-blue-600 text-white shadow-xs' : 'text-slate-600 hover:bg-slate-200'}`}
+                                >
+                                  Office Live Viewer
+                                </button>
+                              )}
+                            </div>
+                            <div className="text-[10px] text-slate-400 font-semibold">
+                              💡 Tip: Slow connection? Try another mode, Open in New Tab, or Download directly.
+                            </div>
+                          </div>
+
+                          {/* iframe Container */}
+                          <div className="flex-1 bg-slate-50 relative min-h-[300px]">
+                            {activeViewer === 'native' && (mime.includes('pdf') || name.endsWith('.pdf')) && (
+                              <iframe 
+                                src={`${securePreviewUrl}#toolbar=1`} 
+                                title={previewFile.name}
+                                className="w-full h-full border-0 absolute inset-0"
+                              />
+                            )}
+                            {activeViewer === 'google' && (
+                              <iframe 
+                                src={`https://docs.google.com/gview?url=${encodeURIComponent(window.location.origin + securePreviewUrl)}&embedded=true`} 
+                                title={previewFile.name}
+                                className="w-full h-full border-0 absolute inset-0 bg-white"
+                              />
+                            )}
+                            {activeViewer === 'ms' && (
+                              <iframe 
+                                src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(window.location.origin + securePreviewUrl)}`} 
+                                title={previewFile.name}
+                                className="w-full h-full border-0 absolute inset-0 bg-white"
+                              />
+                            )}
+                          </div>
                         </div>
                       );
                     }

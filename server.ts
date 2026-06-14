@@ -236,6 +236,34 @@ async function setFirestoreDoc(idToken: string | undefined, collection: string, 
   return parseRestDoc(json);
 }
 
+async function updateFirestoreDoc(idToken: string | undefined, collection: string, docId: string, data: any): Promise<any> {
+  const tokenToUse = isFirebaseToken(idToken) ? idToken : await getServerAgentIdToken();
+  const docPath = `projects/${firebaseConfig.projectId}/databases/${firebaseConfig.firestoreDatabaseId}/documents/${collection}/${docId}`;
+  const keys = Object.keys(data);
+  const maskParams = keys.map(k => `updateMask.fieldPaths=${k}`).join('&');
+  const url = `https://firestore.googleapis.com/v1/${docPath}?key=${firebaseConfig.apiKey}${maskParams ? '&' + maskParams : ''}`;
+  const body = {
+    fields: encodeRestFields(data)
+  };
+  const headers: any = {
+    'Content-Type': 'application/json'
+  };
+  if (tokenToUse) {
+    headers['Authorization'] = `Bearer ${tokenToUse}`;
+  }
+  const response = await fetch(url, {
+    method: 'PATCH',
+    headers,
+    body: JSON.stringify(body)
+  });
+  if (!response.ok) {
+    const errText = await response.text();
+    throw new Error(`Firestore REST update PATCH failed: status ${response.status} - ${errText}`);
+  }
+  const json = await response.json();
+  return parseRestDoc(json);
+}
+
 async function deleteFirestoreDoc(idToken: string | undefined, collection: string, docId: string): Promise<void> {
   const tokenToUse = isFirebaseToken(idToken) ? idToken : await getServerAgentIdToken();
   const docPath = `projects/${firebaseConfig.projectId}/databases/${firebaseConfig.firestoreDatabaseId}/documents/${collection}/${docId}`;
@@ -427,7 +455,7 @@ async function startServer() {
         db.profiles[req.user.userId] = profile;
 
         // Ensure Firestore users collection has the same storage value
-        await setFirestoreDoc(req.idToken, 'users', req.user.userId, {
+        await updateFirestoreDoc(req.idToken, 'users', req.user.userId, {
           storageUsed: storageUsed
         });
       } catch (err) {
@@ -1190,6 +1218,7 @@ async function startServer() {
       const fileType = (req.query.type || '').toString().toLowerCase().trim(); // e.g. 'image', 'document' etc
       const sortBy = (req.query.sortBy || 'name').toString(); // 'name', 'size', 'createdAt'
       const sortOrder = (req.query.sortOrder || 'asc').toString(); // 'asc', 'desc'
+      const all = req.query.all === 'true';
 
       // Get basic workspace files owned by me or shared with me
       let userFiles = await getFilesForUser(req.idToken, userId, req.user.email);
@@ -1209,7 +1238,7 @@ async function startServer() {
       // Standard Parent Navigation Flow. (If there's a search keyword, do global search bypassing parentId boundaries!)
       else {
         userFiles = userFiles.filter(f => !f.isTrashed);
-        if (!search) {
+        if (!search && !all) {
           userFiles = userFiles.filter(f => f.parentId === parentId);
         }
       }
@@ -1407,7 +1436,7 @@ async function startServer() {
 
       // Update Firestore users collection to trigger real-time profile listener in client using REST helper
       try {
-        await setFirestoreDoc(req.idToken, 'users', userId, {
+        await updateFirestoreDoc(req.idToken, 'users', userId, {
           storageUsed: updatedStorageUsed
         });
       } catch (err) {
@@ -1644,7 +1673,7 @@ async function startServer() {
       db.profiles[userId] = profile;
 
       try {
-        await setFirestoreDoc(req.idToken, 'users', userId, {
+        await updateFirestoreDoc(req.idToken, 'users', userId, {
           storageUsed: updatedStorageUsed
         });
       } catch (err) {
@@ -1874,7 +1903,7 @@ async function startServer() {
         db.profiles[userId] = profile;
 
         try {
-          await setFirestoreDoc(req.idToken, 'users', userId, {
+          await updateFirestoreDoc(req.idToken, 'users', userId, {
             storageUsed: storageUsed
           });
         } catch (err) {
@@ -1980,7 +2009,7 @@ async function startServer() {
       db.profiles[userId] = profile;
 
       try {
-        await setFirestoreDoc(req.idToken, 'users', userId, {
+        await updateFirestoreDoc(req.idToken, 'users', userId, {
           storageUsed: storageUsed
         });
       } catch (err) {
