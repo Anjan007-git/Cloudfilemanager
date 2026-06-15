@@ -228,11 +228,21 @@ export default function LoginForm({ onLoginSuccess, onBackToLanding }: LoginForm
     setError(null);
     setLoading(true);
 
+    // Diagnostics logs
+    console.log("=== RUNTIME GOOGLE AUTHENTICATION DIAGNOSIS ===");
+    console.log("Current Hostname:", window.location.hostname);
+    console.log("Current Origin:", window.location.origin);
+    console.log("Firebase Project ID:", "cloudfile-manager-9b697");
+    console.log("Firebase Auth Domain:", "cloudfile-manager-9b697.firebaseapp.com");
+    console.log("Auth Provider Object:", auth);
+
     try {
       const provider = new GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
       
+      console.log("Initiating signInWithPopup...");
       const credentials = await signInWithPopup(auth, provider);
+      console.log("Google sign-in successful. Credentials:", credentials);
       const user = credentials.user;
       const idToken = await user.getIdToken();
 
@@ -288,7 +298,13 @@ export default function LoginForm({ onLoginSuccess, onBackToLanding }: LoginForm
 
       onLoginSuccess(idToken, profileData);
     } catch (err: any) {
-      console.error('Google verification pop-up failure', err);
+      console.error('=== GOOGLE AUTH EXCEPTION ===');
+      console.error('Error Code:', err?.code);
+      console.error('Error Message:', err?.message);
+      console.error('Error Object:', err);
+      console.error('Current Hostname is:', window.location.hostname);
+      console.error('Firebase Auth Domain is:', "cloudfile-manager-9b697.firebaseapp.com");
+      console.error('==============================');
       setError(getFriendlyErrorMessage(err));
     } finally {
       setLoading(false);
