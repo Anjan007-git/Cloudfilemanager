@@ -71,29 +71,29 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
 }
 
 export function getApiUrl(path: string): string {
-  const isVercel = window.location.hostname.includes('vercel.app');
-  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
-  const isRailway = window.location.hostname.includes('railway.app');
-  
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  if (isVercel || (!isLocal && !isRailway)) {
-    let apiBase = (import.meta as any).env.VITE_API_URL || 'https://cloudfilemanager-production.up.railway.app';
-    if (apiBase.includes('run.app') || apiBase.includes('ais-pre') || apiBase.includes('ais-dev')) {
-      apiBase = 'https://cloudfilemanager-production.up.railway.app';
-    }
-    if (apiBase.endsWith('/')) {
-      apiBase = apiBase.slice(0, -1);
-    }
-    if (apiBase.startsWith('http://') && !apiBase.includes('localhost') && !apiBase.includes('127.0.0.1')) {
-      apiBase = apiBase.replace('http://', 'https://');
-    }
-    return `${apiBase}${cleanPath}`;
+  // Preferred strategy: Set VITE_API_URL to "/api" or default to "/api"
+  let apiBase = (import.meta as any).env.VITE_API_URL || '/api';
+  
+  if (apiBase.endsWith('/')) {
+    apiBase = apiBase.slice(0, -1);
   }
-  return cleanPath;
+
+  // Prevent double prepend of /api
+  if (apiBase === '/api' && cleanPath.startsWith('/api')) {
+    return cleanPath;
+  }
+  
+  if (cleanPath.startsWith(apiBase)) {
+    return cleanPath;
+  }
+
+  return `${apiBase}${cleanPath}`;
 }
 
 export async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
   const url = getApiUrl(input);
+  console.log("API REQUEST:", url);
 
   const newInit: RequestInit = { ...(init || {}) };
   const headers = new Headers(newInit.headers || {});
@@ -115,6 +115,10 @@ export async function apiFetch(input: string, init?: RequestInit): Promise<Respo
     }
   }
   newInit.headers = headers;
+
+  console.log("AUTH USER:", auth.currentUser);
+  console.log("TOKEN:", await auth.currentUser?.getIdToken());
+  console.log("REQUEST HEADERS:", [...headers.entries()]);
 
   return fetch(url, newInit);
 }
