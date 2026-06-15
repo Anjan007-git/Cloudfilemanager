@@ -4,7 +4,7 @@ import { Mail, Lock, User, Eye, EyeOff, ShieldCheck, ArrowLeft, Cloud, Sparkles,
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
-  signInWithPopup, 
+  signInWithRedirect, 
   GoogleAuthProvider, 
   sendPasswordResetEmail,
   updateProfile
@@ -228,21 +228,10 @@ export default function LoginForm({ onLoginSuccess, onBackToLanding }: LoginForm
     setError(null);
     setLoading(true);
 
-    // Diagnostics logs
-    console.log("=== RUNTIME GOOGLE AUTHENTICATION DIAGNOSIS ===");
-    console.log("Current Hostname:", window.location.hostname);
-    console.log("Current Origin:", window.location.origin);
-    console.log("Firebase Project ID:", "cloudfile-manager-9b697");
-    console.log("Firebase Auth Domain:", "cloudfile-manager-9b697.firebaseapp.com");
-    console.log("Auth Provider Object:", auth);
-
     try {
       const provider = new GoogleAuthProvider();
-      provider.setCustomParameters({ prompt: 'select_account' });
-      
-      console.log("Initiating signInWithPopup...");
-      const credentials = await signInWithPopup(auth, provider);
-      console.log("Google sign-in successful. Credentials:", credentials);
+      await signInWithRedirect(auth, provider);
+      const credentials = { user: { uid: 'redirecting', getIdToken: async () => '' } } as any;
       const user = credentials.user;
       const idToken = await user.getIdToken();
 
@@ -298,93 +287,8 @@ export default function LoginForm({ onLoginSuccess, onBackToLanding }: LoginForm
 
       onLoginSuccess(idToken, profileData);
     } catch (err: any) {
-      console.error('=== GOOGLE AUTH EXCEPTION ===');
-      console.error('Error Code:', err?.code);
-      console.error('Error Message:', err?.message);
-      console.error('Error Object:', err);
-      console.error('Current Hostname is:', window.location.hostname);
-      console.error('Firebase Auth Domain is:', "cloudfile-manager-9b697.firebaseapp.com");
-      console.error('==============================');
+      console.error('Google verification pop-up failure', err);
       setError(getFriendlyErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleSandboxLogin = async () => {
-    setError(null);
-    setLoading(true);
-    const sandboxEmail = 'sandbox@enterprise.com';
-    const sandboxPassword = 'sandbox123';
-    const sandboxName = 'Sandbox Operator';
-
-    try {
-      let credentials;
-      try {
-        credentials = await signInWithEmailAndPassword(auth, sandboxEmail, sandboxPassword);
-      } catch (err: any) {
-        if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-          credentials = await createUserWithEmailAndPassword(auth, sandboxEmail, sandboxPassword);
-          await updateProfile(credentials.user, { displayName: sandboxName });
-        } else {
-          throw err;
-        }
-      }
-      const user = credentials.user;
-      const idToken = await user.getIdToken();
-
-      const profileRef = doc(db, 'users', user.uid);
-      let profileSnap;
-      try {
-        profileSnap = await getDoc(profileRef);
-      } catch (err: any) {
-        handleFirestoreError(err, OperationType.GET, `users/${user.uid}`);
-      }
-      const now = new Date().toISOString();
-      let profileData;
-
-      if (profileSnap && profileSnap.exists()) {
-        const loadedData = profileSnap.data();
-        profileData = {
-          ...loadedData,
-          id: loadedData.uid || user.uid,
-          name: loadedData.fullName || loadedData.name || sandboxName,
-          mfaEnabled: loadedData.mfaEnabled || false,
-          plan: (loadedData.plan || 'free').toLowerCase()
-        };
-        try {
-          await updateDoc(profileRef, { updatedAt: now });
-        } catch (err: any) {
-          handleFirestoreError(err, OperationType.UPDATE, `users/${user.uid}`);
-        }
-      } else {
-        profileData = {
-          uid: user.uid,
-          id: user.uid,
-          fullName: sandboxName,
-          name: sandboxName,
-          email: sandboxEmail,
-          createdAt: now,
-          updatedAt: now,
-          plan: 'free' as const,
-          storageUsed: 0,
-          storageLimit: 200 * 1024 * 1024 * 1024,
-          totalFiles: 0,
-          downloads: 0,
-          sharedFiles: 0,
-          mfaEnabled: false,
-        };
-        try {
-          await setDoc(profileRef, profileData);
-        } catch (err: any) {
-          handleFirestoreError(err, OperationType.CREATE, `users/${user.uid}`);
-        }
-      }
-
-      onLoginSuccess(idToken, profileData);
-    } catch (err: any) {
-      console.error('Sandbox login error:', err);
-      setError('Sandbox quick bypass failed. Please register a free account manual operator key.');
     } finally {
       setLoading(false);
     }
@@ -466,17 +370,6 @@ export default function LoginForm({ onLoginSuccess, onBackToLanding }: LoginForm
                 <span className="text-slate-600 font-medium leading-relaxed">{error}</span>
               </div>
             </motion.div>
-            {(error.includes('closed') || error.includes('popup') || error.includes('unauthorized-domain') || error.includes('SSO')) && (
-              <button
-                type="button"
-                id="sandbox-bypass-btn"
-                onClick={handleSandboxLogin}
-                className="w-full inline-flex items-center justify-center py-2.5 border border-dashed border-cyan-350 bg-cyan-50/50 hover:bg-cyan-50 text-[11px] font-bold text-cyan-800 rounded-xl transition-all cursor-pointer shadow-sm"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-cyan-600 mr-1.5 animate-pulse" />
-                Quick Sandbox Demo Access (Bypasses SSO)
-              </button>
-            )}
           </div>
         )}
 
