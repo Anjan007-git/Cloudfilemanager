@@ -3,7 +3,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://ais-pre-3jurc4t4l3jgejtc77cjns-965251783867.asia-southeast1.run.app/api/:path*"
+      "destination": "https://cloudfilemanager-production.up.railway.app/api/:path*"
     },
     {
       "source": "/(.*)",

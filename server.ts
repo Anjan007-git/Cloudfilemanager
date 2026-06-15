@@ -362,7 +362,7 @@ const UPLOADS_DIR = path.join(process.cwd(), 'uploads');
 
 async function startServer() {
   const app = express();
-  const PORT = 3000;
+  const PORT = parseInt(process.env.PORT || '3000', 10);
 
   // Robust CORS Middleware for multi-environment deployments (e.g. Vercel)
   app.use((req, res, next) => {
@@ -386,6 +386,15 @@ async function startServer() {
       return res.sendStatus(200);
     }
     next();
+  });
+
+  // ==================== RAILWAY COMPATIBILITY HEALTH CHECKS ====================
+  app.get('/', (req, res) => {
+    res.status(200).send('Cloud File Manager Backend Running');
+  });
+
+  app.get('/health', (req, res) => {
+    res.status(200).json({ ok: true });
   });
 
   // Enlarge payload sizes for file parameters/headers if needed

@@ -12,12 +12,11 @@ try {
     value: function (input: any, init: any) {
       if (typeof input === 'string' && input.startsWith('/api/')) {
         const isVercel = window.location.hostname.includes('vercel.app');
-        const isNotCloudRun = !window.location.hostname.endsWith('.run.app') && 
-                              window.location.hostname !== 'localhost' && 
-                              window.location.hostname !== '127.0.0.1';
+        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+        const isRailway = window.location.hostname.includes('railway.app');
         
-        if (isVercel || isNotCloudRun) {
-          const apiBase = (import.meta as any).env.VITE_API_URL || 'https://ais-pre-3jurc4t4l3jgejtc77cjns-965251783867.asia-southeast1.run.app';
+        if (isVercel || (!isLocal && !isRailway)) {
+          const apiBase = (import.meta as any).env.VITE_API_URL || 'https://cloudfilemanager-production.up.railway.app';
           input = `${apiBase}${input}`;
         }
       }

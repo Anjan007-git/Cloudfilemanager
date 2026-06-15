@@ -72,13 +72,12 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
 
 export function getApiUrl(path: string): string {
   const isVercel = window.location.hostname.includes('vercel.app');
-  const isNotCloudRun = !window.location.hostname.endsWith('.run.app') && 
-                        window.location.hostname !== 'localhost' && 
-                        window.location.hostname !== '127.0.0.1';
+  const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+  const isRailway = window.location.hostname.includes('railway.app');
   
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  if (isVercel || isNotCloudRun) {
-    let apiBase = (import.meta as any).env.VITE_API_URL || 'https://ais-pre-3jurc4t4l3jgejtc77cjns-965251783867.asia-southeast1.run.app';
+  if (isVercel || (!isLocal && !isRailway)) {
+    let apiBase = (import.meta as any).env.VITE_API_URL || 'https://cloudfilemanager-production.up.railway.app';
     if (apiBase.endsWith('/')) {
       apiBase = apiBase.slice(0, -1);
     }
