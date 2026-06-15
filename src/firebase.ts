@@ -78,6 +78,9 @@ export function getApiUrl(path: string): string {
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   if (isVercel || (!isLocal && !isRailway)) {
     let apiBase = (import.meta as any).env.VITE_API_URL || 'https://cloudfilemanager-production.up.railway.app';
+    if (apiBase.includes('run.app') || apiBase.includes('ais-pre') || apiBase.includes('ais-dev')) {
+      apiBase = 'https://cloudfilemanager-production.up.railway.app';
+    }
     if (apiBase.endsWith('/')) {
       apiBase = apiBase.slice(0, -1);
     }

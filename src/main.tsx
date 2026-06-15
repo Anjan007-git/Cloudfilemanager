@@ -16,7 +16,13 @@ try {
         const isRailway = window.location.hostname.includes('railway.app');
         
         if (isVercel || (!isLocal && !isRailway)) {
-          const apiBase = (import.meta as any).env.VITE_API_URL || 'https://cloudfilemanager-production.up.railway.app';
+          let apiBase = (import.meta as any).env.VITE_API_URL || 'https://cloudfilemanager-production.up.railway.app';
+          if (apiBase.includes('run.app') || apiBase.includes('ais-pre') || apiBase.includes('ais-dev')) {
+            apiBase = 'https://cloudfilemanager-production.up.railway.app';
+          }
+          if (apiBase.endsWith('/')) {
+            apiBase = apiBase.slice(0, -1);
+          }
           input = `${apiBase}${input}`;
         }
       }
