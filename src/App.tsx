@@ -104,6 +104,13 @@ export default function App() {
         if (!isMounted) return;
 
         if (fbUser) {
+          const isPasswordUser = fbUser.providerData.some(p => p.providerId === 'password');
+          if (isPasswordUser && !fbUser.emailVerified) {
+            console.log("Blocking unverified password login");
+            await auth.signOut().catch(e => console.error("Signout error in onAuthStateChanged", e));
+            return;
+          }
+
           try {
             const idToken = await fbUser.getIdToken();
             localStorage.setItem('cfm_token', idToken);

@@ -5,9 +5,11 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   signInWithRedirect, 
+  signInWithPopup,
   GoogleAuthProvider, 
   sendPasswordResetEmail,
-  updateProfile
+  updateProfile,
+  sendEmailVerification
 } from 'firebase/auth';
 import { auth, db, handleFirestoreError, OperationType } from '../firebase.js';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
@@ -27,6 +29,7 @@ export default function LoginForm({ onLoginSuccess, onBackToLanding }: LoginForm
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [forgotSuccess, setForgotSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   // Password strength visual indicator mechanics
   const [passwordStrength, setPasswordStrength] = useState({
@@ -98,6 +101,7 @@ export default function LoginForm({ onLoginSuccess, onBackToLanding }: LoginForm
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+    setSuccessMessage(null);
     setLoading(true);
 
     const emailTrimmed = email.trim().toLowerCase();
@@ -125,8 +129,12 @@ export default function LoginForm({ onLoginSuccess, onBackToLanding }: LoginForm
         // Set Firebase display name
         await updateProfile(user, { displayName: name.trim() });
 
-        // Retrieve ID token
-        const idToken = await user.getIdToken();
+        // Try automatically sending a verification email
+        try {
+          await sendEmailVerification(user);
+        } catch (verifErr) {
+          console.error("sendEmailVerification failure", verifErr);
+        }
 
         // Check if profile exists and synchronize default stats in Firestore
         const profileRef = doc(db, 'users', user.uid);
@@ -155,12 +163,26 @@ export default function LoginForm({ onLoginSuccess, onBackToLanding }: LoginForm
           handleFirestoreError(err, OperationType.CREATE, `users/${user.uid}`);
         }
 
-        // Map auth session back to React state tree
-        onLoginSuccess(idToken, profileData);
+        // Sign out immediately so we block this user session until they verify
+        await auth.signOut();
+
+        setSuccessMessage("Verification email sent. Please verify your email before signing in.");
+        setMode('login');
       } else {
         // Standard Email/Password unlock logic
         const credentials = await signInWithEmailAndPassword(auth, emailTrimmed, password);
         const user = credentials.user;
+
+        // Reload user stats to check emailVerified status
+        await user.reload();
+        const freshUser = auth.currentUser;
+
+        if (freshUser && !freshUser.emailVerified) {
+          // Block login
+          await auth.signOut();
+          throw new Error("Please verify your email before accessing Cloud File Manager.");
+        }
+
         const idToken = await user.getIdToken();
 
         // Read real workspace metrics from Firestore
@@ -226,15 +248,72 @@ export default function LoginForm({ onLoginSuccess, onBackToLanding }: LoginForm
 
   const handleGoogleLogin = async () => {
     setError(null);
+    setSuccessMessage(null);
     setLoading(true);
 
     try {
       const provider = new GoogleAuthProvider();
-      await signInWithRedirect(auth, provider);
+      // Try popup login style first which is extremely robust under sandboxed preview iframes.
+      const result = await signInWithPopup(auth, provider);
+      
+      if (result?.user) {
+        // Retrieve ID token
+        const idToken = await result.user.getIdToken();
+
+        // Check if profile exists and synchronize default stats in Firestore
+        const profileRef = doc(db, 'users', result.user.uid);
+        const now = new Date().toISOString();
+        let profileData;
+
+        try {
+          const profileSnap = await getDoc(profileRef);
+          if (profileSnap.exists()) {
+            profileData = profileSnap.data();
+          }
+        } catch (err) {
+          console.error("Error reading profile", err);
+        }
+
+        if (!profileData) {
+          profileData = {
+            uid: result.user.uid,
+            id: result.user.uid,
+            fullName: result.user.displayName || result.user.email?.split('@')[0] || 'Cloud Operator',
+            name: result.user.displayName || result.user.email?.split('@')[0] || 'Cloud Operator',
+            email: result.user.email || '',
+            createdAt: now,
+            updatedAt: now,
+            plan: 'free' as const,
+            storageUsed: 0,
+            storageLimit: 200 * 1024 * 1024 * 1024,
+            totalFiles: 0,
+            downloads: 0,
+            sharedFiles: 0,
+            mfaEnabled: false,
+          };
+          try {
+            await setDoc(profileRef, profileData);
+          } catch (err: any) {
+            handleFirestoreError(err, OperationType.CREATE, `users/${result.user.uid}`);
+          }
+        }
+
+        onLoginSuccess(idToken, profileData);
+      }
     } catch (err: any) {
-      console.error('Google verification redirect failure', err);
-      setError(getFriendlyErrorMessage(err));
-      setLoading(false);
+      console.warn('Google verification popup failed or blocked, attempting fallback redirect...', err);
+      try {
+        const provider = new GoogleAuthProvider();
+        await signInWithRedirect(auth, provider);
+      } catch (redirectErr: any) {
+        console.error('Google verification redirect failure', redirectErr);
+        setError(getFriendlyErrorMessage(redirectErr));
+        setLoading(false);
+      }
+    } finally {
+      if (auth.currentUser) {
+        setLoading(false);
+      }
     }
   };
 
@@ -312,6 +391,23 @@ export default function LoginForm({ onLoginSuccess, onBackToLanding }: LoginForm
               <div className="space-y-0.5">
                 <span className="block font-bold">Security Alert</span>
                 <span className="text-slate-600 font-medium leading-relaxed">{error}</span>
+              </div>
+            </motion.div>
+          </div>
+        )}
+
+        {/* Success Banner */}
+        {successMessage && (
+          <div className="space-y-3">
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="p-4 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-2xl border border-emerald-100 flex items-start gap-2.5 shadow-sm"
+            >
+              <Check className="w-4 h-4 text-emerald-500 mt-0.5 flex-shrink-0" />
+              <div className="space-y-0.5">
+                <span className="block font-bold">Verification Pending</span>
+                <span className="text-slate-600 font-medium leading-relaxed">{successMessage}</span>
               </div>
             </motion.div>
           </div>
