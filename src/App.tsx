@@ -198,6 +198,10 @@ export default function App() {
           }
         } else {
           console.error("AUTH STATE CLEARED");
+          if (unsubscribeSnapshot) {
+            unsubscribeSnapshot();
+            unsubscribeSnapshot = null;
+          }
           localStorage.removeItem('cfm_token');
           setToken(null);
           setUser(null);
