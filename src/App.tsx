@@ -76,6 +76,9 @@ export default function App() {
 
       // 2. Register onAuthStateChanged to track overall login/session states
       const unsubscribeAuth = onAuthStateChanged(auth, async (fbUser) => {
+        console.log("AUTH CALLBACK");
+        console.log("fbUser:", fbUser);
+        console.log("uid:", fbUser?.uid);
         const user = fbUser;
         console.log("onAuthStateChanged user:", user);
         if (!isMounted) return;
@@ -107,7 +110,9 @@ export default function App() {
                   plan: (profile.plan || 'free').toLowerCase() as any,
                   mfaEnabled: profile.mfaEnabled ?? false
                 } as UserProfile);
+                console.log("SETTING AUTH TRUE");
                 setIsAuthenticated(true);
+                console.log("SETTING CHECKING FALSE");
                 setCheckingAuth(false);
               } else {
                 // Gracefully provision schema documents if missing
@@ -131,27 +136,42 @@ export default function App() {
                 setDoc(userDocRef, freshProfile).then(() => {
                   if (!isMounted) return;
                   setUser(freshProfile as any);
+                  console.log("SETTING AUTH TRUE");
                   setIsAuthenticated(true);
+                  console.log("SETTING CHECKING FALSE");
                   setCheckingAuth(false);
                 }).catch(err => {
+                  console.error("FIRESTORE FAILURE", err);
                   handleFirestoreError(err, OperationType.CREATE, `users/${fbUser.uid}`);
-                  if (isMounted) setCheckingAuth(false);
+                  if (isMounted) {
+                    console.log("SETTING CHECKING FALSE");
+                    setCheckingAuth(false);
+                  }
                 });
               }
             }, (error) => {
+              console.error("FIRESTORE FAILURE", error);
               handleFirestoreError(error, OperationType.GET, `users/${fbUser.uid}`);
-              if (isMounted) setCheckingAuth(false);
+              if (isMounted) {
+                console.log("SETTING CHECKING FALSE");
+                setCheckingAuth(false);
+              }
             });
 
           } catch (error) {
             console.error("Auth status restoration handshakes error", error);
-            if (isMounted) setCheckingAuth(false);
+            if (isMounted) {
+              console.log("SETTING CHECKING FALSE");
+              setCheckingAuth(false);
+            }
           }
         } else {
+          console.error("AUTH STATE CLEARED");
           localStorage.removeItem('cfm_token');
           setToken(null);
           setUser(null);
           setIsAuthenticated(false);
+          console.log("SETTING CHECKING FALSE");
           setCheckingAuth(false);
         }
       });
@@ -201,6 +221,7 @@ export default function App() {
         } as UserProfile);
       }
     } catch (e) {
+      console.error("FIRESTORE FAILURE", e);
       console.error('Session handshakes error', e);
     }
   };
@@ -273,6 +294,7 @@ export default function App() {
               totalFiles: computedTotalFiles,
               sharedFiles: computedSharedFiles
             }).catch(e => {
+              console.error("FIRESTORE FAILURE", e);
               handleFirestoreError(e, OperationType.UPDATE, `users/${auth.currentUser?.uid}`);
             });
           }
@@ -326,6 +348,7 @@ export default function App() {
     } catch (e) {
       console.error('Firebase cloud logout failure', e);
     }
+    console.error("AUTH STATE CLEARED");
     localStorage.removeItem('cfm_token');
     setToken(null);
     setUser(null);
