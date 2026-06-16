@@ -574,7 +574,7 @@ export default function App() {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!checkingAuth && !isAuthenticated) {
     if (authStep === 'landing') {
       return <LandingPage onGetStarted={() => setAuthStep('login')} onLoginClick={() => setAuthStep('login')} />;
     }

@@ -5,7 +5,6 @@ import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   signInWithRedirect, 
-  getRedirectResult,
   GoogleAuthProvider, 
   sendPasswordResetEmail,
   updateProfile
@@ -66,79 +65,6 @@ export default function LoginForm({ onLoginSuccess, onBackToLanding }: LoginForm
       setPasswordStrength({ score: 4, text: 'Excellent (Very Secure)', color: 'bg-emerald-500', textColor: 'text-emerald-500' });
     }
   }, [password, mode]);
-
-  // Handle Firebase secure OAuth redirect result on app initialization
-  useEffect(() => {
-    const handleRedirectResult = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        if (result?.user) {
-          setLoading(true);
-          const user = result.user;
-          const idToken = await user.getIdToken();
-
-          const profileRef = doc(db, 'users', user.uid);
-          let profileSnap;
-          try {
-            profileSnap = await getDoc(profileRef);
-          } catch (err: any) {
-            handleFirestoreError(err, OperationType.GET, `users/${user.uid}`);
-          }
-          const now = new Date().toISOString();
-
-          let profileData;
-
-          if (profileSnap && profileSnap.exists()) {
-            const loadedData = profileSnap.data();
-            profileData = {
-              ...loadedData,
-              id: loadedData.uid || user.uid,
-              name: loadedData.fullName || loadedData.name || user.displayName || 'Authorized operator',
-              mfaEnabled: loadedData.mfaEnabled || false,
-              plan: (loadedData.plan || 'free').toLowerCase()
-            };
-            try {
-              await updateDoc(profileRef, { updatedAt: now });
-            } catch (err: any) {
-              handleFirestoreError(err, OperationType.UPDATE, `users/${user.uid}`);
-            }
-          } else {
-            // Provision secure default stats in Firestore for Google Sign In profiles
-            profileData = {
-              uid: user.uid,
-              id: user.uid,
-              fullName: user.displayName || 'Authorized operator',
-              name: user.displayName || 'Authorized operator',
-              email: user.email || '',
-              createdAt: now,
-              updatedAt: now,
-              plan: 'free' as const,
-              storageUsed: 0,
-              storageLimit: 200 * 1024 * 1024 * 1024, // 200 GB
-              totalFiles: 0,
-              downloads: 0,
-              sharedFiles: 0,
-              mfaEnabled: false,
-            };
-            try {
-              await setDoc(profileRef, profileData);
-            } catch (err: any) {
-              handleFirestoreError(err, OperationType.CREATE, `users/${user.uid}`);
-            }
-          }
-
-          onLoginSuccess(idToken, profileData);
-        }
-      } catch (err: any) {
-        console.error('Google verification redirect failure', err);
-        setError(getFriendlyErrorMessage(err));
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    handleRedirectResult();
-  }, []);
 
   // Map Firebase exception codes to graceful user-friendly error banners
   const getFriendlyErrorMessage = (err: any) => {
