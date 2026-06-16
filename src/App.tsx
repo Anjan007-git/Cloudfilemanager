@@ -28,6 +28,7 @@ export default function App() {
   const [authStep, setAuthStep] = useState<'landing' | 'login'>('landing');
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
+  const [redirectUser, setRedirectUser] = useState<any>(null);
 
   // Shell Layout properties
   const [activeView, setActiveView] = useState<string>('dashboard'); // 'dashboard', 'files', 'shared', 'starred', 'recent', 'trash', 'storage', 'settings', 'help'
@@ -61,7 +62,12 @@ export default function App() {
     const setupAuthAndRedirect = async () => {
       // 1. Verify getRedirectResult(auth) is executed on startup & processes secure redirect logins
       try {
-        await getRedirectResult(auth);
+        const result = await getRedirectResult(auth);
+        console.log("Redirect Result:", result);
+        console.log("auth.currentUser:", auth.currentUser);
+        if (result?.user) {
+          setRedirectUser(result.user);
+        }
       } catch (error) {
         console.error("Firebase auth redirect result resolution failure:", error);
       }
@@ -70,6 +76,8 @@ export default function App() {
 
       // 2. Register onAuthStateChanged to track overall login/session states
       const unsubscribeAuth = onAuthStateChanged(auth, async (fbUser) => {
+        const user = fbUser;
+        console.log("onAuthStateChanged user:", user);
         if (!isMounted) return;
 
         if (fbUser) {
@@ -527,6 +535,11 @@ export default function App() {
     { id: 'storage', label: 'Subscription Vault', icon: <Sparkles className="w-4 h-4" /> },
     { id: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" /> }
   ];
+
+  console.log("Current route decision:", {
+    hasCurrentUser: !!auth.currentUser,
+    redirectUser: !!redirectUser
+  });
 
   if (checkingAuth) {
     return (
