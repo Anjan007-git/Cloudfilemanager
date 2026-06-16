@@ -59,28 +59,46 @@ export default function App() {
     let unsubscribeSnapshot: (() => void) | null = null;
     let isMounted = true;
 
+    const redirectResolvedRef = { current: false };
+    const authFiredRef = { current: false };
+
+    const evaluateCheckingAuth = (hasUser: boolean) => {
+      if (!hasUser) {
+        if (redirectResolvedRef.current && authFiredRef.current) {
+          console.log("SETTING CHECKING FALSE (No user, redirect completed, auth callback fired)");
+          setCheckingAuth(false);
+        }
+      }
+    };
+
     const setupAuthAndRedirect = async () => {
       // 1. Verify getRedirectResult(auth) is executed on startup & processes secure redirect logins
-      try {
-        const result = await getRedirectResult(auth);
-        console.log("Redirect Result:", result);
-        console.log("auth.currentUser:", auth.currentUser);
-        if (result?.user) {
-          setRedirectUser(result.user);
-        }
-      } catch (error) {
-        console.error("Firebase auth redirect result resolution failure:", error);
-      }
-
-      if (!isMounted) return;
+      const redirectPromise = getRedirectResult(auth)
+        .then((result) => {
+          console.log("Redirect Result:", result);
+          console.log("auth.currentUser:", auth.currentUser);
+          if (result?.user) {
+            setRedirectUser(result.user);
+          }
+          redirectResolvedRef.current = true;
+          if (isMounted) {
+            evaluateCheckingAuth(!!auth.currentUser);
+          }
+        })
+        .catch((error) => {
+          console.error("Firebase auth redirect result resolution failure:", error);
+          redirectResolvedRef.current = true;
+          if (isMounted) {
+            evaluateCheckingAuth(!!auth.currentUser);
+          }
+        });
 
       // 2. Register onAuthStateChanged to track overall login/session states
       const unsubscribeAuth = onAuthStateChanged(auth, async (fbUser) => {
         console.log("AUTH CALLBACK");
         console.log("fbUser:", fbUser);
         console.log("uid:", fbUser?.uid);
-        const user = fbUser;
-        console.log("onAuthStateChanged user:", user);
+        authFiredRef.current = true;
         if (!isMounted) return;
 
         if (fbUser) {
@@ -171,11 +189,11 @@ export default function App() {
           setToken(null);
           setUser(null);
           setIsAuthenticated(false);
-          console.log("SETTING CHECKING FALSE");
-          setCheckingAuth(false);
+          evaluateCheckingAuth(false);
         }
       });
 
+      await redirectPromise;
       return unsubscribeAuth;
     };
 
