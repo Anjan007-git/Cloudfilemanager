@@ -6,7 +6,7 @@ import {
   FileText, Shield, Sparkles, CheckCircle, AlertTriangle, RefreshCw, LayoutGrid, Folder, Users, ChevronDown
 } from 'lucide-react';
 
-import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { onAuthStateChanged, signOut, getRedirectResult } from 'firebase/auth';
 import { auth, db, handleFirestoreError, OperationType, apiFetch } from './firebase.js';
 import { doc, onSnapshot, setDoc, updateDoc, getDoc } from 'firebase/firestore';
 
@@ -55,78 +55,113 @@ export default function App() {
 
   // Restore session on load natively via Firebase Auth with zero layout shifts or flickering
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, async (fbUser) => {
-      if (fbUser) {
-        try {
-          const idToken = await fbUser.getIdToken();
-          localStorage.setItem('cfm_token', idToken);
-          setToken(idToken);
-          
-          // Connect a live, double-bound listener to the user document in Firestore
-          const userDocRef = doc(db, 'users', fbUser.uid);
-          const unsubscribeSnapshot = onSnapshot(userDocRef, (docSnap) => {
-            if (docSnap.exists()) {
-              const profile = docSnap.data();
-              setUser({
-                ...profile,
-                id: profile.uid || fbUser.uid,
-                name: profile.fullName || profile.name || fbUser.displayName || fbUser.email?.split('@')[0] || 'Cloud Operator',
-                email: profile.email || fbUser.email || '',
-                storageUsed: profile.storageUsed ?? 0,
-                storageLimit: profile.storageLimit ?? 200 * 1024 * 1024 * 1024,
-                plan: (profile.plan || 'free').toLowerCase() as any,
-                mfaEnabled: profile.mfaEnabled ?? false
-              } as UserProfile);
-              setIsAuthenticated(true);
-              setCheckingAuth(false);
-            } else {
-              // Gracefully provision schema documents if missing
-              const now = new Date().toISOString();
-              const freshProfile = {
-                uid: fbUser.uid,
-                id: fbUser.uid,
-                fullName: fbUser.displayName || fbUser.email?.split('@')[0] || 'Cloud Operator',
-                name: fbUser.displayName || fbUser.email?.split('@')[0] || 'Cloud Operator',
-                email: fbUser.email || '',
-                createdAt: now,
-                updatedAt: now,
-                plan: 'free',
-                storageUsed: 0,
-                storageLimit: 200 * 1024 * 1024 * 1024, // 200 GB
-                totalFiles: 0,
-                downloads: 0,
-                sharedFiles: 0,
-                mfaEnabled: false
-              };
-              setDoc(userDocRef, freshProfile).catch(err => {
-                handleFirestoreError(err, OperationType.CREATE, `users/${fbUser.uid}`);
-              });
-              setUser(freshProfile as any);
-              setIsAuthenticated(true);
-              setCheckingAuth(false);
-            }
-          }, (error) => {
-            handleFirestoreError(error, OperationType.GET, `users/${fbUser.uid}`);
-            setCheckingAuth(false);
-          });
+    let unsubscribeSnapshot: (() => void) | null = null;
+    let isMounted = true;
 
-          return () => {
-            unsubscribeSnapshot();
-          };
-        } catch (error) {
-          console.error("Auth status restoration handshakes error", error);
+    const setupAuthAndRedirect = async () => {
+      // 1. Verify getRedirectResult(auth) is executed on startup & processes secure redirect logins
+      try {
+        await getRedirectResult(auth);
+      } catch (error) {
+        console.error("Firebase auth redirect result resolution failure:", error);
+      }
+
+      if (!isMounted) return;
+
+      // 2. Register onAuthStateChanged to track overall login/session states
+      const unsubscribeAuth = onAuthStateChanged(auth, async (fbUser) => {
+        if (!isMounted) return;
+
+        if (fbUser) {
+          try {
+            const idToken = await fbUser.getIdToken();
+            localStorage.setItem('cfm_token', idToken);
+            setToken(idToken);
+            
+            // Connect a live, double-bound listener to the user document in Firestore
+            const userDocRef = doc(db, 'users', fbUser.uid);
+            
+            if (unsubscribeSnapshot) {
+              unsubscribeSnapshot();
+            }
+
+            unsubscribeSnapshot = onSnapshot(userDocRef, (docSnap) => {
+              if (!isMounted) return;
+              if (docSnap.exists()) {
+                const profile = docSnap.data();
+                setUser({
+                  ...profile,
+                  id: profile.uid || fbUser.uid,
+                  name: profile.fullName || profile.name || fbUser.displayName || fbUser.email?.split('@')[0] || 'Cloud Operator',
+                  email: profile.email || fbUser.email || '',
+                  storageUsed: profile.storageUsed ?? 0,
+                  storageLimit: profile.storageLimit ?? 200 * 1024 * 1024 * 1024,
+                  plan: (profile.plan || 'free').toLowerCase() as any,
+                  mfaEnabled: profile.mfaEnabled ?? false
+                } as UserProfile);
+                setIsAuthenticated(true);
+                setCheckingAuth(false);
+              } else {
+                // Gracefully provision schema documents if missing
+                const now = new Date().toISOString();
+                const freshProfile = {
+                  uid: fbUser.uid,
+                  id: fbUser.uid,
+                  fullName: fbUser.displayName || fbUser.email?.split('@')[0] || 'Cloud Operator',
+                  name: fbUser.displayName || fbUser.email?.split('@')[0] || 'Cloud Operator',
+                  email: fbUser.email || '',
+                  createdAt: now,
+                  updatedAt: now,
+                  plan: 'free',
+                  storageUsed: 0,
+                  storageLimit: 200 * 1024 * 1024 * 1024, // 200 GB
+                  totalFiles: 0,
+                  downloads: 0,
+                  sharedFiles: 0,
+                  mfaEnabled: false
+                };
+                setDoc(userDocRef, freshProfile).then(() => {
+                  if (!isMounted) return;
+                  setUser(freshProfile as any);
+                  setIsAuthenticated(true);
+                  setCheckingAuth(false);
+                }).catch(err => {
+                  handleFirestoreError(err, OperationType.CREATE, `users/${fbUser.uid}`);
+                  if (isMounted) setCheckingAuth(false);
+                });
+              }
+            }, (error) => {
+              handleFirestoreError(error, OperationType.GET, `users/${fbUser.uid}`);
+              if (isMounted) setCheckingAuth(false);
+            });
+
+          } catch (error) {
+            console.error("Auth status restoration handshakes error", error);
+            if (isMounted) setCheckingAuth(false);
+          }
+        } else {
+          localStorage.removeItem('cfm_token');
+          setToken(null);
+          setUser(null);
+          setIsAuthenticated(false);
           setCheckingAuth(false);
         }
-      } else {
-        localStorage.removeItem('cfm_token');
-        setToken(null);
-        setUser(null);
-        setIsAuthenticated(false);
-        setCheckingAuth(false);
-      }
-    });
+      });
 
-    return () => unsubscribeAuth();
+      return unsubscribeAuth;
+    };
+
+    const setupPromise = setupAuthAndRedirect();
+
+    return () => {
+      isMounted = false;
+      if (unsubscribeSnapshot) {
+        unsubscribeSnapshot();
+      }
+      setupPromise.then(unsub => {
+        if (unsub) unsub();
+      });
+    };
   }, []);
 
   // Sync state loops of authenticated files data
