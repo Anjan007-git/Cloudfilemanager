@@ -106,6 +106,10 @@ export default function App() {
         if (fbUser) {
           const isPasswordUser = fbUser.providerData.some(p => p.providerId === 'password');
           if (isPasswordUser && !fbUser.emailVerified) {
+            if (sessionStorage.getItem('cfm_registration_in_progress') === 'true') {
+              console.log("Allowing unverified password login temporarily for profile creation");
+              return;
+            }
             console.log("Blocking unverified password login");
             await auth.signOut().catch(e => console.error("Signout error in onAuthStateChanged", e));
             return;

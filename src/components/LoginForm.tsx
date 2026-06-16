@@ -122,52 +122,57 @@ export default function LoginForm({ onLoginSuccess, onBackToLanding }: LoginForm
           throw new Error('Security key passwords do not match.');
         }
 
-        // Initialize Firebase account registration
-        const credentials = await createUserWithEmailAndPassword(auth, emailTrimmed, password);
-        const user = credentials.user;
-
-        // Set Firebase display name
-        await updateProfile(user, { displayName: name.trim() });
-
-        // Try automatically sending a verification email
         try {
-          await sendEmailVerification(user);
-        } catch (verifErr) {
-          console.error("sendEmailVerification failure", verifErr);
+          // Initialize Firebase account registration
+          sessionStorage.setItem('cfm_registration_in_progress', 'true');
+          const credentials = await createUserWithEmailAndPassword(auth, emailTrimmed, password);
+          const user = credentials.user;
+
+          // Set Firebase display name
+          await updateProfile(user, { displayName: name.trim() });
+
+          // Try automatically sending a verification email
+          try {
+            await sendEmailVerification(user);
+          } catch (verifErr) {
+            console.error("sendEmailVerification failure", verifErr);
+          }
+
+          // Check if profile exists and synchronize default stats in Firestore
+          const profileRef = doc(db, 'users', user.uid);
+          const now = new Date().toISOString();
+
+          const profileData = {
+            uid: user.uid,
+            id: user.uid,
+            fullName: name.trim(),
+            name: name.trim(),
+            email: user.email || '',
+            createdAt: now,
+            updatedAt: now,
+            plan: 'free' as const,
+            storageUsed: 0,
+            storageLimit: 200 * 1024 * 1024 * 1024, // 200 GB
+            totalFiles: 0,
+            downloads: 0,
+            sharedFiles: 0,
+            mfaEnabled: false,
+          };
+
+          try {
+            await setDoc(profileRef, profileData);
+          } catch (err: any) {
+            handleFirestoreError(err, OperationType.CREATE, `users/${user.uid}`);
+          }
+
+          // Sign out immediately so we block this user session until they verify
+          await auth.signOut();
+
+          setSuccessMessage("Verification email sent. Please verify your email before signing in.");
+          setMode('login');
+        } finally {
+          sessionStorage.removeItem('cfm_registration_in_progress');
         }
-
-        // Check if profile exists and synchronize default stats in Firestore
-        const profileRef = doc(db, 'users', user.uid);
-        const now = new Date().toISOString();
-
-        const profileData = {
-          uid: user.uid,
-          id: user.uid,
-          fullName: name.trim(),
-          name: name.trim(),
-          email: user.email || '',
-          createdAt: now,
-          updatedAt: now,
-          plan: 'free' as const,
-          storageUsed: 0,
-          storageLimit: 200 * 1024 * 1024 * 1024, // 200 GB
-          totalFiles: 0,
-          downloads: 0,
-          sharedFiles: 0,
-          mfaEnabled: false,
-        };
-
-        try {
-          await setDoc(profileRef, profileData);
-        } catch (err: any) {
-          handleFirestoreError(err, OperationType.CREATE, `users/${user.uid}`);
-        }
-
-        // Sign out immediately so we block this user session until they verify
-        await auth.signOut();
-
-        setSuccessMessage("Verification email sent. Please verify your email before signing in.");
-        setMode('login');
       } else {
         // Standard Email/Password unlock logic
         const credentials = await signInWithEmailAndPassword(auth, emailTrimmed, password);
