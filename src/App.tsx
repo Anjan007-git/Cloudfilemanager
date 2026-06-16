@@ -25,6 +25,8 @@ export default function App() {
   // Authentication states
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [isSyncingData, setIsSyncingData] = useState(false);
+  const loadedUserRef = useRef<string | null>(null);
   const [authStep, setAuthStep] = useState<'landing' | 'login'>('landing');
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -189,6 +191,13 @@ export default function App() {
           setToken(null);
           setUser(null);
           setIsAuthenticated(false);
+          setFiles([]);
+          setActivities([]);
+          setNotifications([]);
+          setSelectedFolderId(null);
+          setSearchQuery('');
+          setShowSearchResults(false);
+          setRedirectUser(null);
           evaluateCheckingAuth(false);
         }
       });
@@ -212,12 +221,40 @@ export default function App() {
 
   // Sync state loops of authenticated files data
   useEffect(() => {
-    if (isAuthenticated && token) {
-      fetchFiles();
-      fetchActivities();
-      fetchNotifications();
+    if (isAuthenticated && token && user) {
+      const userId = user.id;
+      if (loadedUserRef.current !== userId) {
+        setIsSyncingData(true);
+        // Clear all user-specific state before loading next account
+        setFiles([]);
+        setActivities([]);
+        setNotifications([]);
+        setSelectedFolderId(null);
+        setSearchQuery('');
+        setShowSearchResults(false);
+        
+        Promise.all([
+          fetchFiles(),
+          fetchActivities(),
+          fetchNotifications()
+        ]).then(() => {
+          loadedUserRef.current = userId;
+          setIsSyncingData(false);
+        }).catch((err) => {
+          console.error("Initial data sync failure:", err);
+          loadedUserRef.current = userId;
+          setIsSyncingData(false);
+        });
+      } else {
+        fetchFiles();
+        fetchActivities();
+        fetchNotifications();
+      }
+    } else {
+      loadedUserRef.current = null;
+      setIsSyncingData(false);
     }
-  }, [isAuthenticated, token, selectedFolderId, activeView]);
+  }, [isAuthenticated, token, user, selectedFolderId, activeView]);
 
   const fetchMe = async (authToken: string) => {
     // Kept for backward compatibility if child views call onRefresh / fetchMe manually
@@ -371,6 +408,13 @@ export default function App() {
     setToken(null);
     setUser(null);
     setIsAuthenticated(false);
+    setFiles([]);
+    setActivities([]);
+    setNotifications([]);
+    setSelectedFolderId(null);
+    setSearchQuery('');
+    setShowSearchResults(false);
+    setRedirectUser(null);
     setAuthStep('landing');
     setActiveView('dashboard');
   };
@@ -582,7 +626,7 @@ export default function App() {
     redirectUser: !!redirectUser
   });
 
-  if (checkingAuth) {
+  if (checkingAuth || isSyncingData) {
     return (
       <div className="h-screen w-full bg-[#F4F7FB] flex flex-col items-center justify-center p-6 text-slate-800 font-sans" id="auth-loading-screen">
         <div className="space-y-6 text-center max-w-sm flex flex-col items-center">
