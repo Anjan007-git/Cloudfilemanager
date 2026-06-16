@@ -206,7 +206,6 @@ export default function LandingPage({ onGetStarted, onLoginClick }: LandingPageP
 
           {/* Clean Navigation Hierarchy */}
           <div className="hidden md:flex items-center space-x-8 text-xs font-semibold tracking-wide text-slate-500 font-sans">
-            <a href="#" className="hover:text-blue-600 transition-colors py-1 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-blue-600 hover:after:w-full after:transition-all">Home</a>
             <a href="#features" className="hover:text-blue-600 transition-colors py-1 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-blue-600 hover:after:w-full after:transition-all">Capabilities</a>
             <a href="#pricing" className="hover:text-blue-600 transition-colors py-1 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-blue-600 hover:after:w-full after:transition-all">Pricing Model</a>
             <a href="#faq" className="hover:text-blue-600 transition-colors py-1 relative after:absolute after:bottom-0 after:left-0 after:w-0 after:h-0.5 after:bg-blue-600 hover:after:w-full after:transition-all">Information</a>
@@ -252,7 +251,7 @@ export default function LandingPage({ onGetStarted, onLoginClick }: LandingPageP
 
               <div className="space-y-4">
                 <h1 className="text-4xl sm:text-5xl md:text-[62px] font-bold text-slate-900 tracking-tight leading-[1.08]">
-                  CloudFile <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 font-extrabold block sm:inline">Manager</span>
+                  CloudFile <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500 font-extrabold block sm:inline">Enterprise</span>
                 </h1>
                 <p className="text-slate-600 text-[15px] sm:text-[17px] leading-relaxed max-w-xl mx-auto lg:mx-0 font-medium">
                   Secure cloud storage built for professionals, teams and modern businesses. Save, sync, and share files on a high-availability infrastructure with ironclad cryptographic armor.
