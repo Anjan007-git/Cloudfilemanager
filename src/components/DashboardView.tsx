@@ -6,7 +6,7 @@ import {
   ExternalLink, Lock, Clipboard, Check, Loader2, HardDrive
 } from 'lucide-react';
 import { CloudFile, Activity, UserProfile } from '../types.js';
-import { apiFetch, getApiUrl } from '../firebase.js';
+import { apiFetch, getApiUrl, auth } from '../firebase.js';
 
 interface DashboardProps {
   user: UserProfile;
@@ -156,6 +156,33 @@ export default function DashboardView({
   token,
   onRefresh
 }: DashboardProps) {
+
+  // Get greeting name following strict priority guidelines
+  const getGreetingName = () => {
+    // 1. profile.fullName
+    if (user && (user as any).fullName && typeof (user as any).fullName === 'string' && (user as any).fullName.trim()) {
+      return (user as any).fullName.trim();
+    }
+    // 2. profile.name
+    if (user && user.name && typeof user.name === 'string' && user.name.trim()) {
+      return user.name.trim();
+    }
+    // 3. auth.currentUser.displayName
+    const currentFbUser = auth.currentUser;
+    if (currentFbUser && currentFbUser.displayName && currentFbUser.displayName.trim()) {
+      return currentFbUser.displayName.trim();
+    }
+    // 4. email username before "@" (fallback)
+    const emailToUse = (user && user.email) || (currentFbUser && currentFbUser.email);
+    if (emailToUse && emailToUse.includes('@')) {
+      const parts = emailToUse.split('@');
+      const username = parts[0];
+      if (username) {
+        return username.charAt(0).toUpperCase() + username.slice(1);
+      }
+    }
+    return "User";
+  };
 
   // All premium interactive states for Recent Files and Actions
   const [activeMenuFileId, setActiveMenuFileId] = useState<string | null>(null);
@@ -563,7 +590,7 @@ export default function DashboardView({
         <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight md:text-[28px] leading-tight flex items-center gap-2">
           <span>Welcome,</span>
           <span className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500">
-            Anjan
+            {getGreetingName()}!
           </span>
         </h1>
         <p className="text-[13px] text-slate-400 font-semibold tracking-wide">
