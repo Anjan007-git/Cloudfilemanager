@@ -43,6 +43,7 @@ export interface Activity {
 
 export interface SystemNotification {
   id: string;
+  userId?: string;
   title: string;
   message: string;
   type: 'info' | 'success' | 'warning' | 'error';

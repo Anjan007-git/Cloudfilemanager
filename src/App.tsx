@@ -224,6 +224,8 @@ export default function App() {
             unsubscribeSnapshot = null;
           }
           localStorage.removeItem('cfm_token');
+          localStorage.removeItem('notifications');
+          sessionStorage.removeItem('notifications');
           setToken(null);
           setUser(null);
           setIsAuthenticated(false);
@@ -259,6 +261,11 @@ export default function App() {
   useEffect(() => {
     if (isAuthenticated && token && user) {
       const userId = user.id;
+      const previousUid = loadedUserRef.current;
+      const currentUid = userId;
+      if (previousUid !== currentUid) {
+        setNotifications([]);
+      }
       if (loadedUserRef.current !== userId) {
         setIsSyncingData(true);
         // Clear all user-specific state before loading next account
@@ -441,6 +448,8 @@ export default function App() {
     }
     console.error("AUTH STATE CLEARED");
     localStorage.removeItem('cfm_token');
+    localStorage.removeItem('notifications');
+    sessionStorage.removeItem('notifications');
     setToken(null);
     setUser(null);
     setIsAuthenticated(false);

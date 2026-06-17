@@ -1414,6 +1414,7 @@ async function startServer() {
         // Emit a warning/error system notification
         db.notifications.unshift({
           id: 'notif-' + Date.now(),
+          userId,
           title: 'Storage Limit Exhausted',
           message: `Your upload of "${req.file.originalname}" was rejected. Please upgrade subscription space.`,
           type: 'error',
@@ -1489,6 +1490,7 @@ async function startServer() {
 
       db.notifications.unshift({
         id: 'notif-' + Date.now(),
+        userId,
         title: 'Upload Completed',
         message: `Successfully uploaded "${req.file.originalname}"!`,
         type: 'success',
@@ -1799,6 +1801,7 @@ async function startServer() {
       // Notify user
       db.notifications.unshift({
         id: 'notif-' + Date.now(),
+        userId,
         title: 'File Collaboration Modified',
         message: `Sharing properties updated on "${updatedFile.name}"`,
         type: 'info',
@@ -1897,6 +1900,7 @@ async function startServer() {
 
         db.notifications.unshift({
           id: 'notif-' + Date.now(),
+          userId,
           title: 'Item Moved to Trash',
           message: `"${updatedFile.name}" was safely relocated to the Trash.`,
           type: 'warning',
@@ -2205,6 +2209,7 @@ async function startServer() {
 
     db.notifications.unshift({
       id: 'notif-' + Date.now(),
+      userId,
       title: 'Subscription Active',
       message: `Welcome to ${plan.toUpperCase()} tier. You now have access to ${(limitBytes / 1024 / 1024 / 1024 / 1024).toFixed(0)} TB storage.`,
       type: 'success',
@@ -2263,31 +2268,36 @@ async function startServer() {
 
   app.get('/api/notifications', authenticateToken, (req: any, res) => {
     const db = dbService.getDB();
-    res.json({ notifications: db.notifications });
+    const userNotifications = db.notifications.filter(n => n.userId === req.user.userId);
+    res.json({ notifications: userNotifications });
   });
 
-  app.post('/api/notifications/read/:id', authenticateToken, (req, res) => {
+  app.post('/api/notifications/read/:id', authenticateToken, (req: any, res) => {
     const db = dbService.getDB();
-    const notification = db.notifications.find(n => n.id === req.params.id);
+    const notification = db.notifications.find(n => n.id === req.params.id && n.userId === req.user.userId);
     if (notification) {
       notification.read = true;
     }
     dbService.saveDB(db);
-    res.json({ notifications: db.notifications });
+    const userNotifications = db.notifications.filter(n => n.userId === req.user.userId);
+    res.json({ notifications: userNotifications });
   });
 
-  app.post('/api/notifications/read-all', authenticateToken, (req, res) => {
+  app.post('/api/notifications/read-all', authenticateToken, (req: any, res) => {
     const db = dbService.getDB();
     db.notifications.forEach(n => {
-      n.read = true;
+      if (n.userId === req.user.userId) {
+        n.read = true;
+      }
     });
     dbService.saveDB(db);
-    res.json({ notifications: db.notifications });
+    const userNotifications = db.notifications.filter(n => n.userId === req.user.userId);
+    res.json({ notifications: userNotifications });
   });
 
-  app.post('/api/notifications/clear', authenticateToken, (req, res) => {
+  app.post('/api/notifications/clear', authenticateToken, (req: any, res) => {
     const db = dbService.getDB();
-    db.notifications = [];
+    db.notifications = db.notifications.filter(n => n.userId !== req.user.userId);
     dbService.saveDB(db);
     res.json({ notifications: [] });
   });
@@ -2303,6 +2313,7 @@ async function startServer() {
     const db = dbService.getDB();
     db.notifications.unshift({
       id: 'notif-' + Date.now(),
+      userId: req.user.userId,
       title: 'Support Ticket Received',
       message: `Your inquiry "${subject}" was received. Support engineers will follow up within 24 hours.`,
       type: 'info',
