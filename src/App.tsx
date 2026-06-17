@@ -214,20 +214,20 @@ export default function App() {
                   setCheckingAuth(false);
                 }).catch(err => {
                   console.error("FIRESTORE FAILURE", err);
-                  handleFirestoreError(err, OperationType.CREATE, `users/${fbUser.uid}`);
                   if (isMounted) {
                     console.log("SETTING CHECKING FALSE");
                     setCheckingAuth(false);
                   }
+                  handleFirestoreError(err, OperationType.CREATE, `users/${fbUser.uid}`);
                 });
               }
             }, (error) => {
               console.error("FIRESTORE FAILURE", error);
-              handleFirestoreError(error, OperationType.GET, `users/${fbUser.uid}`);
               if (isMounted) {
                 console.log("SETTING CHECKING FALSE");
                 setCheckingAuth(false);
               }
+              handleFirestoreError(error, OperationType.GET, `users/${fbUser.uid}`);
             });
             }
 
