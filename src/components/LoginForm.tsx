@@ -190,14 +190,26 @@ export default function LoginForm({ onLoginSuccess, onBackToLanding }: LoginForm
 
         const idToken = await user.getIdToken();
 
+        // 9. Add temporary logs:
+        console.log("AUTH USER:", auth.currentUser);
+        console.log("EMAIL VERIFIED:", auth.currentUser?.emailVerified);
+        console.log("BEFORE FIRESTORE READ:", auth.currentUser);
+
         // Read real workspace metrics from Firestore
         const profileRef = doc(db, 'users', user.uid);
         let profileSnap;
-        try {
-          profileSnap = await getDoc(profileRef);
-        } catch (err: any) {
-          handleFirestoreError(err, OperationType.GET, `users/${user.uid}`);
+        
+        // 8. Move all Firestore reads behind:
+        if (auth.currentUser) {
+          try {
+            profileSnap = await getDoc(profileRef);
+          } catch (err: any) {
+            handleFirestoreError(err, OperationType.GET, `users/${user.uid}`);
+          }
+        } else {
+          console.error("NO AUTH USER AT GETDOC TIME!");
         }
+        
         const now = new Date().toISOString();
 
         let profileData;
@@ -211,10 +223,12 @@ export default function LoginForm({ onLoginSuccess, onBackToLanding }: LoginForm
             mfaEnabled: loadedData.mfaEnabled || false,
             plan: (loadedData.plan || 'free').toLowerCase()
           };
-          try {
-            await updateDoc(profileRef, { updatedAt: now });
-          } catch (err: any) {
-            handleFirestoreError(err, OperationType.UPDATE, `users/${user.uid}`);
+          if (auth.currentUser) {
+            try {
+              await updateDoc(profileRef, { updatedAt: now });
+            } catch (err: any) {
+              handleFirestoreError(err, OperationType.UPDATE, `users/${user.uid}`);
+            }
           }
         } else {
           // Fallback provisioning if authenticated account lacks schema
@@ -234,10 +248,12 @@ export default function LoginForm({ onLoginSuccess, onBackToLanding }: LoginForm
             sharedFiles: 0,
             mfaEnabled: false,
           };
-          try {
-            await setDoc(profileRef, profileData);
-          } catch (err: any) {
-            handleFirestoreError(err, OperationType.CREATE, `users/${user.uid}`);
+          if (auth.currentUser) {
+            try {
+              await setDoc(profileRef, profileData);
+            } catch (err: any) {
+              handleFirestoreError(err, OperationType.CREATE, `users/${user.uid}`);
+            }
           }
         }
 

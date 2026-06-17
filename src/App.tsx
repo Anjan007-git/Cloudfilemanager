@@ -104,15 +104,28 @@ export default function App() {
         if (!isMounted) return;
 
         if (fbUser) {
+          // 3. Before checking emailVerified, force refresh the user:
+          try {
+            await fbUser.reload();
+          } catch (e) {
+            console.error("Failed to reload user in onAuthStateChanged:", e);
+          }
+          // 4. Re-read the user after reload:
+          const refreshedUser = auth.currentUser;
+
           const isPasswordUser = fbUser.providerData.some(p => p.providerId === 'password');
-          if (isPasswordUser && !fbUser.emailVerified) {
+          // 5. Only block access if refreshedUser exists AND refreshedUser.emailVerified is false.
+          if (isPasswordUser && refreshedUser && !refreshedUser.emailVerified) {
             if (sessionStorage.getItem('cfm_registration_in_progress') === 'true') {
               console.log("Allowing unverified password login temporarily for profile creation");
+            } else {
+              console.log("Blocking unverified password login UI transition (No immediate signOut inside listener)");
+              // 6. Do not sign out immediately from onAuthStateChanged.
+              if (isMounted) {
+                setCheckingAuth(false);
+              }
               return;
             }
-            console.log("Blocking unverified password login");
-            await auth.signOut().catch(e => console.error("Signout error in onAuthStateChanged", e));
-            return;
           }
 
           try {
@@ -120,14 +133,21 @@ export default function App() {
             localStorage.setItem('cfm_token', idToken);
             setToken(idToken);
             
-            // Connect a live, double-bound listener to the user document in Firestore
-            const userDocRef = doc(db, 'users', fbUser.uid);
-            
-            if (unsubscribeSnapshot) {
-              unsubscribeSnapshot();
-            }
+            // 8. Move all Firestore reads behind:
+            if (auth.currentUser) {
+              // 9. Add temporary logs:
+              console.log("AUTH USER:", auth.currentUser);
+              console.log("EMAIL VERIFIED:", auth.currentUser?.emailVerified);
+              console.log("BEFORE FIRESTORE READ:", auth.currentUser);
 
-            unsubscribeSnapshot = onSnapshot(userDocRef, (docSnap) => {
+              // Connect a live, double-bound listener to the user document in Firestore
+              const userDocRef = doc(db, 'users', fbUser.uid);
+              
+              if (unsubscribeSnapshot) {
+                unsubscribeSnapshot();
+              }
+
+              unsubscribeSnapshot = onSnapshot(userDocRef, (docSnap) => {
               if (!isMounted) return;
               if (docSnap.exists()) {
                 const profile = docSnap.data();
@@ -188,6 +208,7 @@ export default function App() {
                 setCheckingAuth(false);
               }
             });
+            }
 
           } catch (error) {
             console.error("Auth status restoration handshakes error", error);
