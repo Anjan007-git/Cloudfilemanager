@@ -22,6 +22,7 @@ interface MyFilesViewProps {
   onUploadFiles: (files: FileList | File[]) => void;
   onClearCompletedUploads: () => void;
   activeView?: string;
+  user?: any;
 }
 
 export default function MyFilesView({ 
@@ -34,6 +35,7 @@ export default function MyFilesView({
   uploadQueue,
   onUploadFiles,
   onClearCompletedUploads,
+  user,
   activeView = 'files'
 }: MyFilesViewProps) {
   
@@ -567,6 +569,13 @@ export default function MyFilesView({
               </button>
             </React.Fragment>
           ))}
+          
+          {user && (user.storageUsed / user.storageLimit) > 0.9 && (
+            <div className="inline-flex items-center space-x-1.5 px-2.5 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded-full text-[10.5px] font-extrabold leading-none animate-pulse shrink-0 ml-2.5" id="storage-almost-full-badge">
+              <ShieldAlert className="w-3.5 h-3.5 text-amber-655 text-amber-600 shrink-0" />
+              <span>Storage Almost Full</span>
+            </div>
+          )}
         </div>
 
         {/* Category Quick Filter badges */}

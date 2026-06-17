@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Folder, Image, Cloud, Users, Share2, BarChart3, FileText, MoreVertical, X, Upload, ChevronRight, Settings, 
   Trash2, Download, Music, Video, Code, ShieldCheck, Mail, Star, Edit3, Copy, Move, Eye, Calendar, 
-  ExternalLink, Lock, Clipboard, Check, Loader2, HardDrive
+  ExternalLink, Lock, Clipboard, Check, Loader2, HardDrive, ShieldAlert
 } from 'lucide-react';
 import { CloudFile, Activity, UserProfile } from '../types.js';
 import { apiFetch, getApiUrl, auth } from '../firebase.js';
@@ -587,11 +587,17 @@ export default function DashboardView({
       
       {/* ================= WELCOME HEADER SECTION WITH SPECIFIC GRADIENT STYLING & REDUCED EXTRA SPACING ================= */}
       <div className="space-y-1 text-left pt-1">
-        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight md:text-[28px] leading-tight flex items-center gap-2">
+        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight md:text-[28px] leading-tight flex flex-wrap items-center gap-x-2 gap-y-1">
           <span>Welcome,</span>
           <span className="font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-cyan-500">
             {getGreetingName()}!
           </span>
+          {percentUsed > 90 && (
+            <span className="inline-flex items-center space-x-1.5 px-2.5 py-1 bg-amber-50 text-amber-800 border border-amber-200 rounded-full text-[10.5px] font-extrabold leading-none animate-pulse shrink-0 ml-1.5 align-middle" id="dashboard-almost-full">
+              <ShieldAlert className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+              <span>Storage Almost Full</span>
+            </span>
+          )}
         </h1>
         <p className="text-[13px] text-slate-400 font-semibold tracking-wide">
           Here's what's happening with your files today.

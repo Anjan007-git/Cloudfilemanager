@@ -443,7 +443,7 @@ async function startServer() {
             name: req.user.name,
             email: req.user.email,
             storageUsed: 0,
-            storageLimit: 200 * 1024 * 1024 * 1024,
+            storageLimit: 5 * 1024 * 1024 * 1024,
             plan: 'free',
             createdAt: new Date().toISOString(),
             mfaEnabled: false
@@ -535,7 +535,7 @@ async function startServer() {
       name,
       email: emailNorm,
       storageUsed: 0,
-      storageLimit: 200 * 1024 * 1024 * 1024, // 200 GB default limit
+      storageLimit: 5 * 1024 * 1024 * 1024, // 5 GB limit
       plan: 'free',
       createdAt: new Date().toISOString(),
       mfaEnabled: false,
@@ -647,7 +647,7 @@ async function startServer() {
           name: defaultName,
           email: defaultEmail,
           storageUsed: 0, // start clean, computed dynamically from S3
-          storageLimit: 200 * 1024 * 1024 * 1024,
+          storageLimit: 5 * 1024 * 1024 * 1024,
           plan: 'free',
           createdAt: new Date().toISOString(),
           mfaEnabled: false,
@@ -2178,7 +2178,7 @@ async function startServer() {
       return res.status(404).json({ error: 'Profile not found' });
     }
 
-    let limitBytes = 200 * 1024 * 1024 * 1024; // Free
+    let limitBytes = 5 * 1024 * 1024 * 1024; // Free
     if (plan === 'pro') limitBytes = 1 * 1024 * 1024 * 1024 * 1024; // 1 TB
     if (plan === 'business') limitBytes = 5 * 1024 * 1024 * 1024 * 1024; // 5 TB
     if (plan === 'enterprise') limitBytes = 100 * 1024 * 1024 * 1024 * 1024; // 100 TB or infinite
@@ -2232,7 +2232,7 @@ async function startServer() {
     const profile = db.profiles[userId];
 
     profile.plan = plan;
-    let limitBytes = 200 * 1024 * 1024 * 1024;
+    let limitBytes = 5 * 1024 * 1024 * 1024;
     if (plan === 'pro') limitBytes = 1 * 1024 * 1024 * 1024 * 1024;
     if (plan === 'business') limitBytes = 5 * 1024 * 1024 * 1024 * 1024;
 

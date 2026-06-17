@@ -152,7 +152,7 @@ export default function LoginForm({ onLoginSuccess, onBackToLanding }: LoginForm
             updatedAt: now,
             plan: 'free' as const,
             storageUsed: 0,
-            storageLimit: 200 * 1024 * 1024 * 1024, // 200 GB
+            storageLimit: 5 * 1024 * 1024 * 1024, // 5 GB
             totalFiles: 0,
             downloads: 0,
             sharedFiles: 0,
@@ -242,7 +242,7 @@ export default function LoginForm({ onLoginSuccess, onBackToLanding }: LoginForm
             updatedAt: now,
             plan: 'free' as const,
             storageUsed: 0,
-            storageLimit: 200 * 1024 * 1024 * 1024, // 200 GB
+            storageLimit: 5 * 1024 * 1024 * 1024, // 5 GB
             totalFiles: 0,
             downloads: 0,
             sharedFiles: 0,
@@ -306,7 +306,7 @@ export default function LoginForm({ onLoginSuccess, onBackToLanding }: LoginForm
             updatedAt: now,
             plan: 'free' as const,
             storageUsed: 0,
-            storageLimit: 200 * 1024 * 1024 * 1024,
+            storageLimit: 5 * 1024 * 1024 * 1024,
             totalFiles: 0,
             downloads: 0,
             sharedFiles: 0,

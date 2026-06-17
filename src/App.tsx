@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   Cloud, HardDrive, Share2, Star, Trash2, Clock, Settings, HelpCircle, LogOut, 
   Menu, X, Bell, Search, Upload, Activity as ActivityIcon, ChevronRight, User, Plus,
-  FileText, Shield, Sparkles, CheckCircle, AlertTriangle, RefreshCw, LayoutGrid, Folder, Users, ChevronDown
+  FileText, Shield, Sparkles, CheckCircle, AlertTriangle, RefreshCw, LayoutGrid, Folder, Users, ChevronDown, ShieldAlert
 } from 'lucide-react';
 
 import { onAuthStateChanged, signOut, getRedirectResult } from 'firebase/auth';
@@ -55,6 +55,9 @@ export default function App() {
   // Search states moved to global header
   const [searchQuery, setSearchQuery] = useState('');
   const [showSearchResults, setShowSearchResults] = useState(false);
+
+  // Storage Limit Reached premium upgrade modal state
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
 
   // Restore session on load natively via Firebase Auth with zero layout shifts or flickering
   useEffect(() => {
@@ -157,7 +160,7 @@ export default function App() {
                   name: profile.fullName || profile.name || fbUser.displayName || fbUser.email?.split('@')[0] || 'Cloud Operator',
                   email: profile.email || fbUser.email || '',
                   storageUsed: profile.storageUsed ?? 0,
-                  storageLimit: profile.storageLimit ?? 200 * 1024 * 1024 * 1024,
+                  storageLimit: getPlanStorageLimit(profile.plan, profile.storageLimit),
                   plan: (profile.plan || 'free').toLowerCase() as any,
                   mfaEnabled: profile.mfaEnabled ?? false
                 } as UserProfile);
@@ -178,7 +181,7 @@ export default function App() {
                   updatedAt: now,
                   plan: 'free',
                   storageUsed: 0,
-                  storageLimit: 200 * 1024 * 1024 * 1024, // 200 GB
+                  storageLimit: 5 * 1024 * 1024 * 1024, // 5 GB
                   totalFiles: 0,
                   downloads: 0,
                   sharedFiles: 0,
@@ -186,7 +189,10 @@ export default function App() {
                 };
                 setDoc(userDocRef, freshProfile).then(() => {
                   if (!isMounted) return;
-                  setUser(freshProfile as any);
+                  setUser({
+                    ...freshProfile,
+                    storageLimit: 5 * 1024 * 1024 * 1024
+                  } as any);
                   console.log("SETTING AUTH TRUE");
                   setIsAuthenticated(true);
                   console.log("SETTING CHECKING FALSE");
@@ -313,7 +319,7 @@ export default function App() {
           name: profile.fullName || profile.name || auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || 'Cloud Operator',
           email: profile.email || auth.currentUser.email || '',
           storageUsed: profile.storageUsed ?? 0,
-          storageLimit: profile.storageLimit ?? 200 * 1024 * 1024 * 1024,
+          storageLimit: getPlanStorageLimit(profile.plan, profile.storageLimit),
           plan: (profile.plan || 'free').toLowerCase() as any,
           mfaEnabled: profile.mfaEnabled ?? false
         } as UserProfile);
@@ -554,6 +560,15 @@ export default function App() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
   };
 
+  const getPlanStorageLimit = (planName: string | undefined, originalLimit?: number) => {
+    const p = (planName || 'free').toLowerCase();
+    if (p === 'free') return 5 * 1024 * 1024 * 1024; // 5 GB
+    if (p === 'pro' || p === 'personal') return 100 * 1024 * 1024 * 1024; // 100 GB
+    if (p === 'business') return 500 * 1024 * 1024 * 1024; // 500 GB
+    if (p === 'enterprise') return originalLimit && originalLimit > 500 * 1024 * 1024 * 1024 ? originalLimit : 10 * 1024 * 1024 * 1024 * 1024; // 10 TB custom fallback
+    return 5 * 1024 * 1024 * 1024;
+  };
+
   // Centralized upload queue state
   const [uploadQueue, setUploadQueue] = useState<any[]>([]);
   const [successToast, setSuccessToast] = useState<string | null>(null);
@@ -577,6 +592,20 @@ export default function App() {
   };
 
   const handleFilesUpload = async (items: FileList | File[]) => {
+    // 1. Calculate incoming file sizes and check remaining storage allotment
+    let totalIncomingSize = 0;
+    for (let i = 0; i < items.length; i++) {
+      totalIncomingSize += items[i].size;
+    }
+
+    const currentUsed = user?.storageUsed || 0;
+    const limitBytes = getPlanStorageLimit(user?.plan, user?.storageLimit);
+
+    if (currentUsed + totalIncomingSize > limitBytes) {
+      setShowPremiumModal(true);
+      return; // Block execution
+    }
+
     const queueList = [...uploadQueue];
 
     for (let i = 0; i < items.length; i++) {
@@ -1135,6 +1164,7 @@ export default function App() {
                       onUploadFiles={handleFilesUpload}
                       onClearCompletedUploads={handleClearCompletedUploads}
                       activeView={activeView}
+                      user={user}
                     />
                   </ErrorBoundary>
                 )}
@@ -1253,6 +1283,63 @@ export default function App() {
               <X className="w-4 h-4" />
             </button>
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Premium Upgrade Storage Limit Reached Modal */}
+      <AnimatePresence>
+        {showPremiumModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowPremiumModal(false)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              id="premium-modal-backdrop"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 10 }}
+              className="relative bg-white rounded-[24px] shadow-2xl p-6 sm:p-8 w-full max-w-md border border-slate-100 font-sans text-center space-y-6 z-50 pointer-events-auto"
+              id="premium-limit-modal"
+            >
+              <div className="mx-auto w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center shadow-inner">
+                <ShieldAlert className="w-8 h-8" />
+              </div>
+
+              <div className="space-y-2">
+                <h3 className="text-xl font-extrabold text-slate-950 font-display tracking-tight">
+                  Storage Limit Reached
+                </h3>
+                <p className="text-sm font-normal text-slate-500 leading-relaxed">
+                  You have used all available storage in your current plan. Upgrade your subscription to continue uploading files.
+                </p>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                <button
+                  id="modal-upgrade-btn"
+                  onClick={() => {
+                    setShowPremiumModal(false);
+                    window.history.pushState(null, '', '/subscription-vault');
+                    setActiveView('storage');
+                  }}
+                  className="flex-1 py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white text-xs font-black rounded-xl transition-all shadow-md shadow-blue-500/15 cursor-pointer active:scale-95"
+                >
+                  Upgrade Now
+                </button>
+                <button
+                  id="modal-cancel-btn"
+                  onClick={() => setShowPremiumModal(false)}
+                  className="flex-1 py-3 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all cursor-pointer active:scale-95"
+                >
+                  Cancel
+                </button>
+              </div>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 
