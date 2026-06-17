@@ -69,6 +69,8 @@ export interface UserProfile {
   plan: 'free' | 'pro' | 'business' | 'enterprise';
   createdAt: string;
   mfaEnabled: boolean;
+  totalFiles?: number;
+  sharedFiles?: number;
 }
 
 export interface SubscriptionPlan {

@@ -154,16 +154,30 @@ export default function App() {
               if (!isMounted) return;
               if (docSnap.exists()) {
                 const profile = docSnap.data();
-                setUser({
-                  ...profile,
-                  id: profile.uid || fbUser.uid,
-                  name: profile.fullName || profile.name || fbUser.displayName || fbUser.email?.split('@')[0] || 'Cloud Operator',
-                  email: profile.email || fbUser.email || '',
-                  storageUsed: profile.storageUsed ?? 0,
-                  storageLimit: getPlanStorageLimit(profile.plan, profile.storageLimit),
-                  plan: (profile.plan || 'free').toLowerCase() as any,
-                  mfaEnabled: profile.mfaEnabled ?? false
-                } as UserProfile);
+                setUser(prev => {
+                  const nextUser = {
+                    ...profile,
+                    id: profile.uid || fbUser.uid,
+                    name: profile.fullName || profile.name || fbUser.displayName || fbUser.email?.split('@')[0] || 'Cloud Operator',
+                    email: profile.email || fbUser.email || '',
+                    storageUsed: profile.storageUsed ?? 0,
+                    storageLimit: getPlanStorageLimit(profile.plan, profile.storageLimit),
+                    plan: (profile.plan || 'free').toLowerCase() as any,
+                    mfaEnabled: profile.mfaEnabled ?? false
+                  } as UserProfile;
+
+                  if (prev &&
+                      prev.id === nextUser.id &&
+                      prev.name === nextUser.name &&
+                      prev.email === nextUser.email &&
+                      prev.storageUsed === nextUser.storageUsed &&
+                      prev.storageLimit === nextUser.storageLimit &&
+                      prev.plan === nextUser.plan &&
+                      prev.mfaEnabled === nextUser.mfaEnabled) {
+                    return prev;
+                  }
+                  return nextUser;
+                });
                 console.log("SETTING AUTH TRUE");
                 setIsAuthenticated(true);
                 console.log("SETTING CHECKING FALSE");
@@ -187,6 +201,7 @@ export default function App() {
                   sharedFiles: 0,
                   mfaEnabled: false
                 };
+                console.log("FIRESTORE UPDATE");
                 setDoc(userDocRef, freshProfile).then(() => {
                   if (!isMounted) return;
                   setUser({
@@ -265,6 +280,7 @@ export default function App() {
 
   // Sync state loops of authenticated files data
   useEffect(() => {
+    console.log("SYNC EFFECT RUN");
     if (isAuthenticated && token && user) {
       const userId = user.id;
       const previousUid = loadedUserRef.current;
@@ -303,7 +319,7 @@ export default function App() {
       loadedUserRef.current = null;
       setIsSyncingData(false);
     }
-  }, [isAuthenticated, token, user, selectedFolderId, activeView]);
+  }, [isAuthenticated, token, user?.id, selectedFolderId, activeView]);
 
   const fetchMe = async (authToken: string) => {
     // Kept for backward compatibility if child views call onRefresh / fetchMe manually
@@ -313,16 +329,30 @@ export default function App() {
       const docSnap = await getDoc(userDocRef);
       if (docSnap.exists()) {
         const profile = docSnap.data();
-        setUser({
-          ...profile,
-          id: profile.uid || auth.currentUser.uid,
-          name: profile.fullName || profile.name || auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || 'Cloud Operator',
-          email: profile.email || auth.currentUser.email || '',
-          storageUsed: profile.storageUsed ?? 0,
-          storageLimit: getPlanStorageLimit(profile.plan, profile.storageLimit),
-          plan: (profile.plan || 'free').toLowerCase() as any,
-          mfaEnabled: profile.mfaEnabled ?? false
-        } as UserProfile);
+        setUser(prev => {
+          const nextUser = {
+            ...profile,
+            id: profile.uid || auth.currentUser.uid,
+            name: profile.fullName || profile.name || auth.currentUser.displayName || auth.currentUser.email?.split('@')[0] || 'Cloud Operator',
+            email: profile.email || auth.currentUser.email || '',
+            storageUsed: profile.storageUsed ?? 0,
+            storageLimit: getPlanStorageLimit(profile.plan, profile.storageLimit),
+            plan: (profile.plan || 'free').toLowerCase() as any,
+            mfaEnabled: profile.mfaEnabled ?? false
+          } as UserProfile;
+
+          if (prev &&
+              prev.id === nextUser.id &&
+              prev.name === nextUser.name &&
+              prev.email === nextUser.email &&
+              prev.storageUsed === nextUser.storageUsed &&
+              prev.storageLimit === nextUser.storageLimit &&
+              prev.plan === nextUser.plan &&
+              prev.mfaEnabled === nextUser.mfaEnabled) {
+            return prev;
+          }
+          return nextUser;
+        });
       }
     } catch (e) {
       console.error("FIRESTORE FAILURE", e);
@@ -331,6 +361,7 @@ export default function App() {
   };
 
   const fetchFiles = async () => {
+    console.log("FILES FETCHED");
     if (!token) return;
     try {
       let url = '/api/files?';
@@ -384,22 +415,17 @@ export default function App() {
 
             setUser(prev => {
               if (!prev) return null;
+              if (prev.storageUsed === computedStorageUsed &&
+                  prev.totalFiles === computedTotalFiles &&
+                  prev.sharedFiles === computedSharedFiles) {
+                return prev;
+              }
               return {
                 ...prev,
                 storageUsed: computedStorageUsed,
                 totalFiles: computedTotalFiles,
                 sharedFiles: computedSharedFiles
               };
-            });
-
-            const userDocRef = doc(db, 'users', auth.currentUser.uid);
-            await updateDoc(userDocRef, {
-              storageUsed: computedStorageUsed,
-              totalFiles: computedTotalFiles,
-              sharedFiles: computedSharedFiles
-            }).catch(e => {
-              console.error("FIRESTORE FAILURE", e);
-              handleFirestoreError(e, OperationType.UPDATE, `users/${auth.currentUser?.uid}`);
             });
           }
         }
