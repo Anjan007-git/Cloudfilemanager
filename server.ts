@@ -28,24 +28,63 @@ process.on('uncaughtException', (err) => {
     }, null, 2),
     'utf8'
   );
-  console.error('SERVER CRASH:', err);
+  console.error('SERVER CRASH (uncaughtException):', err);
 });
 
-const firebaseApp = initializeApp({
-  projectId: firebaseConfig.projectId,
+// Global unhandled promise rejection logger — catches silent async failures
+process.on('unhandledRejection', (reason, promise) => {
+  const message = reason instanceof Error ? reason.message : String(reason);
+  const stack = reason instanceof Error ? reason.stack : undefined;
+  console.error('[FATAL] Unhandled promise rejection:', message);
+  if (stack) console.error(stack);
+  try {
+    fs.writeFileSync(
+      path.join(process.cwd(), 'debug-log.txt'),
+      JSON.stringify({
+        status: 'UNHANDLED_REJECTION',
+        timestamp: new Date().toISOString(),
+        error: message,
+        stack: stack || null,
+      }, null, 2),
+      'utf8'
+    );
+  } catch (_) { /* ignore write errors */ }
 });
-const firestoreDb = firebaseConfig.firestoreDatabaseId 
-  ? getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId)
-  : getFirestore(firebaseApp);
+
+let firebaseApp: any;
+let firestoreDb: any;
+try {
+  console.log('[INIT] Initializing Firebase Admin SDK...');
+  firebaseApp = initializeApp({
+    projectId: firebaseConfig.projectId,
+  });
+  firestoreDb = firebaseConfig.firestoreDatabaseId
+    ? getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId)
+    : getFirestore(firebaseApp);
+  console.log('[INIT] Firebase Admin SDK initialized successfully. Project:', firebaseConfig.projectId);
+} catch (err: any) {
+  console.error('[FATAL] Firebase Admin SDK initialization failed:', err.message || err);
+  console.error(err.stack || '');
+  process.exit(1);
+}
 
 // Initialize S3 Client
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION || 'us-east-1',
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-  }
-});
+let s3Client: S3Client;
+try {
+  console.log('[INIT] Initializing S3 client...');
+  s3Client = new S3Client({
+    region: process.env.AWS_REGION || 'us-east-1',
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+    },
+  });
+  console.log('[INIT] S3 client initialized. Region:', process.env.AWS_REGION || 'us-east-1');
+} catch (err: any) {
+  console.error('[FATAL] S3 client initialization failed:', err.message || err);
+  console.error(err.stack || '');
+  process.exit(1);
+}
 
 // Map Firestore doc data to standard CloudFile model
 function mapFirestoreDocToFile(docId: string, data: any): CloudFile {
@@ -2348,6 +2387,12 @@ async function startServer() {
     res.json({ success: true, message: 'Support ticket successfully generated!' });
   });
 
+  // ==================== HEALTH CHECK ====================
+
+  app.get('/health', (_req, res) => {
+    res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
+  });
+
   // ==================== BIND ASSETS & VITE MIDDLEWARES ====================
 
   if (process.env.NODE_ENV !== 'production') {
@@ -2369,4 +2414,8 @@ async function startServer() {
   });
 }
 
-startServer();
+startServer().catch((err) => {
+  console.error('[FATAL] startServer() threw an unhandled error:', err.message || err);
+  console.error(err.stack || '');
+  process.exit(1);
+});
