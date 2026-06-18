@@ -703,6 +703,9 @@ export default function MyFilesView({
                   <div className="truncate text-left space-y-0.5">
                     <p className="font-semibold text-slate-800 truncate pr-1" title={item.name}>{item.name}</p>
                     <span className="text-[10px] text-slate-400 font-medium font-sans block">{formatBytes(item.size)}</span>
+                    {item.status === 'error' && item.errorMsg && (
+                      <span className="text-[10px] text-red-500 font-semibold block leading-normal mt-0.5 whitespace-normal pr-2">{item.errorMsg}</span>
+                    )}
                   </div>
                 </div>
                 <div className="flex items-center space-x-2 flex-shrink-0">

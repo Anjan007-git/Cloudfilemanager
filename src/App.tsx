@@ -595,6 +595,14 @@ export default function App() {
     return 5 * 1024 * 1024 * 1024;
   };
 
+  const getPlanMaxUploadSize = (planName: string | undefined) => {
+    const p = (planName || 'free').toLowerCase();
+    if (p === 'pro' || p === 'personal') return 500 * 1024 * 1024; // 500 MB
+    if (p === 'business') return 2 * 1024 * 1024 * 1024; // 2 GB
+    if (p === 'enterprise') return 5 * 1024 * 1024 * 1024; // 5 GB
+    return 50 * 1024 * 1024; // 50 MB
+  };
+
   // Centralized upload queue state
   const [uploadQueue, setUploadQueue] = useState<any[]>([]);
   const [successToast, setSuccessToast] = useState<string | null>(null);
@@ -638,6 +646,22 @@ export default function App() {
       const element = items[i];
       const trackingId = 'q-' + Date.now() + '-' + Math.random().toString(36).substring(2, 7);
       
+      const maxUploadSize = getPlanMaxUploadSize(user?.plan);
+      if (element.size > maxUploadSize) {
+        const errorQueueItem = {
+          id: trackingId,
+          name: element.name,
+          size: element.size,
+          progress: 0,
+          status: 'error',
+          errorMsg: 'Your file exceeds the maximum upload size allowed for your plan.',
+          part: element
+        };
+        queueList.push(errorQueueItem);
+        setUploadQueue([...queueList]);
+        continue;
+      }
+
       const newQueueItem = {
         id: trackingId,
         name: element.name,

@@ -146,6 +146,13 @@ export default function StorageView({ user, token, onRefresh }: StorageViewProps
                 style={{ width: `${Math.min(100, (user.storageUsed / user.storageLimit) * 100)}%` }}
               ></div>
             </div>
+
+            <div className="flex justify-between items-center text-xs text-slate-500 font-semibold pt-1">
+              <span>Allowed Upload Size Limit per file:</span>
+              <span className="font-bold text-slate-700">
+                {user.plan === 'free' ? '50 MB' : user.plan === 'pro' ? '500 MB' : user.plan === 'business' ? '2 GB' : '5 GB'}
+              </span>
+            </div>
           </div>
 
           {/* Allocation insights bullet points */}
@@ -301,8 +308,15 @@ export default function StorageView({ user, token, onRefresh }: StorageViewProps
                   <td className="py-3.5 px-4 font-bold text-slate-900">S3 Cloud Space</td>
                   <td className="py-3.5 px-4 text-slate-500 font-bold text-red-500">5 GB limit</td>
                   <td className="py-3.5 px-4 text-slate-900">1 TB limit</td>
-                  <td className="py-3.5 px-4 text-slate-900">5 TB limit</td>
+                  <td className="py-3.5 px-4 text-slate-950">5 TB limit</td>
                   <td className="py-3.5 px-4 text-blue-600 font-extrabold flex items-center gap-1"><Orbit className="w-3.5 h-3.5 animate-spin text-blue-500" /> Unlimited</td>
+                </tr>
+                <tr className="hover:bg-slate-50/50 transition-colors">
+                  <td className="py-3.5 px-4 font-bold text-slate-900">Max File Upload Size</td>
+                  <td className="py-3.5 px-4 text-slate-500 font-bold">50 MB</td>
+                  <td className="py-3.5 px-4 text-slate-900">500 MB</td>
+                  <td className="py-3.5 px-4 text-slate-900">2 GB</td>
+                  <td className="py-3.5 px-4 text-slate-900">5 GB</td>
                 </tr>
                 <tr className="hover:bg-slate-50/50 transition-colors">
                   <td className="py-3.5 px-4 font-bold text-slate-900">Signed Link Expirations</td>

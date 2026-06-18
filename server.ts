@@ -406,7 +406,7 @@ async function startServer() {
 
   const upload = multer({
     storage: storage,
-    limits: { fileSize: 50 * 1024 * 1024 }, // 50MB safe size limit inside sandboxed container
+    limits: { fileSize: 5 * 1024 * 1024 * 1024 }, // 5GB max allowed size for enterprise uploads
   });
 
   // Authentication Middleware
@@ -1395,6 +1395,21 @@ async function startServer() {
       const db = dbService.getDB();
       const userId = req.user.userId;
       const profile = db.profiles[userId];
+
+      // Dynamic plan-based file size validation
+      const plan = (profile.plan || 'free').toLowerCase();
+      let maxUploadSize = 50 * 1024 * 1024; // 50 MB
+      if (plan === 'pro' || plan === 'personal') {
+        maxUploadSize = 500 * 1024 * 1024; // 500 MB
+      } else if (plan === 'business') {
+        maxUploadSize = 2 * 1024 * 1024 * 1024; // 2 GB
+      } else if (plan === 'enterprise') {
+        maxUploadSize = 5 * 1024 * 1024 * 1024; // 5 GB
+      }
+
+      if (req.file.size > maxUploadSize) {
+        return res.status(400).json({ error: 'Your file exceeds the maximum upload size allowed for your plan.' });
+      }
 
       // Calculate active storage used dynamically from Firestore using REST helper
       let storageUsed = 0;
