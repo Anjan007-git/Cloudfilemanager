@@ -200,7 +200,7 @@ Add screenshots here:
 
 ### Dashboard
 
-https://raw.githubusercontent.com/Anjan007-git/Cloudfilemanager/9cd54daa2a5204b4931065036ed88eaa1ffa8b46/Screenshot%202026-06-19%20002959.png
+![Dashboard](https://raw.githubusercontent.com/Anjan007-git/Cloudfilemanager/9cd54daa2a5204b4931065036ed88eaa1ffa8b46/Screenshot%202026-06-19%20002959.png)
 
 ### File Manager
 
