@@ -210,9 +210,9 @@ Add screenshots here:
 
 ![Upload](screenshots/upload.png)
 
-### Subscription Vault
+### Home Page
 
-![Subscription](screenshots/subscription.png)
+![Home](screenshots/subscription.png)
 
 ---
 
