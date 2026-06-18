@@ -1,20 +1,246 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
-</div>
+# ☁️ CloudFile Manager
 
-# Run and deploy your AI Studio app
+A modern cloud storage and file management platform that enables users to securely upload, organize, preview, download, and manage files from anywhere.
 
-This contains everything you need to run your app locally.
+Built with a production-style architecture using React, TypeScript, Firebase Authentication, AWS S3, Firestore, Railway, and Vercel.
 
-View your app in AI Studio: https://ai.studio/apps/1eee3088-d640-49f6-98c0-00bb6fcb2cea
+---
 
-## Run Locally
+## 🚀 Live Features
 
-**Prerequisites:**  Node.js
+### Secure Authentication
 
+* Google Sign-In
+* Email & Password Authentication
+* Email Verification Workflow
+* Session Management
+* Protected Routes
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### Cloud Storage
+
+* Upload Files
+* Download Files
+* File Preview
+* Folder Organization
+* File Management Dashboard
+* Storage Usage Tracking
+
+### Storage Management
+
+* Free Plan Storage Limits
+* Dynamic Usage Calculation
+* Storage Analytics
+* Upgrade Flow
+* Subscription Vault
+
+### User Experience
+
+* Real-Time Dashboard
+* Responsive Design
+* Modern SaaS Interface
+* Notification Center
+* Search & Navigation
+
+---
+
+## 🏗 Architecture
+
+Frontend:
+
+* React
+* TypeScript
+* Vite
+* Tailwind CSS
+
+Authentication:
+
+* Firebase Authentication
+
+Database:
+
+* Firestore
+
+Storage:
+
+* AWS S3
+
+Backend:
+
+* Node.js
+* Express
+* Railway
+
+Deployment:
+
+* Vercel
+
+---
+
+## 🔄 System Flow
+
+User Login
+↓
+Firebase Authentication
+↓
+JWT Verification
+↓
+Railway Backend
+↓
+Firestore Metadata
+↓
+AWS S3 File Storage
+↓
+Dashboard & Analytics
+
+---
+
+## 🔒 Security Features
+
+* User Isolation
+* Protected API Endpoints
+* Firebase Authentication
+* Token Verification
+* Storage Quota Enforcement
+* Secure File Access
+* Per-User Data Segregation
+
+---
+
+## 💡 Real Problems Solved
+
+### 1. Cloud Storage Cost Control
+
+Problem:
+Providing large free storage allowances can create significant cloud infrastructure costs.
+
+Solution:
+Implemented plan-based storage limits with upload validation before storage allocation.
+
+Result:
+Prevents unnecessary AWS S3 storage consumption and enables scalable subscription models.
+
+---
+
+### 2. Cross-Account Notification Leakage
+
+Problem:
+Notifications created by one user appeared in another user's session.
+
+Solution:
+Implemented user-scoped notification ownership and state cleanup on account changes.
+
+Result:
+Complete account isolation and secure multi-user experience.
+
+---
+
+### 3. Authentication State Race Conditions
+
+Problem:
+Firestore profile reads failed during login due to authentication state timing conflicts.
+
+Solution:
+Refactored authentication synchronization and profile initialization workflows.
+
+Result:
+Stable login experience with proper user state management.
+
+---
+
+### 4. Firestore Quota Exhaustion Investigation
+
+Problem:
+Unexpected Firestore read spikes caused application instability.
+
+Solution:
+Performed deep debugging of synchronization loops, dependency tracking, and real-time listeners.
+
+Result:
+Eliminated unnecessary database operations and improved application efficiency.
+
+---
+
+### 5. Secure File Storage Architecture
+
+Problem:
+Need secure file storage while maintaining scalable cloud infrastructure.
+
+Solution:
+Separated file binaries and metadata.
+
+AWS S3:
+Stores file content.
+
+Firestore:
+Stores file metadata and ownership information.
+
+Result:
+Improved scalability and maintainability.
+
+---
+
+## 📊 Technical Highlights
+
+* Cloud-Native Architecture
+* Multi-Service Integration
+* Authentication & Authorization
+* Storage Quota Enforcement
+* AWS S3 Integration
+* REST API Development
+* Firestore Data Modeling
+* Real-Time State Management
+* SaaS Dashboard Design
+* Production Deployment Pipeline
+
+---
+
+## 📸 Screenshots
+
+Add screenshots here:
+
+### Dashboard
+
+![Dashboard](screenshots/dashboard.png)
+
+### File Manager
+
+![Files](screenshots/files.png)
+
+### Upload Workflow
+
+![Upload](screenshots/upload.png)
+
+### Subscription Vault
+
+![Subscription](screenshots/subscription.png)
+
+---
+
+## 🎯 Future Roadmap
+
+* File Sharing Links
+* Team Workspaces
+* Role-Based Access Control
+* Activity Logs
+* File Versioning
+* AI File Search
+* Advanced Analytics
+* Mobile Application
+
+---
+
+## 👨‍💻 Developer
+
+Developed by Anjan Prajapati
+
+Cloud & Data Engineering Student
+
+Passionate about Cloud Computing, Full-Stack Development, Data Engineering, and AI-Powered Applications.
+
+LinkedIn: [Your LinkedIn]
+Portfolio: [Your Portfolio]
+GitHub: [Your GitHub]
+
+---
+
+⭐ If you found this project interesting, consider giving it a star.
