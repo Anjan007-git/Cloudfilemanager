@@ -202,9 +202,9 @@ Add screenshots here:
 
 ![Dashboard](https://raw.githubusercontent.com/Anjan007-git/Cloudfilemanager/9cd54daa2a5204b4931065036ed88eaa1ffa8b46/Screenshot%202026-06-19%20002959.png)
 
-### File Manager
+### Subscription Vault
 
-![Files](screenshots/files.png)
+![Subscription]((https://github.com/Anjan007-git/Cloudfilemanager/blob/587fe3aba9b6eaac86d5983bb5bf5f68a96be569/Screenshot%202026-06-19%20004141.png))
 
 ### Upload Workflow
 
