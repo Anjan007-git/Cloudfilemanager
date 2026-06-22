@@ -213,21 +213,21 @@ export default function LandingPage({ onGetStarted, onLoginClick }: LandingPageP
           </div>
 
           {/* Action Buttons */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-1.5 sm:space-x-4">
             <button 
               id="header-login-btn"
               onClick={onLoginClick} 
-              className="text-xs font-bold text-slate-600 hover:text-blue-600 transition-colors px-4 py-2 hover:bg-slate-50 rounded-xl cursor-pointer"
+              className="text-xs font-bold text-slate-600 hover:text-blue-600 transition-colors px-2.5 py-1.5 sm:px-4 sm:py-2 hover:bg-slate-50 rounded-xl cursor-pointer"
             >
               Log In
             </button>
             <button 
               id="header-cta-btn"
               onClick={onGetStarted} 
-              className="inline-flex items-center justify-center text-xs font-bold text-white bg-blue-600 hover:bg-slate-900 transition-all duration-300 px-5.5 py-3 rounded-xl shadow-lg shadow-blue-500/10 hover:shadow-slate-900/10 group cursor-pointer active:scale-95"
+              className="inline-flex items-center justify-center text-xs font-bold text-white bg-blue-600 hover:bg-slate-900 transition-all duration-300 px-3 py-2 sm:px-5.5 sm:py-3 rounded-xl shadow-lg shadow-blue-500/10 hover:shadow-slate-900/10 group cursor-pointer active:scale-95"
             >
-              <span>Get Started</span>
-              <ArrowRight className="w-3.5 h-3.5 ml-1.5 group-hover:translate-x-1 transition-transform" />
+              <span className="xs:inline">Get Started</span>
+              <ArrowRight className="w-3.5 h-3.5 ml-1 sm:ml-1.5 group-hover:translate-x-1 transition-transform" />
             </button>
           </div>
         </div>

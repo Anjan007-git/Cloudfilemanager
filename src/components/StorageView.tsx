@@ -366,14 +366,15 @@ export default function StorageView({ user, token, onRefresh }: StorageViewProps
           <p className="text-xs text-slate-400 font-semibold mt-0.5">Audit complete transaction logs and receipts</p>
         </div>
 
-        <div className="bg-white border border-slate-200/50 rounded-2xl overflow-hidden shadow-sm">
+        <div className="bg-white border border-slate-200/50 rounded-2xl overflow-x-auto shadow-sm">
           {billingHistory.length === 0 ? (
             <div className="p-12 text-center text-slate-400 text-xs flex flex-col items-center space-y-1">
               <BadgeDollarSign className="w-8 h-8 text-slate-350 mb-1" />
               <p className="font-semibold text-slate-500 leading-snug">No active direct invoices recorded yet.</p>
             </div>
           ) : (
-            <table className="min-w-full divide-y divide-slate-150 text-xs text-slate-700 font-semibold">
+            <div className="min-w-[600px] sm:min-w-0">
+              <table className="min-w-full divide-y divide-slate-150 text-xs text-slate-700 font-semibold">
               <thead className="bg-[#F8FAFC]/55 text-xs text-slate-500 font-semibold border-b border-slate-200/40">
                 <tr>
                    <th scope="col" className="px-6 py-4 text-left">Invoice Identification ID</th>
@@ -399,6 +400,7 @@ export default function StorageView({ user, token, onRefresh }: StorageViewProps
                 ))}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </div>

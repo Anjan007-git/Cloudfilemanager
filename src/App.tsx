@@ -936,108 +936,217 @@ export default function App() {
       <div className="flex-1 flex flex-col overflow-hidden px-4 md:px-8">
         
         {/* Premium Redesigned Top Header Panel */}
-        <header className="py-3 flex items-center justify-between border-b border-slate-100 flex-shrink-0 gap-4 mt-1 mb-2 select-none">
-          <div className="flex items-center gap-3.5 flex-1 min-w-0">
-            {/* Mobile menu trigger */}
-            <button 
-              onClick={() => setSidebarOpen(true)}
-              className="p-2.5 rounded-xl text-slate-500 hover:bg-white hover:border-slate-300 border border-slate-200 md:hidden cursor-pointer shadow-sm transition-all flex-shrink-0"
-            >
-              <Menu className="w-5 h-5" />
-            </button>
+        <header className="py-3 flex flex-col md:flex-row md:items-center justify-between border-b border-slate-100 flex-shrink-0 gap-2 sm:gap-3 md:gap-4 mt-1 mb-2 select-none">
+          {/* Top Row for Mobile / Standard Layout for Desktop */}
+          <div className="flex items-center justify-between w-full md:w-auto md:flex-1 gap-3.5">
+            <div className="flex items-center gap-3.5 flex-1 min-w-0">
+              {/* Mobile menu trigger */}
+              <button 
+                onClick={() => setSidebarOpen(true)}
+                className="p-2.5 rounded-xl text-slate-500 hover:bg-white hover:border-slate-300 border border-slate-200 md:hidden cursor-pointer shadow-sm transition-all flex-shrink-0"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
 
-            {/* Global Workspace Search Bar */}
-            <div className="relative flex-1 max-w-2xl">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                <input 
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => {
-                    setSearchQuery(e.target.value);
-                    setShowSearchResults(true);
-                  }}
-                  onFocus={() => setShowSearchResults(true)}
-                  placeholder="Search files and folders..."
-                  className="w-full pl-11 pr-16 py-2.5 bg-slate-50/60 hover:bg-slate-50 border border-slate-200/60 rounded-2xl text-[13px] font-semibold focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 shadow-sm transition-all text-slate-850 placeholder:text-slate-400/80"
-                />
-                <div className="absolute right-4.5 top-1/2 -translate-y-1/2 hidden sm:flex items-center space-x-1 pointer-events-none">
-                  <kbd className="px-1.5 py-0.5 bg-slate-50 border border-slate-200 rounded-md font-mono text-[9px] font-bold text-slate-400/90 shadow-sm">⌘K</kbd>
-                </div>
+              {/* Mobile Branding Logo */}
+              <div className="md:hidden font-display font-extrabold text-slate-900 text-sm tracking-tight flex items-center space-x-2">
+                <span className="bg-blue-600 text-white p-1 rounded-lg">CF</span>
+                <span>Manager</span>
               </div>
 
-              {/* Search Dropdown Suggestion Panel */}
-              <AnimatePresence>
-                {showSearchResults && searchQuery.trim() && (
-                  <>
-                    <div className="fixed inset-0 z-40" onClick={() => setShowSearchResults(false)} />
-                    <motion.div 
-                      initial={{ opacity: 0, y: 8, scale: 0.99 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      exit={{ opacity: 0, y: 8, scale: 0.99 }}
-                      className="absolute left-0 right-0 mt-2 bg-white rounded-2xl border border-slate-200 shadow-xl z-50 overflow-hidden text-left"
-                    >
-                      <div className="p-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-[11px] font-bold text-slate-500">
-                        <span>SUGGESTED FILES & DIRECTORIES</span>
-                        <span>{files.filter(f => !f.isTrashed && f.name.toLowerCase().includes(searchQuery.toLowerCase())).length} item(s)</span>
-                      </div>
+              {/* Global Workspace Search Bar - Desktop Only */}
+              <div className="hidden md:block relative flex-1 max-w-2xl">
+                <div className="relative">
+                  <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input 
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      setShowSearchResults(true);
+                    }}
+                    onFocus={() => setShowSearchResults(true)}
+                    placeholder="Search files and folders..."
+                    className="w-full pl-11 pr-16 py-2.5 bg-slate-50/60 hover:bg-slate-50 border border-slate-200/60 rounded-2xl text-[13px] font-semibold focus:bg-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 shadow-sm transition-all text-slate-850 placeholder:text-slate-400/80"
+                  />
+                  <div className="absolute right-4.5 top-1/2 -translate-y-1/2 hidden sm:flex items-center space-x-1 pointer-events-none">
+                    <kbd className="px-1.5 py-0.5 bg-slate-50 border border-slate-200 rounded-md font-mono text-[9px] font-bold text-slate-400/90 shadow-sm">⌘K</kbd>
+                  </div>
+                </div>
 
-                      {files.filter(f => !f.isTrashed && f.name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 ? (
-                        <div className="p-8 text-center text-xs text-slate-400 italic">
-                          No matching items found for "{searchQuery}"
+                {/* Search Dropdown Suggestion Panel */}
+                <AnimatePresence>
+                  {showSearchResults && searchQuery.trim() && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setShowSearchResults(false)} />
+                      <motion.div 
+                        initial={{ opacity: 0, y: 8, scale: 0.99 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 8, scale: 0.99 }}
+                        className="absolute left-0 right-0 mt-2 bg-white rounded-2xl border border-slate-200 shadow-xl z-50 overflow-hidden text-left"
+                      >
+                        <div className="p-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-[11px] font-bold text-slate-500">
+                          <span>SUGGESTED FILES & DIRECTORIES</span>
+                          <span>{files.filter(f => !f.isTrashed && f.name.toLowerCase().includes(searchQuery.toLowerCase())).length} item(s)</span>
                         </div>
-                      ) : (
-                        <div className="max-h-72 overflow-y-auto divide-y divide-slate-100">
-                          {files.filter(f => !f.isTrashed && f.name.toLowerCase().includes(searchQuery.toLowerCase())).map((file) => (
-                            <button
-                              key={file.id}
-                              onClick={() => {
-                                if (file.isFolder) {
-                                  setSelectedFolderId(file.id);
-                                  setActiveView('files');
-                                } else {
-                                  if (file.url) {
-                                    window.open(file.url, '_blank');
+
+                        {files.filter(f => !f.isTrashed && f.name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 ? (
+                          <div className="p-8 text-center text-xs text-slate-400 italic">
+                            No matching items found for "{searchQuery}"
+                          </div>
+                        ) : (
+                          <div className="max-h-72 overflow-y-auto divide-y divide-slate-100">
+                            {files.filter(f => !f.isTrashed && f.name.toLowerCase().includes(searchQuery.toLowerCase())).map((file) => (
+                              <button
+                                key={file.id}
+                                onClick={() => {
+                                  if (file.isFolder) {
+                                    setSelectedFolderId(file.id);
+                                    setActiveView('files');
+                                  } else {
+                                    if (file.url) {
+                                      window.open(file.url, '_blank');
+                                    }
                                   }
-                                }
-                                setSearchQuery('');
-                                setShowSearchResults(false);
-                              }}
-                              className="w-full px-4 py-3 flex items-center justify-between hover:bg-blue-50/50 transition-all cursor-pointer text-left"
-                            >
-                              <div className="flex items-center space-x-3 truncate">
-                                <div className="p-2 rounded-xl bg-slate-100 flex-shrink-0">
-                                  {file.isFolder ? (
-                                    <Folder className="w-4 h-4 text-amber-500 fill-amber-500/20" />
-                                  ) : (
-                                    <FileText className="w-4 h-4 text-blue-500" />
-                                  )}
+                                  setSearchQuery('');
+                                  setShowSearchResults(false);
+                                }}
+                                className="w-full px-4 py-3 flex items-center justify-between hover:bg-blue-50/50 transition-all cursor-pointer text-left"
+                              >
+                                <div className="flex items-center space-x-3 truncate">
+                                  <div className="p-2 rounded-xl bg-slate-100 flex-shrink-0">
+                                    {file.isFolder ? (
+                                      <Folder className="w-4 h-4 text-amber-500 fill-amber-500/20" />
+                                    ) : (
+                                      <FileText className="w-4 h-4 text-blue-500" />
+                                    )}
+                                  </div>
+                                  <div className="truncate">
+                                    <p className="text-xs font-bold text-slate-800 truncate leading-tight">{file.name}</p>
+                                    <p className="text-[10px] text-slate-400 block mt-1">
+                                      {file.isFolder ? 'Folder' : `${formatBytes(file.size)} • ${file.mimeType}`}
+                                    </p>
+                                  </div>
                                 </div>
-                                <div className="truncate">
-                                  <p className="text-xs font-bold text-slate-800 truncate leading-tight">{file.name}</p>
-                                  <p className="text-[10px] text-slate-400 block mt-1">
-                                    {file.isFolder ? 'Folder' : `${formatBytes(file.size)} • ${file.mimeType}`}
-                                  </p>
+                                
+                                <div className="flex items-center space-x-2 text-[10px] font-bold text-blue-600">
+                                  <span>Open</span>
+                                  <ChevronRight className="w-3 h-3" />
                                 </div>
-                              </div>
-                              
-                              <div className="flex items-center space-x-2 text-[10px] font-bold text-blue-600">
-                                <span>Open</span>
-                                <ChevronRight className="w-3 h-3" />
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </motion.div>
-                  </>
-                )}
-              </AnimatePresence>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
+
+            {/* Mobile Actions: notification bell and profile badge */}
+            <div className="flex items-center space-x-2.5 md:hidden">
+              <button 
+                onClick={() => setNotifDropdownOpen(!notifDropdownOpen)}
+                className="p-2 bg-white border border-slate-200 text-slate-500 hover:text-slate-700 rounded-xl relative cursor-pointer active:scale-95"
+              >
+                <Bell className="w-4.5 h-4.5" />
+                {unreadCount > 0 && <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-red-500 rounded-full" />}
+              </button>
+
+              <button 
+                onClick={triggerGlobalUpload}
+                className="p-2 bg-[#005AE2] text-white rounded-xl cursor-pointer active:scale-95"
+              >
+                <Upload className="w-4.5 h-4.5" />
+              </button>
+
+              <button 
+                onClick={() => setActiveView('settings')}
+                className="h-8 w-8 rounded-full bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-display font-black text-[9px] flex items-center justify-center cursor-pointer"
+              >
+                {getInitials(user?.name || '')}
+              </button>
             </div>
           </div>
 
+          {/* Mobile Only Search Bar Row */}
+          <div className="block md:hidden w-full relative">
+            <div className="relative">
+              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400" />
+              <input 
+                type="text"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setShowSearchResults(true);
+                }}
+                onFocus={() => setShowSearchResults(true)}
+                placeholder="Search files and folders..."
+                className="w-full pl-9 pr-6 py-2 bg-slate-50/60 border border-slate-200/60 rounded-xl text-xs font-semibold focus:bg-white focus:outline-none focus:border-blue-500 shadow-sm transition-all text-slate-850 placeholder:text-slate-400/80"
+              />
+            </div>
+
+            {/* Mobile suggestion drop lists */}
+            <AnimatePresence>
+              {showSearchResults && searchQuery.trim() && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowSearchResults(false)} />
+                  <motion.div 
+                    initial={{ opacity: 0, y: 4, scale: 0.99 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 4, scale: 0.99 }}
+                    className="absolute left-0 right-0 mt-1 bg-white rounded-xl border border-slate-200 shadow-xl z-50 overflow-hidden text-left"
+                  >
+                    <div className="p-2.5 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-[9px] font-bold text-slate-500">
+                      <span>SUGGESTED ITEMS</span>
+                      <span>{files.filter(f => !f.isTrashed && f.name.toLowerCase().includes(searchQuery.toLowerCase())).length} item(s)</span>
+                    </div>
+
+                    {files.filter(f => !f.isTrashed && f.name.toLowerCase().includes(searchQuery.toLowerCase())).length === 0 ? (
+                      <div className="p-6 text-center text-xs text-slate-400 italic">
+                        No matches found
+                      </div>
+                    ) : (
+                      <div className="max-h-60 overflow-y-auto divide-y divide-slate-100">
+                        {files.filter(f => !f.isTrashed && f.name.toLowerCase().includes(searchQuery.toLowerCase())).map((file) => (
+                          <button
+                            key={file.id}
+                            onClick={() => {
+                              if (file.isFolder) {
+                                setSelectedFolderId(file.id);
+                                setActiveView('files');
+                              } else {
+                                if (file.url) {
+                                  window.open(file.url, '_blank');
+                                }
+                              }
+                              setSearchQuery('');
+                              setShowSearchResults(false);
+                            }}
+                            className="w-full px-3 py-2.5 flex items-center justify-between hover:bg-blue-50/50 transition-all cursor-pointer text-left"
+                          >
+                            <div className="flex items-center space-x-2 truncate">
+                              {file.isFolder ? (
+                                <Folder className="w-3.5 h-3.5 text-amber-500 fill-amber-500/20" />
+                              ) : (
+                                <FileText className="w-3.5 h-3.5 text-blue-500" />
+                              )}
+                              <p className="text-xs font-bold text-slate-800 truncate leading-tight">{file.name}</p>
+                            </div>
+                            <ChevronRight className="w-3 h-3 text-slate-400" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
+
           {/* Right Header actions ordered EXACTLY Notification -> New Folder -> Upload -> Profile */}
-          <div className="flex items-center space-x-3.5 flex-shrink-0">
+          <div className="hidden md:flex items-center space-x-3.5 flex-shrink-0">
             
             {/* 1. NOTIFICATION BELL */}
             <div className="relative">

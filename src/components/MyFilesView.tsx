@@ -766,14 +766,14 @@ export default function MyFilesView({
       ) : (
         viewMode === 'grid' ? (
           /* Grid View Layout panel */
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5" id="explorer-grid">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-5" id="explorer-grid">
             {filteredAndSortedFiles.map(item => {
               const isMenuOpen = activeContextId === item.id;
               return (
                 <div 
                   key={item.id}
                   onContextMenu={(e) => handleContextMenu(e, item)}
-                  className={`border hover:shadow-xl hover:shadow-slate-100/60 hover:-translate-y-0.5 rounded-2xl p-5 transition-all relative flex flex-col justify-between h-44 cursor-pointer ${
+                  className={`border hover:shadow-xl hover:shadow-slate-100/60 hover:-translate-y-0.5 rounded-2xl p-3.5 sm:p-5 transition-all relative flex flex-col justify-between h-40 sm:h-44 cursor-pointer ${
                     selectedFile?.id === item.id 
                       ? 'bg-blue-50/40 border-blue-500 shadow-md ring-2 ring-blue-500/10' 
                       : 'bg-white border-slate-200/50'
@@ -920,9 +920,9 @@ export default function MyFilesView({
               <thead className="bg-[#F8FAFC]/55 text-xs text-slate-500 font-semibold border-b border-slate-200/40">
                 <tr>
                   <th scope="col" className="px-6 py-3.5 text-left">Document Title</th>
-                  <th scope="col" className="px-6 py-3.5 text-left">Created Date</th>
-                  <th scope="col" className="px-6 py-3.5 text-left">Size Index</th>
-                  <th scope="col" className="px-6 py-3.5 text-left">Collaboration Sharing</th>
+                  <th scope="col" className="px-6 py-3.5 text-left hidden sm:table-cell">Created Date</th>
+                  <th scope="col" className="px-6 py-3.5 text-left hidden sm:table-cell">Size Index</th>
+                  <th scope="col" className="px-6 py-3.5 text-left hidden md:table-cell">Collaboration Sharing</th>
                   <th scope="col" className="px-6 py-3.5 text-right"></th>
                 </tr>
               </thead>
@@ -952,7 +952,7 @@ export default function MyFilesView({
                         setSelectedFile(item);
                       }}
                     >
-                      <td className="px-6 py-4 flex items-center space-x-3.5 w-1/3">
+                      <td className="px-6 py-4 flex items-center space-x-3.5 w-full sm:w-1/3">
                         <button 
                           onClick={(e) => {
                             e.stopPropagation();
@@ -967,18 +967,18 @@ export default function MyFilesView({
                             e.stopPropagation();
                             setSelectedFile(item);
                           }}
-                          className="font-semibold text-slate-900 hover:text-blue-600 truncate max-w-sm text-left block outline-none cursor-pointer"
+                          className="font-semibold text-slate-900 hover:text-blue-600 truncate max-w-[150px] sm:max-w-sm text-left block outline-none cursor-pointer"
                         >
                           {item.name}
                         </button>
                       </td>
-                      <td className="px-6 py-4 text-slate-400 font-sans font-medium text-xs">
+                      <td className="px-6 py-4 text-slate-400 font-sans font-medium text-xs hidden sm:table-cell">
                         {new Date(item.createdAt).toLocaleDateString()}
                       </td>
-                      <td className="px-6 py-4 text-slate-500 font-mono text-xs">
+                      <td className="px-6 py-4 text-slate-500 font-mono text-xs hidden sm:table-cell">
                         {item.isFolder ? '--' : formatBytes(item.size)}
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-6 py-4 hidden md:table-cell">
                         {item.sharedWith.length === 0 ? (
                           <span className="text-xs font-semibold text-slate-500 bg-slate-50 px-2.5 py-1 rounded-full border border-slate-200/10">Private (Me)</span>
                         ) : (
