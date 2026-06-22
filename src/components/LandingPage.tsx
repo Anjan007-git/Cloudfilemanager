@@ -992,7 +992,7 @@ export default function LandingPage({ onGetStarted, onLoginClick }: LandingPageP
 
               <div className="flex items-center space-x-4 pt-1">
                 <motion.a 
-                  href="https://twitter.com" 
+                  href="https://x.com/AnjanXPrajapati" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.05, y: -1 }}
@@ -1004,7 +1004,7 @@ export default function LandingPage({ onGetStarted, onLoginClick }: LandingPageP
                 </motion.a>
 
                 <motion.a 
-                  href="https://github.com" 
+                  href="https://github.com/Anjan007-git" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.05, y: -1 }}
@@ -1016,7 +1016,7 @@ export default function LandingPage({ onGetStarted, onLoginClick }: LandingPageP
                 </motion.a>
 
                 <motion.a 
-                  href="https://linkedin.com" 
+                  href="https://linkedin.com/in/anjanprajapati" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   whileHover={{ scale: 1.05, y: -1 }}
