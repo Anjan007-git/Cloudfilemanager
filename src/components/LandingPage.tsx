@@ -1042,7 +1042,7 @@ export default function LandingPage({ onGetStarted, onLoginClick }: LandingPageP
           {/* Bottom copyright bar */}
           <div className="pt-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm font-normal text-slate-500">
             <p>&copy; 2026 CloudFile. All rights reserved.</p>
-            <p>Developed by Anjan</p>
+            <p>Developed by Anjan  • Powered by TRIFECTA TRENDS</p>
           </div>
 
         </div>
