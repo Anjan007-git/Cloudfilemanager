@@ -1,0 +1,118 @@
+
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <!-- Background Blue Gradient -->
+    <linearGradient id="bgGrad" x1="0.1" y1="0.1" x2="0.9" y2="0.9">
+      <stop offset="0%" stop-color="#00C4FF" />
+      <stop offset="65%" stop-color="#0066FF" />
+      <stop offset="100%" stop-color="#002DB3" />
+    </linearGradient>
+
+    <!-- Bottom Wave Blue Gradient -->
+    <linearGradient id="waveGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#005CFF" />
+      <stop offset="60%" stop-color="#0044CC" />
+      <stop offset="100%" stop-color="#002288" />
+    </linearGradient>
+
+    <!-- Glassy Top Highlight Gradient -->
+    <linearGradient id="glassHighlight" x1="0" y1="0" x2="0.5" y2="1">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.4" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Bottom Crescent Glossy Highlight -->
+    <linearGradient id="bottomGloss" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0%" stop-color="#00E5FF" stop-opacity="0.65" />
+      <stop offset="100%" stop-color="#0066FF" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Cloud Shadow -->
+    <filter id="cloudShadow" x="-15%" y="-15%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="6" stdDeviation="10" flood-color="#00185A" flood-opacity="0.25" />
+    </filter>
+
+    <!-- Document Shadow -->
+    <filter id="docShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#00185A" flood-opacity="0.2" />
+    </filter>
+  </defs>
+
+  <!-- Clip-path to keep highlights inside the main circular badge -->
+  <clipPath id="circleClip">
+    <circle cx="256" cy="256" r="236" />
+  </clipPath>
+
+  <!-- Main Background Badge -->
+  <circle cx="256" cy="256" r="236" fill="url(#bgGrad)" />
+
+  <!-- Subtle Crescent Glossy overlay inside the circle background -->
+  <circle cx="256" cy="270" r="236" fill="url(#bottomGloss)" clip-path="url(#circleClip)" opacity="0.3" />
+
+  <!-- Sleek Top Glossy Rim Highlights -->
+  <path d="M 20,256 A 236,236 0 0,1 492,256 A 236,200 0 0,0 20,256 Z" fill="url(#glassHighlight)" opacity="0.5" />
+
+  <!-- 1. Beautiful White Cloud Silhouette with drop shadow -->
+  <!-- Designed to match the soft high-tech curves of the original design -->
+  <path d="M 170 340 
+           C 130 340, 100 305, 100 265 
+           C 100 230, 125 200, 160 195 
+           C 175 142, 220 105, 272 105 
+           C 332 105, 381 150, 388 210 
+           C 424 212, 452 242, 452 278 
+           C 452 315, 424 340, 388 340 Z" 
+        fill="#FFFFFF" 
+        filter="url(#cloudShadow)" />
+
+  <!-- 2. Dark Blue Curved Wave Swoop -->
+  <!-- Sweeps across the bottom of the circle and covers the bottom of the cloud -->
+  <path d="M 0 328 
+           C 140 286, 320 274, 512 334 
+           L 512 512 
+           L 0 512 Z" 
+        fill="url(#waveGrad)" 
+        clip-path="url(#circleClip)" />
+
+  <!-- 3. Glowing highlight at the top edge of the bottom wave -->
+  <path d="M 0 328 
+           C 140 286, 320 274, 512 334" 
+        fill="none" 
+        stroke="#00F0FF" 
+        stroke-width="5" 
+        stroke-opacity="0.6" 
+        clip-path="url(#circleClip)" />
+
+  <!-- 4. Premium Document Icon suspended over the cloud and bottom wave -->
+  <!-- Its white fill is fully visible across both upper (white) and lower (blue wave) environments -->
+  <!-- Left: 204, Right: 308, Top: 182, Bottom: 342, stroke-width: 11 -->
+  <g filter="url(#docShadow)">
+    <!-- Base Document Body with Folded Angle -->
+    <path d="M 209,182 
+             L 278,182 
+             L 307,211 
+             L 307,337 
+             A 6,6 0 0,1 301,343 
+             L 215,343 
+             A 6,6 0 0,1 209,337 
+             Z" 
+          fill="#FFFFFF" 
+          stroke="#0066FF" 
+          stroke-width="11" 
+          stroke-linejoin="round" />
+
+    <!-- Corner fold triangle detail inside the document -->
+    <path d="M 278,182 
+             L 278,211 
+             L 307,211 
+             Z" 
+          fill="#E6F0FF" 
+          stroke="#0066FF" 
+          stroke-width="9" 
+          stroke-linejoin="round" />
+
+    <!-- Three Blue lines of text inside the document -->
+    <line x1="228" y1="244" x2="284" y2="244" stroke="#0066FF" stroke-width="11" stroke-linecap="round" />
+    <line x1="228" y1="274" x2="288" y2="274" stroke="#0066FF" stroke-width="11" stroke-linecap="round" />
+    <line x1="228" y1="304" x2="288" y2="304" stroke="#0066FF" stroke-width="11" stroke-linecap="round" />
+  </g>
+</svg>
