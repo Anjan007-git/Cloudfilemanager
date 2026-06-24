@@ -624,7 +624,6 @@ export default function DashboardView({
               <div className="space-y-1 mt-3">
                 <span className="text-xs font-semibold text-slate-500 block leading-none">Total Files</span>
                 <span className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight leading-none block">{displayTotalFiles}</span>
-                <span className="text-[11px] font-medium text-emerald-500 block leading-none pt-0.5">+12 this week</span>
               </div>
             </div>
 
@@ -654,7 +653,6 @@ export default function DashboardView({
               <div className="space-y-1 mt-3">
                 <span className="text-xs font-semibold text-slate-500 block leading-none">Shared Files</span>
                 <span className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight leading-none block">{displaySharedFiles}</span>
-                <span className="text-[11px] font-medium text-emerald-500 block leading-none pt-0.5">+8 this week</span>
               </div>
             </div>
 
@@ -669,7 +667,6 @@ export default function DashboardView({
               <div className="space-y-1 mt-3">
                 <span className="text-xs font-semibold text-slate-500 block leading-none">Downloads</span>
                 <span className="text-xl md:text-2xl font-bold text-slate-900 tracking-tight leading-none block">{displayDownloads}</span>
-                <span className="text-[11px] font-medium text-emerald-500 block leading-none pt-0.5">+23 this week</span>
               </div>
             </div>
 
