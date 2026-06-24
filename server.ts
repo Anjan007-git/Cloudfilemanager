@@ -2244,9 +2244,9 @@ async function startServer() {
         return res.status(404).json({ error: 'Profile not found' });
       }
 
-      let limitBytes = 5 * 1024 * 1024 * 1024; // Free
-      if (plan === 'pro') limitBytes = 1 * 1024 * 1024 * 1024 * 1024; // 1 TB
-      if (plan === 'business') limitBytes = 5 * 1024 * 1024 * 1024 * 1024; // 5 TB
+      let limitBytes = 5 * 1024 * 1024 * 1024; // Free (5 GB)
+      if (plan === 'pro') limitBytes = 200 * 1024 * 1024 * 1024; // Pro (200 GB)
+      if (plan === 'business') limitBytes = 1024 * 1024 * 1024 * 1024; // Business (1 TB)
 
       profile.plan = plan;
       profile.storageLimit = limitBytes;
@@ -2276,7 +2276,7 @@ async function startServer() {
         id: 'notif-' + Date.now(),
         userId,
         title: 'Subscription Active',
-        message: `Welcome to ${plan.toUpperCase()} tier. You now have access to ${plan === 'pro' ? '1 TB' : '5 TB'} storage.`,
+        message: `Welcome to ${plan.toUpperCase()} tier. You now have access to ${plan === 'pro' ? '200 GB' : '1 TB'} storage.`,
         type: 'success',
         read: false,
         createdAt: new Date().toISOString(),
@@ -2316,9 +2316,9 @@ async function startServer() {
     }
 
     let limitBytes = 5 * 1024 * 1024 * 1024; // Free
-    if (plan === 'pro') limitBytes = 1 * 1024 * 1024 * 1024 * 1024; // 1 TB
-    if (plan === 'business') limitBytes = 5 * 1024 * 1024 * 1024 * 1024; // 5 TB
-    if (plan === 'enterprise') limitBytes = 100 * 1024 * 1024 * 1024 * 1024; // 100 TB or infinite
+    if (plan === 'pro') limitBytes = 200 * 1024 * 1024 * 1024; // 200 GB
+    if (plan === 'business') limitBytes = 1024 * 1024 * 1024 * 1024; // 1 TB
+    if (plan === 'enterprise') limitBytes = 5 * 1024 * 1024 * 1024 * 1024; // 5 TB+
 
     profile.plan = plan;
     profile.storageLimit = limitBytes;
@@ -2358,7 +2358,7 @@ async function startServer() {
       id: 'notif-' + Date.now(),
       userId,
       title: 'Subscription Active',
-      message: `Welcome to ${plan.toUpperCase()} tier. You now have access to ${(limitBytes / 1024 / 1024 / 1024 / 1024).toFixed(0)} TB storage.`,
+      message: `Welcome to ${plan.toUpperCase()} tier. You now have access to ${plan === 'pro' ? '200 GB' : plan === 'business' ? '1 TB' : '5 TB+'} storage.`,
       type: 'success',
       read: false,
       createdAt: new Date().toISOString(),
@@ -2380,8 +2380,8 @@ async function startServer() {
 
     profile.plan = plan;
     let limitBytes = 5 * 1024 * 1024 * 1024;
-    if (plan === 'pro') limitBytes = 1 * 1024 * 1024 * 1024 * 1024;
-    if (plan === 'business') limitBytes = 5 * 1024 * 1024 * 1024 * 1024;
+    if (plan === 'pro') limitBytes = 200 * 1024 * 1024 * 1024;
+    if (plan === 'business') limitBytes = 1024 * 1024 * 1024 * 1024;
 
     profile.storageLimit = limitBytes;
     db.profiles[userId] = profile;

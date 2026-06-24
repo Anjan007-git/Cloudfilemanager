@@ -291,10 +291,10 @@ export default function StorageView({ user, token, onRefresh }: StorageViewProps
                 <span className="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-md border border-blue-100/30">Pro Tier</span>
                 {user.plan === 'pro' && <span className="text-xs font-bold text-teal-600 font-mono">● Active Plan</span>}
               </div>
-              <h4 className="text-3xl font-bold font-display text-slate-900 tracking-tight">1 TB Space</h4>
+              <h4 className="text-3xl font-bold font-display text-slate-900 tracking-tight">200 GB Space</h4>
               <p className="text-xs text-slate-500 leading-relaxed font-semibold">Bespoke capabilities for freelance creators and technical consultants.</p>
               <ul className="text-xs text-slate-700 space-y-2.5 pt-4 border-t border-slate-100 font-semibold">
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500 flex-shrink-0" /> 1 TB Encrypted Storage</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500 flex-shrink-0" /> 200 GB Encrypted Storage</li>
                 <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500 flex-shrink-0" /> Signed share expiration dates</li>
                 <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500 flex-shrink-0" /> Key-locked secure passphrases</li>
               </ul>
@@ -317,10 +317,10 @@ export default function StorageView({ user, token, onRefresh }: StorageViewProps
                 <span className="text-xs font-bold text-[#06b6d4] bg-cyan-50 px-2.5 py-1 rounded-md border border-cyan-100/35">Business Tier</span>
                 {user.plan === 'business' && <span className="text-xs font-bold text-teal-600 font-mono">● Active Plan</span>}
               </div>
-              <h4 className="text-3xl font-bold font-display text-slate-900 tracking-tight">5 TB Space</h4>
+              <h4 className="text-3xl font-bold font-display text-slate-900 tracking-tight">1 TB Space</h4>
               <p className="text-xs text-slate-500 leading-relaxed font-semibold">Seamless multi-user cloud environments optimized for engineering and operations.</p>
               <ul className="text-xs text-slate-700 space-y-2.5 pt-4 border-t border-slate-100 font-semibold">
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500 flex-shrink-0" /> 5 TB High Density S3 Quotas</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500 flex-shrink-0" /> 1 TB High Density S3 Quotas</li>
                 <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500 flex-shrink-0" /> 90-day Immutable operations audits</li>
                 <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500 flex-shrink-0" /> Custom subfolders administration</li>
               </ul>
@@ -343,10 +343,10 @@ export default function StorageView({ user, token, onRefresh }: StorageViewProps
                 <span className="text-xs font-bold text-slate-800 bg-slate-100 px-2.5 py-1 rounded-md border border-slate-200">Corporate Premium</span>
                 {user.plan === 'enterprise' && <span className="text-xs font-bold text-teal-600 font-mono">● Active Plan</span>}
               </div>
-              <h4 className="text-3xl font-bold font-display text-slate-900 tracking-tight">Unlimited Files</h4>
+              <h4 className="text-3xl font-bold font-display text-slate-900 tracking-tight">5 TB+ Space</h4>
               <p className="text-xs text-slate-500 leading-relaxed font-semibold">Limitless memory for high-throughput automated server sync pipelines.</p>
               <ul className="text-xs text-slate-700 space-y-2.5 pt-4 border-t border-slate-100 font-semibold font-semibold">
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500 flex-shrink-0" /> Unlimited AWS storage scaling</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500 flex-shrink-0" /> 5 TB+ AWS storage scaling</li>
                 <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500 flex-shrink-0" /> Signed dedicated contract SLAs</li>
                 <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-500 flex-shrink-0" /> 24x7 Engineering support hotline</li>
               </ul>
@@ -396,9 +396,9 @@ export default function StorageView({ user, token, onRefresh }: StorageViewProps
                 <tr className="hover:bg-slate-50/50 transition-colors">
                   <td className="py-3.5 px-4 font-bold text-slate-900">S3 Cloud Space</td>
                   <td className="py-3.5 px-4 text-slate-500 font-bold text-red-500">5 GB limit</td>
-                  <td className="py-3.5 px-4 text-slate-900">1 TB limit</td>
-                  <td className="py-3.5 px-4 text-slate-950">5 TB limit</td>
-                  <td className="py-3.5 px-4 text-blue-600 font-extrabold flex items-center gap-1"><Orbit className="w-3.5 h-3.5 animate-spin text-blue-500" /> Unlimited</td>
+                  <td className="py-3.5 px-4 text-slate-900">200 GB limit</td>
+                  <td className="py-3.5 px-4 text-slate-950">1 TB limit</td>
+                  <td className="py-3.5 px-4 text-blue-600 font-extrabold flex items-center gap-1"><Orbit className="w-3.5 h-3.5 animate-spin text-blue-500" /> 5 TB+ limit</td>
                 </tr>
                 <tr className="hover:bg-slate-50/50 transition-colors">
                   <td className="py-3.5 px-4 font-bold text-slate-900">Max File Upload Size</td>

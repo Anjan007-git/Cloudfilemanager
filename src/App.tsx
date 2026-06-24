@@ -589,9 +589,9 @@ export default function App() {
   const getPlanStorageLimit = (planName: string | undefined, originalLimit?: number) => {
     const p = (planName || 'free').toLowerCase();
     if (p === 'free') return 5 * 1024 * 1024 * 1024; // 5 GB
-    if (p === 'pro' || p === 'personal') return 100 * 1024 * 1024 * 1024; // 100 GB
-    if (p === 'business') return 500 * 1024 * 1024 * 1024; // 500 GB
-    if (p === 'enterprise') return originalLimit && originalLimit > 500 * 1024 * 1024 * 1024 ? originalLimit : 10 * 1024 * 1024 * 1024 * 1024; // 10 TB custom fallback
+    if (p === 'pro' || p === 'personal') return 200 * 1024 * 1024 * 1024; // 200 GB
+    if (p === 'business') return 1024 * 1024 * 1024 * 1024; // 1 TB
+    if (p === 'enterprise') return originalLimit && originalLimit > 1024 * 1024 * 1024 * 1024 ? originalLimit : 5 * 1024 * 1024 * 1024 * 1024; // 5 TB custom fallback
     return 5 * 1024 * 1024 * 1024;
   };
 
