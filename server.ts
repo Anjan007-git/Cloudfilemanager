@@ -11,6 +11,7 @@ import { S3Client, PutObjectCommand, DeleteObjectCommand, GetObjectCommand, Copy
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { dbService } from './src/db-service.js';
 import { CloudFile, Activity, SystemNotification, UserSession, UserProfile } from './src/types.js';
+import Razorpay from 'razorpay';
 
 // Read Firebase Applet Configuration securely and inject into Firebase Admin
 const configPath = path.join(process.cwd(), 'firebase-applet-config.json');
@@ -37,6 +38,12 @@ const firebaseApp = initializeApp({
 const firestoreDb = firebaseConfig.firestoreDatabaseId 
   ? getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId)
   : getFirestore(firebaseApp);
+
+// Initialize Razorpay Client (production-ready)
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID || 'rzp_live_T5RscN8B6yot4E',
+  key_secret: process.env.RAZORPAY_KEY_SECRET || 'a1SZf70K2gDYNe9Bad1iBz0Z',
+});
 
 // Initialize S3 Client
 const s3Client = new S3Client({
@@ -2179,6 +2186,121 @@ async function startServer() {
 
   // ==================== BILLING / UPGRADES API ====================
 
+  app.post('/api/billing/create-order', authenticateToken, async (req: any, res) => {
+    const { plan } = req.body;
+    if (!['pro', 'business'].includes(plan)) {
+      return res.status(400).json({ error: 'Invalid selected subscription plan type' });
+    }
+
+    const price = plan === 'pro' ? 299 : 799;
+    const amountInPaise = price * 100;
+
+    try {
+      const options = {
+        amount: amountInPaise,
+        currency: 'INR',
+        receipt: `receipt_${Date.now()}`,
+      };
+
+      const order = await razorpay.orders.create(options);
+      res.json({
+        id: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        key_id: process.env.RAZORPAY_KEY_ID || 'rzp_live_T5RscN8B6yot4E'
+      });
+    } catch (err: any) {
+      console.error('Error creating Razorpay order:', err);
+      res.status(500).json({ error: 'Failed to initiate checkout order with Razorpay.' });
+    }
+  });
+
+  app.post('/api/billing/verify-payment', authenticateToken, async (req: any, res) => {
+    const { razorpay_payment_id, razorpay_order_id, razorpay_signature, plan } = req.body;
+    
+    if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature || !plan) {
+      return res.status(400).json({ error: 'Missing payment details.' });
+    }
+
+    try {
+      const crypto = await import('crypto');
+      const secret = process.env.RAZORPAY_KEY_SECRET || 'a1SZf70K2gDYNe9Bad1iBz0Z';
+      const body = razorpay_order_id + '|' + razorpay_payment_id;
+      const expectedSignature = crypto
+        .createHmac('sha256', secret)
+        .update(body.toString())
+        .digest('hex');
+
+      if (expectedSignature !== razorpay_signature) {
+        return res.status(400).json({ error: 'Payment signature mismatch. Transaction untrusted.' });
+      }
+
+      // Successful payment! Update local profile & firestore
+      const db = dbService.getDB();
+      const userId = req.user.userId;
+      const profile = db.profiles[userId];
+
+      if (!profile) {
+        return res.status(404).json({ error: 'Profile not found' });
+      }
+
+      let limitBytes = 5 * 1024 * 1024 * 1024; // Free
+      if (plan === 'pro') limitBytes = 1 * 1024 * 1024 * 1024 * 1024; // 1 TB
+      if (plan === 'business') limitBytes = 5 * 1024 * 1024 * 1024 * 1024; // 5 TB
+
+      profile.plan = plan;
+      profile.storageLimit = limitBytes;
+      db.profiles[userId] = profile;
+
+      // Billing history record tracker
+      const invoice = {
+        id: 'INV-' + Date.now(),
+        date: new Date().toLocaleDateString(),
+        planName: plan.toUpperCase() + ' Space Provisioning',
+        amount: plan === 'pro' ? '₹299.00' : '₹799.00',
+        status: 'Paid',
+      };
+
+      const history = db.billingHistory[userId] || [];
+      db.billingHistory[userId] = [invoice, ...history];
+
+      db.activities.unshift({
+        id: 'act-' + Date.now(),
+        type: 'subscription',
+        details: `Scaled plan up to ${plan.toUpperCase()} tier successfully (Razorpay)`,
+        createdAt: new Date().toISOString(),
+        userId,
+      });
+
+      db.notifications.unshift({
+        id: 'notif-' + Date.now(),
+        userId,
+        title: 'Subscription Active',
+        message: `Welcome to ${plan.toUpperCase()} tier. You now have access to ${plan === 'pro' ? '1 TB' : '5 TB'} storage.`,
+        type: 'success',
+        read: false,
+        createdAt: new Date().toISOString(),
+      });
+
+      dbService.saveDB(db);
+
+      // Ensure Firestore is updated securely to trigger real-time profile sync in client using REST helper
+      try {
+        await updateFirestoreDoc(req.idToken, 'users', userId, {
+          plan: plan,
+          storageLimit: limitBytes
+        });
+      } catch (firestoreErr) {
+        console.error('Failed to update Firestore plan inside verify-payment, but db.json updated:', firestoreErr);
+      }
+
+      res.json({ success: true, user: profile, invoice });
+    } catch (err: any) {
+      console.error('Payment verification system failure:', err);
+      res.status(500).json({ error: 'Payment verification failed.' });
+    }
+  });
+
   app.post('/api/billing/upgrade', authenticateToken, (req: any, res) => {
     const { plan } = req.body;
     if (!['pro', 'business', 'enterprise'].includes(plan)) {
@@ -2207,12 +2329,22 @@ async function startServer() {
       id: 'INV-' + Date.now(),
       date: new Date().toLocaleDateString(),
       planName: plan.toUpperCase() + ' Space Provisioning',
-      amount: plan === 'pro' ? '$9.99' : plan === 'business' ? '$29.99' : '$89.99',
+      amount: plan === 'pro' ? '₹299.00' : plan === 'business' ? '₹799.00' : '₹4999.00',
       status: 'Paid',
     };
 
     const history = db.billingHistory[userId] || [];
     db.billingHistory[userId] = [invoice, ...history];
+
+    // Ensure Firestore is updated securely to trigger real-time profile sync in client using REST helper
+    try {
+      updateFirestoreDoc(req.idToken, 'users', userId, {
+        plan: plan,
+        storageLimit: limitBytes
+      }).catch(e => console.error("Async Firestore update failed in legacy upgrade:", e));
+    } catch (firestoreErr) {
+      console.error('Failed to update Firestore plan inside legacy upgrade:', firestoreErr);
+    }
 
     db.activities.unshift({
       id: 'act-' + Date.now(),
@@ -2253,6 +2385,16 @@ async function startServer() {
 
     profile.storageLimit = limitBytes;
     db.profiles[userId] = profile;
+
+    // Ensure Firestore is updated securely to trigger real-time profile sync in client using REST helper
+    try {
+      updateFirestoreDoc(req.idToken, 'users', userId, {
+        plan: plan,
+        storageLimit: limitBytes
+      }).catch(e => console.error("Async Firestore update failed in downgrade:", e));
+    } catch (firestoreErr) {
+      console.error('Failed to update Firestore plan inside downgrade:', firestoreErr);
+    }
 
     db.activities.unshift({
       id: 'act-' + Date.now(),

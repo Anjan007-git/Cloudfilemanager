@@ -134,7 +134,7 @@ export default function LandingPage({ onGetStarted, onLoginClick }: LandingPageP
       id: 'business',
       name: "Business",
       storage: "1 TB",
-      price: 499,
+      price: 799,
       badge: "Best for Teams",
       desc: "Robust cloud space and collaboration suite for small teams.",
       suitableFor: "Professionals and small teams",

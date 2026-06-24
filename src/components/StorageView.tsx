@@ -36,11 +36,46 @@ export default function StorageView({ user, token, onRefresh }: StorageViewProps
     }
   };
 
+  const [successPlan, setSuccessPlan] = useState<string | null>(null);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [paymentError, setPaymentError] = useState<string | null>(null);
+  const [showErrorModal, setShowErrorModal] = useState(false);
+
   const handleUpgrade = async (plan: 'pro' | 'business' | 'enterprise') => {
+    if (plan === 'enterprise') {
+      setLoading(true);
+      setSuccessMsg(null);
+      try {
+        const response = await apiFetch('/api/billing/upgrade', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ plan })
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Upgrade transmission failed');
+        }
+
+        setSuccessMsg(`Congratulations! Your S3 workspace has been upgraded to the ${plan.toUpperCase()} tier.`);
+        onRefresh();
+        fetchBillingHistory();
+      } catch (err: any) {
+        alert(err.message);
+      } finally {
+        setLoading(false);
+      }
+      return;
+    }
+
     setLoading(true);
     setSuccessMsg(null);
     try {
-      const response = await apiFetch('/api/billing/upgrade', {
+      // Create Razorpay Order
+      const response = await apiFetch('/api/billing/create-order', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -49,17 +84,71 @@ export default function StorageView({ user, token, onRefresh }: StorageViewProps
         body: JSON.stringify({ plan })
       });
 
-      const data = await response.json();
+      const orderData = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || 'Upgrade transmission failed');
+        throw new Error(orderData.error || 'Checkout order creation failed');
       }
 
-      setSuccessMsg(`Congratulations! Your S3 workspace has been upgraded to the ${plan.toUpperCase()} tier.`);
-      onRefresh();
-      fetchBillingHistory();
+      const options = {
+        key: orderData.key_id,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: "CloudFile Manager",
+        description: `${plan.toUpperCase()} Plan Subscription`,
+        order_id: orderData.id,
+        handler: async function (paymentRes: any) {
+          setLoading(true);
+          try {
+            const verifyResponse = await apiFetch('/api/billing/verify-payment', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                razorpay_payment_id: paymentRes.razorpay_payment_id,
+                razorpay_order_id: paymentRes.razorpay_order_id,
+                razorpay_signature: paymentRes.razorpay_signature,
+                plan: plan
+              })
+            });
+
+            const verifyData = await verifyResponse.json();
+            if (!verifyResponse.ok) {
+              throw new Error(verifyData.error || 'Payment signature verification failed.');
+            }
+
+            setSuccessPlan(plan);
+            setShowSuccessModal(true);
+            setSuccessMsg(`Successfully upgraded your workspace to ${plan.toUpperCase()} tier.`);
+            onRefresh();
+            fetchBillingHistory();
+          } catch (verifyErr: any) {
+            setPaymentError(verifyErr.message || 'Verification failed');
+            setShowErrorModal(true);
+          } finally {
+            setLoading(false);
+          }
+        },
+        prefill: {
+          name: user.name || "",
+          email: user.email || ""
+        },
+        theme: {
+          color: "#2563EB"
+        },
+        modal: {
+          ondismiss: function() {
+            setLoading(false);
+          }
+        }
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
     } catch (err: any) {
-      alert(err.message);
-    } finally {
+      setPaymentError(err.message || 'Could not initiate Razorpay checkout');
+      setShowErrorModal(true);
       setLoading(false);
     }
   };
@@ -243,7 +332,7 @@ export default function StorageView({ user, token, onRefresh }: StorageViewProps
               onClick={() => handleUpgrade('business')}
               className="w-full mt-7 py-3 font-bold text-xs rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition-all disabled:opacity-50 cursor-pointer shadow-md"
             >
-              {user.plan === 'business' ? 'Active Membership Plan' : 'Scale to Business (₹999 / month)'}
+              {user.plan === 'business' ? 'Active Membership Plan' : 'Scale to Business (₹799 / month)'}
             </button>
           </div>
 
@@ -296,10 +385,10 @@ export default function StorageView({ user, token, onRefresh }: StorageViewProps
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b border-slate-100 text-xs font-semibold text-slate-500">
-                  <th className="py-3 px-4">Workspace Features</th>
+                  <th className="py-3 px-4 font-bold text-slate-900">Workspace Features</th>
                   <th className="py-3 px-4">Free (₹0 / mo)</th>
                   <th className="py-3 px-4">Pro (₹299 / mo)</th>
-                  <th className="py-3 px-4">Business (₹999 / mo)</th>
+                  <th className="py-3 px-4">Business (₹799 / mo)</th>
                   <th className="py-3 px-4">Enterprise (Custom)</th>
                 </tr>
               </thead>
@@ -404,6 +493,68 @@ export default function StorageView({ user, token, onRefresh }: StorageViewProps
           )}
         </div>
       </div>
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
+          <motion.div 
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-3xl p-8 max-w-md w-full border border-slate-100 shadow-2xl text-center space-y-5"
+          >
+            <div className="mx-auto w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center border border-emerald-100 shadow-sm animate-bounce">
+              <Check className="w-8 h-8" />
+            </div>
+            <div className="space-y-1.5">
+              <h3 className="font-sans font-bold text-slate-900 text-lg">Payment Successful!</h3>
+              <p className="text-xs text-slate-500 font-semibold leading-relaxed">
+                Your payment was securely processed. Your CloudFile Manager workspace has been upgraded to the <span className="font-extrabold text-blue-600 uppercase">{successPlan}</span> plan.
+              </p>
+            </div>
+            <button 
+              onClick={() => setShowSuccessModal(false)}
+              className="w-full py-3 font-bold text-xs rounded-xl bg-blue-600 hover:bg-blue-700 text-white transition-all cursor-pointer shadow-md"
+            >
+              Continue to Workspace
+            </button>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Error Modal */}
+      {showErrorModal && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
+          <motion.div 
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-3xl p-8 max-w-md w-full border border-slate-100 shadow-2xl text-center space-y-5"
+          >
+            <div className="mx-auto w-16 h-16 bg-red-50 text-red-600 rounded-full flex items-center justify-center border border-red-100 shadow-sm">
+              <ShieldAlert className="w-8 h-8" />
+            </div>
+            <div className="space-y-1.5">
+              <h3 className="font-sans font-bold text-slate-900 text-lg">Payment Failed</h3>
+              <p className="text-xs text-slate-500 font-semibold leading-relaxed">
+                We encountered an error while processing your transaction. No charges were made.
+              </p>
+              {paymentError && (
+                <div className="p-3 bg-red-50/50 rounded-xl border border-red-100/30 text-[10px] text-red-650 font-mono font-semibold break-all text-left">
+                  {paymentError}
+                </div>
+              )}
+            </div>
+            <button 
+              onClick={() => {
+                setShowErrorModal(false);
+                setPaymentError(null);
+              }}
+              className="w-full py-3 font-bold text-xs rounded-xl bg-slate-900 hover:bg-slate-800 text-white transition-all cursor-pointer shadow-md"
+            >
+              Dismiss
+            </button>
+          </motion.div>
+        </div>
+      )}
 
     </div>
   );
