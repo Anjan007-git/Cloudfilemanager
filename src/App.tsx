@@ -752,33 +752,169 @@ export default function App() {
 
   if (checkingAuth || isSyncingData) {
     return (
-      <div className="h-screen w-full bg-[#F4F7FB] flex flex-col items-center justify-center p-6 text-slate-800 font-sans" id="auth-loading-screen">
-        <div className="space-y-6 text-center max-w-sm flex flex-col items-center">
-          <div className="relative">
-            <div className="absolute inset-0 bg-blue-500/10 rounded-full blur-2xl animate-pulse pointer-events-none w-20 h-20 -m-2" />
-            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center shadow-xl border border-slate-200/50 relative z-10">
-              <Cloud className="w-8 h-8 text-[#005AE2] animate-pulse" />
-            </div>
-          </div>
-          
-          <div className="space-y-2">
-            <h3 className="font-display font-bold text-slate-950 text-sm tracking-tight">Synchronizing CloudFile Node</h3>
-            <p className="text-[11px] text-slate-400 font-semibold leading-relaxed uppercase tracking-widest font-mono">
-              Verifying MFA credentials...
-            </p>
-          </div>
+      <div className="h-screen w-full bg-gradient-to-tr from-[#FFFFFF] to-[#F8FAFC] flex flex-col items-center justify-center overflow-hidden" id="auth-loading-screen">
+        <div className="relative w-64 h-64 flex items-center justify-center select-none pointer-events-none">
+          {/* Subtle Radial Gradient behind */}
+          <div className="absolute w-48 h-48 rounded-full bg-blue-500/5 blur-3xl" />
 
-          <div className="h-1.5 w-32 bg-slate-200 rounded-full overflow-hidden relative">
-            <div className="h-full bg-gradient-to-r from-blue-600 to-cyan-500 rounded-full w-20 animate-[loading_1.5s_infinite_ease-in-out]" style={{ animationName: 'loading' }} />
-          </div>
-          
-          <style>{`
-            @keyframes loading {
-              0% { transform: translateX(-100%); }
-              100% { transform: translateX(150%); }
-            }
-          `}</style>
+          {/* Core Loader Component */}
+          <svg
+            width="220"
+            height="220"
+            viewBox="0 0 220 220"
+            className="relative z-10 animate-loader-breathe"
+            style={{ transformOrigin: '110px 110px' }}
+          >
+            <defs>
+              <filter id="reflection-blur" x="-30%" y="-30%" width="160%" height="160%">
+                <feGaussianBlur stdDeviation="5" />
+              </filter>
+            </defs>
+
+            {/* Circular Progress Ring */}
+            <g style={{ transformOrigin: '110px 110px' }} className="animate-ring-rotate">
+              {/* Light Gray Track */}
+              <circle
+                cx="110"
+                cy="110"
+                r="72"
+                stroke="#F1F5F9"
+                strokeWidth="2.5"
+                fill="none"
+              />
+              {/* Blue Animated Segment */}
+              <circle
+                cx="110"
+                cy="110"
+                r="72"
+                stroke="#2563EB"
+                strokeWidth="2.5"
+                fill="none"
+                strokeDasharray="452.4" /* 2 * PI * 72 */
+                strokeDashoffset="310"
+                strokeLinecap="round"
+              />
+            </g>
+
+            {/* Soft Shadow / Reflection under the cubes */}
+            <ellipse
+              cx="110"
+              cy="162"
+              rx="46"
+              ry="10"
+              fill="#2563EB"
+              opacity="0.08"
+              filter="url(#reflection-blur)"
+              className="animate-reflection-scale"
+              style={{ transformOrigin: '110px 162px' }}
+            />
+
+            {/* Isometric Cubes Cluster */}
+            <g style={{ transformOrigin: '110px 110px' }} className="animate-container-rotate">
+              {/* Cube 1 (Bottom Left) */}
+              <g className="animate-cube1-rise" style={{ transformOrigin: '85.75px 145px' }}>
+                <polygon points="85.75,145 61.5,131 61.5,103 85.75,117" fill="#2563EB" /> {/* Left Face */}
+                <polygon points="85.75,145 110,131 110,103 85.75,117" fill="#1D4ED8" /> {/* Right Face */}
+                <polygon points="85.75,117 61.5,103 85.75,89 110,103" fill="#60A5FA" /> {/* Top Face */}
+              </g>
+
+              {/* Cube 2 (Bottom Right) */}
+              <g className="animate-cube2-rise" style={{ transformOrigin: '134.25px 145px' }}>
+                <polygon points="134.25,145 110,131 110,103 134.25,117" fill="#2563EB" /> {/* Left Face */}
+                <polygon points="134.25,145 158.5,131 158.5,103 134.25,117" fill="#1D4ED8" /> {/* Right Face */}
+                <polygon points="134.25,117 110,103 134.25,89 158.5,103" fill="#60A5FA" /> {/* Top Face */}
+              </g>
+
+              {/* Cube 3 (Top Center) */}
+              <g className="animate-cube3-rise" style={{ transformOrigin: '110px 131px' }}>
+                <polygon points="110,131 85.75,117 85.75,89 110,103" fill="#2563EB" /> {/* Left Face */}
+                <polygon points="110,131 134.25,117 134.25,89 110,103" fill="#1D4ED8" /> {/* Right Face */}
+                <polygon points="110,103 85.75,89 110,75 134.25,89" fill="#60A5FA" /> {/* Top Face */}
+              </g>
+            </g>
+          </svg>
         </div>
+
+        <style>{`
+          /* Keyframes for Cube 1 (gently rises, delays slightly) */
+          @keyframes cube1-rise {
+            0%, 100% { transform: translateY(0px); }
+            12% { transform: translateY(-10px); }
+            30% { transform: translateY(0px); }
+          }
+          /* Keyframes for Cube 2 */
+          @keyframes cube2-rise {
+            0%, 10%, 100% { transform: translateY(0px); }
+            22% { transform: translateY(-10px); }
+            40% { transform: translateY(0px); }
+          }
+          /* Keyframes for Cube 3 */
+          @keyframes cube3-rise {
+            0%, 20%, 100% { transform: translateY(0px); }
+            32% { transform: translateY(-10px); }
+            50% { transform: translateY(0px); }
+          }
+          /* Keyframes for the entire container rotation (12deg to 18deg) */
+          @keyframes container-rotate {
+            0%, 50%, 100% { transform: rotate(0deg); }
+            72% { transform: rotate(15deg); }
+          }
+          /* Keyframes for the circular progress ring */
+          @keyframes ring-rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+          /* Keyframes for shadow/reflection scaling */
+          @keyframes reflection-scale {
+            0%, 50%, 100% { transform: scale(1); opacity: 0.08; }
+            12%, 22%, 32% { transform: scale(0.9); opacity: 0.05; }
+            72% { transform: scale(1.05); opacity: 0.09; }
+          }
+          /* Keyframes for subtle loader breathing effect */
+          @keyframes loader-breathe {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.03); }
+          }
+
+          /* Apply Animations */
+          .animate-cube1-rise {
+            animation: cube1-rise 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          }
+          .animate-cube2-rise {
+            animation: cube2-rise 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          }
+          .animate-cube3-rise {
+            animation: cube3-rise 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          }
+          .animate-container-rotate {
+            animation: container-rotate 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          }
+          .animate-ring-rotate {
+            animation: ring-rotate 2.5s linear infinite;
+          }
+          .animate-reflection-scale {
+            animation: reflection-scale 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+          }
+          .animate-loader-breathe {
+            animation: loader-breathe 4s ease-in-out infinite;
+          }
+
+          /* Accessibility Support: prefers-reduced-motion */
+          @media (prefers-reduced-motion: reduce) {
+            .animate-cube1-rise,
+            .animate-cube2-rise,
+            .animate-cube3-rise,
+            .animate-container-rotate,
+            .animate-reflection-scale,
+            .animate-loader-breathe {
+              animation: none !important;
+              transform: none !important;
+            }
+            .animate-ring-rotate {
+              animation: ring-rotate 10s linear infinite !important;
+            }
+          }
+        `}</style>
       </div>
     );
   }
