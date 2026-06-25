@@ -4,7 +4,7 @@ import {
   Cloud, Shield, Zap, RefreshCw, Smartphone, Archive, History, FolderOpen, Lock, 
   ArrowRight, Check, Star, Mail, User, HelpCircle, ChevronDown, ChevronUp, Globe, FileText, Sparkles, Orbit, Server, Layers, Cpu, Heart, AlertCircle, ArrowUpRight,
   Building2, Users, Phone, MapPin, MessageSquare, ShieldCheck, Network,
-  Linkedin, Github, Twitter, Youtube, Send
+  Linkedin, Github, Twitter, Youtube, Send, Gauge, CloudCog
 } from 'lucide-react';
 
 interface LandingPageProps {
@@ -655,62 +655,92 @@ export default function LandingPage({ onGetStarted, onLoginClick }: LandingPageP
         </div>
       </section>
 
-      {/* 6. TESTIMONIALS SECTION */}
+      {/* 6. ENGINEERING PRINCIPLES SECTION */}
       <section className="py-24 bg-white border-t border-slate-100">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
           
-          <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
-            <span className="text-[10px] uppercase font-mono tracking-widest text-[#06b6d4] font-black">VALIDATED PERFORMANCE</span>
-            <h2 className="text-3xl font-display font-extrabold text-slate-900 tracking-tight leading-none">
-              Trusted by modern digital administrators.
+          <div className="text-center max-w-2xl mx-auto mb-16 space-y-4">
+            <span className="text-[10px] uppercase font-mono tracking-widest text-[#2563EB] font-bold">ENGINEERING EXCELLENCE</span>
+            <h2 className="text-3xl sm:text-4xl font-sans font-bold text-[#0F172A] tracking-tight">
+              Built with Engineering Principles
             </h2>
+            <p className="text-sm sm:text-base text-[#64748B] leading-relaxed max-w-[700px] mx-auto font-normal">
+              Every decision behind CloudFileManager is guided by modern software engineering practices, focusing on security, performance, scalability, and long-term maintainability.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="p-8 bg-slate-50/50 rounded-3xl border border-slate-100 flex flex-col justify-between h-64 hover:bg-white hover:shadow-xl transition-all duration-300">
-              <div className="space-y-4">
-                <div className="flex text-amber-400">
-                  {[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-current" />)}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* Card 1 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="bg-white border border-[#E2E8F0] rounded-3xl p-8 flex flex-col justify-between h-80 shadow-xs hover:border-[#2563EB]/40 hover:shadow-lg hover:-translate-y-1.5 transition-all duration-300 group cursor-default"
+            >
+              <div className="space-y-5">
+                <div className="w-12 h-12 rounded-2xl bg-blue-50/50 flex items-center justify-center border border-blue-100/30 group-hover:scale-[1.08] transition-transform duration-300">
+                  <ShieldCheck className="w-6 h-6 text-[#2563EB]" />
                 </div>
-                <p className="text-xs text-slate-600 italic font-semibold leading-relaxed">
-                  "Establishing S3 synchronization used to involve heavy infrastructure terminal work. Cloud File Manager has absolute S3 precision in a clean interface."
-                </p>
+                <div className="space-y-2">
+                  <h3 className="font-sans font-bold text-lg text-[#0F172A]">Security First</h3>
+                  <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed font-normal">
+                    Authentication-first architecture with protected routes, secure cloud storage, and privacy-focused design principles that help protect user data.
+                  </p>
+                </div>
               </div>
-              <div>
-                <span className="font-display font-extrabold text-xs text-slate-900 block leading-none">Marcus Vance</span>
-                <span className="text-[9px] uppercase font-mono font-bold text-slate-400 block mt-1.5">VP Security, Lineage Inc</span>
+              <div className="pt-6 border-t border-[#E2E8F0]">
+                <span className="text-[10px] uppercase font-mono tracking-wider font-bold text-[#2563EB]">Security by Design</span>
               </div>
-            </div>
+            </motion.div>
 
-            <div className="p-8 bg-slate-50/50 rounded-3xl border border-slate-100 flex flex-col justify-between h-64 hover:bg-white hover:shadow-xl transition-all duration-300">
-              <div className="space-y-4">
-                <div className="flex text-amber-400">
-                  {[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-current" />)}
+            {/* Card 2 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="bg-white border border-[#E2E8F0] rounded-3xl p-8 flex flex-col justify-between h-80 shadow-xs hover:border-[#2563EB]/40 hover:shadow-lg hover:-translate-y-1.5 transition-all duration-300 group cursor-default"
+            >
+              <div className="space-y-5">
+                <div className="w-12 h-12 rounded-2xl bg-blue-50/50 flex items-center justify-center border border-blue-100/30 group-hover:scale-[1.08] transition-transform duration-300">
+                  <Gauge className="w-6 h-6 text-[#2563EB]" />
                 </div>
-                <p className="text-xs text-slate-600 italic font-semibold leading-relaxed">
-                  "Our creative leads share high-res 4K video streams continuously. Expiring keys and secure passcodes protect previews flawlessly."
-                </p>
+                <div className="space-y-2">
+                  <h3 className="font-sans font-bold text-lg text-[#0F172A]">Performance Driven</h3>
+                  <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed font-normal">
+                    Optimized uploads, responsive interactions, and efficient application architecture deliver a fast experience across desktop and mobile devices.
+                  </p>
+                </div>
               </div>
-              <div>
-                <span className="font-display font-extrabold text-xs text-slate-900 block leading-none">Sarah Jenkins</span>
-                <span className="text-[9px] uppercase font-mono font-bold text-slate-400 block mt-1.5">Lead Creative, Outrun Studios</span>
+              <div className="pt-6 border-t border-[#E2E8F0]">
+                <span className="text-[10px] uppercase font-mono tracking-wider font-bold text-[#2563EB]">Optimized Experience</span>
               </div>
-            </div>
+            </motion.div>
 
-            <div className="p-8 bg-slate-50/50 rounded-3xl border border-slate-100 flex flex-col justify-between h-64 hover:bg-white hover:shadow-xl transition-all duration-300">
-              <div className="space-y-4">
-                <div className="flex text-amber-400">
-                  {[...Array(5)].map((_, i) => <Star key={i} className="w-3.5 h-3.5 fill-current" />)}
+            {/* Card 3 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="bg-white border border-[#E2E8F0] rounded-3xl p-8 flex flex-col justify-between h-80 shadow-xs hover:border-[#2563EB]/40 hover:shadow-lg hover:-translate-y-1.5 transition-all duration-300 group cursor-default md:col-span-2 lg:col-span-1"
+            >
+              <div className="space-y-5">
+                <div className="w-12 h-12 rounded-2xl bg-blue-50/50 flex items-center justify-center border border-blue-100/30 group-hover:scale-[1.08] transition-transform duration-300">
+                  <CloudCog className="w-6 h-6 text-[#2563EB]" />
                 </div>
-                <p className="text-xs text-slate-600 italic font-semibold leading-relaxed">
-                  "SOC2 compliance requirements mapped beautiful onto their 90-day comprehensive logs auditing controls. An essential tool for security governance."
-                </p>
+                <div className="space-y-2">
+                  <h3 className="font-sans font-bold text-lg text-[#0F172A]">Built to Scale</h3>
+                  <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed font-normal">
+                    Designed with a modular cloud-native architecture that supports future growth, maintainability, and production-ready deployment practices.
+                  </p>
+                </div>
               </div>
-              <div>
-                <span className="font-display font-extrabold text-xs text-slate-900 block leading-none">Chen Jing</span>
-                <span className="text-[9px] uppercase font-mono font-bold text-slate-400 block mt-1.5">Compliance Officer, Orient Capital</span>
+              <div className="pt-6 border-t border-[#E2E8F0]">
+                <span className="text-[10px] uppercase font-mono tracking-wider font-bold text-[#2563EB]">Cloud Native Architecture</span>
               </div>
-            </div>
+            </motion.div>
           </div>
 
         </div>
