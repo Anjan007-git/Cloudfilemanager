@@ -693,10 +693,10 @@ async function startServer() {
   });
 
   // Profile Update
-  app.post('/api/auth/update-profile', authenticateToken, (req: any, res) => {
-    const { name, email } = req.body;
-    if (!name || !email) {
-      return res.status(400).json({ error: 'Name and email are required parameters' });
+  app.post('/api/auth/update-profile', authenticateToken, async (req: any, res) => {
+    const { name } = req.body;
+    if (!name) {
+      return res.status(400).json({ error: 'Name is a required parameter' });
     }
 
     const db = dbService.getDB();
@@ -706,38 +706,39 @@ async function startServer() {
       return res.status(404).json({ error: 'Profile not found' });
     }
 
-    // Capture previous values
     const oldEmail = profile.email.toLowerCase();
-    const newEmail = email.toLowerCase().trim();
-
-    if (oldEmail !== newEmail && db.users[newEmail]) {
-      return res.status(400).json({ error: 'Email address is already in use by another user' });
-    }
 
     // Update in users table
     if (db.users[oldEmail]) {
       const userObj = db.users[oldEmail];
-      delete db.users[oldEmail];
       userObj.name = name;
-      userObj.email = newEmail;
-      db.users[newEmail] = userObj;
     }
 
     // Update in profiles table
     profile.name = name;
-    profile.email = newEmail;
     db.profiles[userId] = profile;
 
     // Log Activity
     db.activities.unshift({
       id: 'act-' + Date.now(),
       type: 'rename',
-      details: `Profile updated name to "${name}" and email to "${newEmail}"`,
+      details: `Profile updated name to "${name}"`,
       createdAt: new Date().toISOString(),
       userId,
     });
 
     dbService.saveDB(db);
+
+    // Sync updated name in Firestore users collection
+    try {
+      await updateFirestoreDoc(req.idToken, 'users', userId, {
+        name: name,
+        fullName: name
+      });
+    } catch (err) {
+      console.warn('Error updating profile name in Firestore via REST:', err);
+    }
+
     res.json({ user: profile });
   });
 
@@ -760,6 +761,34 @@ async function startServer() {
     dbService.saveDB(db);
 
     res.json({ message: 'Password updated successfully' });
+  });
+
+  // Create Password (for users originally signed in using Google who want to create a password)
+  app.post('/api/auth/create-password', authenticateToken, (req: any, res) => {
+    const { password } = req.body;
+    if (!password) {
+      return res.status(400).json({ error: 'Password is required' });
+    }
+
+    const db = dbService.getDB();
+    const emailNorm = req.user.email.toLowerCase();
+    let userObj = db.users[emailNorm];
+
+    if (!userObj) {
+      const userId = req.user.userId;
+      userObj = {
+        id: userId,
+        name: req.user.name || emailNorm.split('@')[0],
+        email: emailNorm,
+        password: bcrypt.hashSync(password, 10),
+      };
+      db.users[emailNorm] = userObj;
+    } else {
+      userObj.password = bcrypt.hashSync(password, 10);
+    }
+
+    dbService.saveDB(db);
+    res.json({ message: 'Password created successfully' });
   });
 
   // Multi-factor Auth Status toggle

@@ -1,10 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { 
-  User, Shield, Smartphone, Bell, Trash2, Key, ToggleLeft, Activity, Laptop, RefreshCw 
+  User, Shield, Smartphone, Bell, Trash2, Key, ToggleLeft, Activity, Laptop, RefreshCw,
+  Lock, Eye, EyeOff, HelpCircle, ShieldCheck
 } from 'lucide-react';
 import { UserProfile, UserSession } from '../types.js';
-import { apiFetch, getApiUrl } from '../firebase.js';
+import { apiFetch, getApiUrl, auth, db } from '../firebase.js';
+import { 
+  EmailAuthProvider, 
+  reauthenticateWithCredential, 
+  updatePassword, 
+  linkWithCredential 
+} from 'firebase/auth';
+import { doc, updateDoc } from 'firebase/firestore';
 
 interface SettingsViewProps {
   user: UserProfile;
@@ -14,16 +22,63 @@ interface SettingsViewProps {
 }
 
 export default function SettingsView({ user, token, onRefresh, onLogout }: SettingsViewProps) {
+  const fbUser = auth.currentUser;
+  
+  // Detect provider types
+  const providers = fbUser?.providerData.map(p => p.providerId) || [];
+  const hasPasswordProvider = providers.includes('password');
+  const isGoogleUserOnly = providers.includes('google.com') && !hasPasswordProvider;
+
+  // Form states
   const [profileName, setProfileName] = useState(user.name);
   const [profileEmail, setProfileEmail] = useState(user.email);
   const [mfa, setMfa] = useState(user.mfaEnabled);
 
+  // Password fields
   const [curPwd, setCurPwd] = useState('');
   const [newPwd, setNewPwd] = useState('');
+  const [confirmNewPwd, setConfirmNewPwd] = useState('');
+  const [showCurPwd, setShowCurPwd] = useState(false);
+  const [showNewPwd, setShowNewPwd] = useState(false);
+  const [showConfirmNewPwd, setShowConfirmNewPwd] = useState(false);
   
+  // Google sign-in password state
+  const [showCreatePasswordForm, setShowCreatePasswordForm] = useState(false);
+
   const [sessions, setSessions] = useState<UserSession[]>([]);
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState<{ status: 'success' | 'error', text: string } | null>(null);
+
+  // Password Rules live validation state
+  const hasMinLength = newPwd.length >= 8;
+  const hasUppercase = /[A-Z]/.test(newPwd);
+  const hasLowercase = /[a-z]/.test(newPwd);
+  const hasNumber = /[0-9]/.test(newPwd);
+  const hasSpecial = /[^A-Za-z0-9]/.test(newPwd);
+
+  const isPasswordValid = hasMinLength && hasUppercase && hasLowercase && hasNumber && hasSpecial;
+
+  const getStrength = () => {
+    if (!newPwd) return { score: 0, text: 'No password', color: 'bg-slate-200', textColor: 'text-slate-400', width: 'w-0' };
+    let score = 0;
+    if (newPwd.length >= 8) score += 1;
+    if (/[A-Z]/.test(newPwd)) score += 1;
+    if (/[a-z]/.test(newPwd)) score += 1;
+    if (/[0-9]/.test(newPwd)) score += 1;
+    if (/[^A-Za-z0-9]/.test(newPwd)) score += 1;
+
+    if (score <= 2) {
+      return { score, text: 'Weak', color: 'bg-red-500', textColor: 'text-red-500', width: 'w-1/4' };
+    } else if (score <= 3) {
+      return { score, text: 'Medium', color: 'bg-amber-500', textColor: 'text-amber-550', width: 'w-2/4' };
+    } else if (score === 4) {
+      return { score, text: 'Strong', color: 'bg-blue-500', textColor: 'text-blue-650', width: 'w-3/4' };
+    } else {
+      return { score, text: 'Excellent', color: 'bg-emerald-500', textColor: 'text-emerald-500', width: 'w-full' };
+    }
+  };
+
+  const strength = getStrength();
 
   // GitHub synchronization states
   const [gitHubLinked, setGitHubLinked] = useState(() => {
@@ -55,7 +110,10 @@ export default function SettingsView({ user, token, onRefresh, onLogout }: Setti
 
   useEffect(() => {
     fetchSessions();
-  }, []);
+    if (fbUser) {
+      setProfileEmail(fbUser.email || '');
+    }
+  }, [fbUser]);
 
   const fetchSessions = async () => {
     try {
@@ -73,22 +131,42 @@ export default function SettingsView({ user, token, onRefresh, onLogout }: Setti
 
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const trimmedName = profileName.trim();
+    if (!trimmedName || trimmedName.length < 2 || trimmedName.length > 50) {
+      setFeedback({ status: 'error', text: 'Representative Name must be between 2 and 50 characters.' });
+      return;
+    }
+
     setLoading(true);
     setFeedback(null);
 
     try {
+      // Sync with local backend
       const resp = await apiFetch('/api/auth/update-profile', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ name: profileName, email: profileEmail })
+        body: JSON.stringify({ name: trimmedName })
       });
       const data = await resp.json();
       if (!resp.ok) throw new Error(data.error || 'Failed updating profile details');
 
-      setFeedback({ status: 'success', text: 'Corporate profile properties updated successfully!' });
+      // Sync live Firestore user document (triggers real-time snapshot listener)
+      if (fbUser) {
+        const userDocRef = doc(db, 'users', fbUser.uid);
+        await updateDoc(userDocRef, {
+          name: trimmedName,
+          fullName: trimmedName
+        });
+
+        // Also update standard display name profile
+        const { updateProfile } = await import('firebase/auth');
+        await updateProfile(fbUser, { displayName: trimmedName });
+      }
+
+      setFeedback({ status: 'success', text: 'Profile updated successfully.' });
       onRefresh();
     } catch (err: any) {
       setFeedback({ status: 'error', text: err.message });
@@ -99,10 +177,29 @@ export default function SettingsView({ user, token, onRefresh, onLogout }: Setti
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!isPasswordValid) {
+      setFeedback({ status: 'error', text: 'New password does not satisfy all requirements.' });
+      return;
+    }
+    if (newPwd !== confirmNewPwd) {
+      setFeedback({ status: 'error', text: 'New passwords do not match.' });
+      return;
+    }
+
     setLoading(true);
     setFeedback(null);
 
     try {
+      if (!fbUser) throw new Error('Not authenticated in Firebase.');
+
+      // Re-authenticate user
+      const credential = EmailAuthProvider.credential(fbUser.email!, curPwd);
+      await reauthenticateWithCredential(fbUser, credential);
+
+      // Update Firebase Auth password
+      await updatePassword(fbUser, newPwd);
+
+      // Keep local JSON DB in sync
       const resp = await apiFetch('/api/auth/update-password', {
         method: 'POST',
         headers: {
@@ -114,11 +211,69 @@ export default function SettingsView({ user, token, onRefresh, onLogout }: Setti
       const data = await resp.json();
       if (!resp.ok) throw new Error(data.error || 'Incorrect current password credential');
 
-      setFeedback({ status: 'success', text: 'Security credentials password altered successfully.' });
+      setFeedback({ status: 'success', text: 'Password updated successfully.' });
       setCurPwd('');
       setNewPwd('');
+      setConfirmNewPwd('');
     } catch (err: any) {
-      setFeedback({ status: 'error', text: err.message });
+      let friendlyMsg = err.message;
+      if (err.code === 'auth/wrong-password' || err.message?.includes('wrong-password') || err.message?.includes('incorrect')) {
+        friendlyMsg = 'Current password provided is incorrect.';
+      } else if (err.code === 'auth/weak-password') {
+        friendlyMsg = 'The new password is too weak according to security providers.';
+      }
+      setFeedback({ status: 'error', text: friendlyMsg });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreatePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!isPasswordValid) {
+      setFeedback({ status: 'error', text: 'Password does not satisfy all requirements.' });
+      return;
+    }
+    if (newPwd !== confirmNewPwd) {
+      setFeedback({ status: 'error', text: 'Passwords do not match.' });
+      return;
+    }
+
+    setLoading(true);
+    setFeedback(null);
+
+    try {
+      if (!fbUser) throw new Error('Not authenticated in Firebase.');
+
+      // Link email/password credential
+      const credential = EmailAuthProvider.credential(fbUser.email!, newPwd);
+      await linkWithCredential(fbUser, credential);
+
+      // Keep local JSON DB in sync
+      const resp = await apiFetch('/api/auth/create-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ password: newPwd })
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error || 'Failed to synchronize password with backend');
+
+      setFeedback({ status: 'success', text: 'Password created successfully.' });
+      setShowCreatePasswordForm(false);
+      setNewPwd('');
+      setConfirmNewPwd('');
+      onRefresh();
+    } catch (err: any) {
+      let friendlyMsg = err.message;
+      if (err.code === 'auth/credential-already-in-use') {
+        friendlyMsg = 'An account with this email/password already exists or is linked.';
+      } else if (err.code === 'auth/requires-recent-login') {
+        friendlyMsg = 'Authentication session expired. Please sign out and log in again to configure a password.';
+      }
+      setFeedback({ status: 'error', text: friendlyMsg });
     } finally {
       setLoading(false);
     }
@@ -184,6 +339,43 @@ export default function SettingsView({ user, token, onRefresh, onLogout }: Setti
     }
   };
 
+  const renderRulesList = () => {
+    return (
+      <div className="mt-3 space-y-1.5 text-slate-500 font-normal text-[11px] leading-relaxed">
+        <div className="flex items-center gap-1.5">
+          <span className={hasMinLength ? "text-emerald-500 font-bold" : "text-slate-300"}>
+            {hasMinLength ? "✓" : "○"}
+          </span>
+          <span className={hasMinLength ? "text-emerald-700 font-semibold" : ""}>Minimum 8 characters</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className={hasUppercase ? "text-emerald-500 font-bold" : "text-slate-300"}>
+            {hasUppercase ? "✓" : "○"}
+          </span>
+          <span className={hasUppercase ? "text-emerald-700 font-semibold" : ""}>At least one uppercase letter (A-Z)</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className={hasLowercase ? "text-emerald-500 font-bold" : "text-slate-300"}>
+            {hasLowercase ? "✓" : "○"}
+          </span>
+          <span className={hasLowercase ? "text-emerald-700 font-semibold" : ""}>At least one lowercase letter (a-z)</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className={hasNumber ? "text-emerald-500 font-bold" : "text-slate-300"}>
+            {hasNumber ? "✓" : "○"}
+          </span>
+          <span className={hasNumber ? "text-emerald-700 font-semibold" : ""}>At least one number (0-9)</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className={hasSpecial ? "text-emerald-500 font-bold" : "text-slate-300"}>
+            {hasSpecial ? "✓" : "○"}
+          </span>
+          <span className={hasSpecial ? "text-emerald-700 font-semibold" : ""}>At least one special character (@, $, !, %, *, etc.)</span>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-8 font-sans pb-12" id="settings-view-root">
       
@@ -223,69 +415,263 @@ export default function SettingsView({ user, token, onRefresh, onLogout }: Setti
                     type="text"
                     required
                     value={profileName}
+                    disabled={loading}
                     onChange={(e) => setProfileName(e.target.value)}
-                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:border-blue-600 transition-all font-semibold text-slate-800 shadow-inner"
+                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:border-blue-600 transition-all font-semibold text-slate-800 shadow-inner disabled:opacity-60"
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="block text-[10px] uppercase font-mono tracking-wider font-extrabold text-slate-400">Corporate Email Domain</label>
-                  <input 
-                    type="email"
-                    required
-                    value={profileEmail}
-                    onChange={(e) => setProfileEmail(e.target.value)}
-                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:border-blue-600 transition-all font-semibold text-slate-800 shadow-inner"
-                  />
+                  <label className="flex items-center gap-1 text-[10px] uppercase font-mono tracking-wider font-extrabold text-slate-400">
+                    <span>Corporate Email Domain</span>
+                    <div className="relative inline-block cursor-help group/tooltip">
+                      <HelpCircle className="w-3.5 h-3.5 text-slate-400 hover:text-slate-600 transition-colors" />
+                      <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-48 p-2.5 bg-slate-900 text-white text-[10px] font-normal rounded-xl shadow-lg opacity-0 pointer-events-none group-hover/tooltip:opacity-100 transition-opacity z-50 leading-relaxed text-center">
+                        Email is managed by your authentication provider.
+                        <div className="absolute top-full left-1/2 -translate-x-1/2 -mt-1 border-4 border-transparent border-t-slate-900" />
+                      </div>
+                    </div>
+                  </label>
+                  <div className="relative">
+                    <input 
+                      type="email"
+                      readOnly
+                      disabled
+                      value={profileEmail}
+                      className="w-full p-3.5 pl-10 bg-slate-100/70 border border-slate-200 rounded-2xl cursor-not-allowed font-semibold text-slate-450 shadow-inner focus:outline-none"
+                    />
+                    <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+                  </div>
                 </div>
               </div>
               <button 
                 id="save-profile-btn"
                 type="submit"
                 disabled={loading}
-                className="px-5 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow cursor-pointer transition-all border border-blue-500/20"
+                className="px-5 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-bold text-xs rounded-xl shadow cursor-pointer transition-all border border-blue-500/20"
               >
-                {loading ? 'Processing changes...' : 'Save Profile Details'}
+                {loading ? 'Saving...' : 'Save Profile Details'}
               </button>
             </form>
           </div>
 
-          {/* Card B: decryptions credentials */}
+          {/* Card B: Password Management / Security Credentials */}
           <div className="bg-white border border-slate-200/50 rounded-3xl p-6 sm:p-8 shadow-sm space-y-5">
-            <h3 className="font-display font-bold text-slate-900 text-sm">Decryption key modification</h3>
-            <form onSubmit={handlePasswordSubmit} className="space-y-5 text-slate-700 font-semibold text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="block text-[10px] uppercase font-mono tracking-wider font-extrabold text-slate-400">Current Key Phrase</label>
-                  <input 
-                    type="password"
-                    required
-                    value={curPwd}
-                    onChange={(e) => setCurPwd(e.target.value)}
-                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:border-blue-600 transition-all shadow-inner"
-                    placeholder="••••••••••••"
-                  />
+            <h3 className="font-display font-bold text-slate-900 text-sm">Password Management</h3>
+            
+            {isGoogleUserOnly ? (
+              /* Google Sign-In Only Interface */
+              <div className="bg-slate-50 border border-slate-200/60 rounded-2xl p-5.5 space-y-4">
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-blue-50 text-blue-600 rounded-xl mt-0.5">
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12.24 10.285V13.4h6.86c-.277 1.56-1.602 4.585-6.86 4.585-4.54 0-8.24-3.765-8.24-8.4s3.7-8.4 8.24-8.4c2.58 0 4.307 1.095 5.298 2.045l2.465-2.37C18.435 1.21 15.62 0 12.24 0 5.58 0 0 5.37 0 12s5.58 12 12.24 12c6.96 0 11.57-4.89 11.57-11.79 0-.795-.085-1.4-.19-1.925H12.24z"/>
+                    </svg>
+                  </div>
+                  <div className="space-y-1">
+                    <h4 className="text-slate-900 font-bold text-xs flex items-center gap-1.5">
+                      Current authentication method: <span className="bg-blue-100 text-blue-850 text-[10px] px-2 py-0.5 rounded-lg font-mono uppercase font-extrabold">Google Sign-In</span>
+                    </h4>
+                    <p className="text-[11px] text-slate-500 font-normal leading-relaxed">
+                      You currently sign in using your Google account.
+                    </p>
+                    <p className="text-[11px] text-slate-500 font-normal leading-relaxed">
+                      To create a password for direct email login, click the button below.
+                    </p>
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <label className="block text-[10px] uppercase font-mono tracking-wider font-extrabold text-slate-400">New Key Phrase</label>
-                  <input 
-                    type="password"
-                    required
-                    value={newPwd}
-                    onChange={(e) => setNewPwd(e.target.value)}
-                    className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:border-blue-600 transition-all shadow-inner"
-                    placeholder="Min 8 letters"
-                  />
-                </div>
+
+                {!showCreatePasswordForm ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowCreatePasswordForm(true)}
+                    className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow cursor-pointer transition-all"
+                  >
+                    Create Password
+                  </button>
+                ) : (
+                  <form onSubmit={handleCreatePasswordSubmit} className="space-y-4 mt-4 pt-4 border-t border-slate-200 text-slate-700 font-semibold text-xs">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-1.5 relative">
+                        <label className="block text-[10px] uppercase font-mono tracking-wider font-extrabold text-slate-400">New Password</label>
+                        <div className="relative">
+                          <input 
+                            type={showNewPwd ? "text" : "password"}
+                            required
+                            value={newPwd}
+                            onChange={(e) => setNewPwd(e.target.value)}
+                            disabled={loading}
+                            className="w-full p-3.5 pr-10 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:border-blue-600 transition-all shadow-inner disabled:opacity-65"
+                            placeholder="••••••••"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowNewPwd(!showNewPwd)}
+                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-650"
+                          >
+                            {showNewPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+                      <div className="space-y-1.5 relative">
+                        <label className="block text-[10px] uppercase font-mono tracking-wider font-extrabold text-slate-400">Confirm New Password</label>
+                        <div className="relative">
+                          <input 
+                            type={showConfirmNewPwd ? "text" : "password"}
+                            required
+                            value={confirmNewPwd}
+                            onChange={(e) => setConfirmNewPwd(e.target.value)}
+                            disabled={loading}
+                            className="w-full p-3.5 pr-10 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:border-blue-600 transition-all shadow-inner disabled:opacity-65"
+                            placeholder="••••••••"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmNewPwd(!showConfirmNewPwd)}
+                            className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-650"
+                          >
+                            {showConfirmNewPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Strength Indicator */}
+                    <div className="space-y-1.5">
+                      <div className="flex justify-between items-center text-[10px] uppercase font-mono tracking-wider font-extrabold text-slate-400">
+                        <span>Password Strength</span>
+                        <span className={strength.textColor}>{strength.text}</span>
+                      </div>
+                      <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                        <div className={`h-full transition-all duration-300 ${strength.color} ${strength.width}`} />
+                      </div>
+                    </div>
+
+                    {/* Requirements validation list */}
+                    <div className="p-4 bg-slate-50 border border-slate-200/50 rounded-2xl">
+                      <span className="block text-[9px] uppercase font-mono tracking-wider font-extrabold text-slate-400 mb-2">Requirements</span>
+                      {renderRulesList()}
+                    </div>
+
+                    <div className="flex gap-2 pt-2">
+                      <button
+                        type="submit"
+                        disabled={loading || !isPasswordValid || newPwd !== confirmNewPwd}
+                        className="px-5 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 disabled:cursor-not-allowed text-white font-bold text-xs rounded-xl shadow cursor-pointer transition-all border border-blue-500/20"
+                      >
+                        {loading ? 'Creating...' : 'Create Password'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowCreatePasswordForm(false);
+                          setNewPwd('');
+                          setConfirmNewPwd('');
+                        }}
+                        className="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+                )}
               </div>
-              <button 
-                id="change-pwd-btn"
-                type="submit"
-                disabled={loading}
-                className="px-5 py-3 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition-all cursor-pointer border border-slate-800/40"
-              >
-                Change Decryption Key
-              </button>
-            </form>
+            ) : (
+              /* Standard Email/Password Update Interface */
+              <form onSubmit={handlePasswordSubmit} className="space-y-5 text-slate-700 font-semibold text-xs">
+                <div className="space-y-1.5 relative">
+                  <label className="block text-[10px] uppercase font-mono tracking-wider font-extrabold text-slate-400">Current Password</label>
+                  <div className="relative">
+                    <input 
+                      type={showCurPwd ? "text" : "password"}
+                      required
+                      value={curPwd}
+                      onChange={(e) => setCurPwd(e.target.value)}
+                      disabled={loading}
+                      className="w-full p-3.5 pr-10 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:border-blue-600 transition-all shadow-inner disabled:opacity-65"
+                      placeholder="••••••••••••"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCurPwd(!showCurPwd)}
+                      className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-650"
+                    >
+                      {showCurPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5 relative">
+                    <label className="block text-[10px] uppercase font-mono tracking-wider font-extrabold text-slate-400">New Password</label>
+                    <div className="relative">
+                      <input 
+                        type={showNewPwd ? "text" : "password"}
+                        required
+                        value={newPwd}
+                        onChange={(e) => setNewPwd(e.target.value)}
+                        disabled={loading}
+                        className="w-full p-3.5 pr-10 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:border-blue-600 transition-all shadow-inner disabled:opacity-65"
+                        placeholder="••••••••"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNewPwd(!showNewPwd)}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-650"
+                      >
+                        {showNewPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="space-y-1.5 relative">
+                    <label className="block text-[10px] uppercase font-mono tracking-wider font-extrabold text-slate-400">Confirm New Password</label>
+                    <div className="relative">
+                      <input 
+                        type={showConfirmNewPwd ? "text" : "password"}
+                        required
+                        value={confirmNewPwd}
+                        onChange={(e) => setConfirmNewPwd(e.target.value)}
+                        disabled={loading}
+                        className="w-full p-3.5 pr-10 bg-slate-50 border border-slate-200 rounded-2xl focus:outline-none focus:border-blue-600 transition-all shadow-inner disabled:opacity-65"
+                        placeholder="••••••••"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmNewPwd(!showConfirmNewPwd)}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-650"
+                      >
+                        {showConfirmNewPwd ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Strength Indicator */}
+                <div className="space-y-1.5">
+                  <div className="flex justify-between items-center text-[10px] uppercase font-mono tracking-wider font-extrabold text-slate-400">
+                    <span>Password Strength</span>
+                    <span className={strength.textColor}>{strength.text}</span>
+                  </div>
+                  <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                    <div className={`h-full transition-all duration-300 ${strength.color} ${strength.width}`} />
+                  </div>
+                </div>
+
+                {/* Requirements validation list */}
+                <div className="p-4 bg-slate-50 border border-slate-200/50 rounded-2xl">
+                  <span className="block text-[9px] uppercase font-mono tracking-wider font-extrabold text-slate-400 mb-2">Requirements</span>
+                  {renderRulesList()}
+                </div>
+
+                <button 
+                  id="change-pwd-btn"
+                  type="submit"
+                  disabled={loading || !isPasswordValid || newPwd !== confirmNewPwd}
+                  className="px-5 py-3 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 disabled:cursor-not-allowed text-white font-bold text-xs rounded-xl transition-all cursor-pointer border border-slate-800/40"
+                >
+                  {loading ? 'Updating...' : 'Update Password'}
+                </button>
+              </form>
+            )}
           </div>
 
         </div>
@@ -341,7 +727,7 @@ export default function SettingsView({ user, token, onRefresh, onLogout }: Setti
                 className={`py-2 px-3.5 rounded-xl font-bold text-[11px] shadow-sm transition-all duration-150 active:scale-95 cursor-pointer ${
                   gitHubLinked 
                     ? 'bg-red-50 hover:bg-red-100 text-red-650 border border-red-200' 
-                    : 'bg-slate-900 hover:bg-slate-800 text-white border border-slate-9d0'
+                    : 'bg-slate-900 hover:bg-slate-800 text-white border border-slate-900'
                 }`}
               >
                 {loadingGitHub ? 'Connecting...' : gitHubLinked ? 'Unlink Sync' : 'Connect API'}
