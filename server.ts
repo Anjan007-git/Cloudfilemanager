@@ -395,7 +395,7 @@ async function startServer() {
     next();
   });
 
-  // ==================== RAILWAY COMPATIBILITY HEALTH CHECKS ====================
+  // ==================== RENDER / CLOUD HOSTING HEALTH CHECKS ====================
   app.get('/', (req, res) => {
     res.status(200).send('Cloud File Manager Backend Running');
   });

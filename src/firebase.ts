@@ -71,19 +71,33 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
 }
 
 export function getApiUrl(path: string): string {
+  if (!path) return '';
+  
+  // If already a full URL, return directly without modification
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
-  // Preferred strategy: Set VITE_API_URL to "/api" or default to "/api"
-  let apiBase = (import.meta as any).env.VITE_API_URL || '/api';
+  
+  // Dynamic API base URL from environment or fallback to Render deployment
+  let apiBase = ((import.meta as any).env?.VITE_API_URL || 'https://cloudfilemanager.onrender.com').trim();
   
   if (apiBase.endsWith('/')) {
     apiBase = apiBase.slice(0, -1);
   }
 
-  // Prevent double prepend of /api
-  if (apiBase === '/api' && cleanPath.startsWith('/api')) {
+  // If apiBase is empty or '/'
+  if (!apiBase || apiBase === '/') {
     return cleanPath;
   }
-  
+
+  // Prevent duplicate /api if both apiBase ends with /api and cleanPath starts with /api
+  if (apiBase.endsWith('/api') && cleanPath.startsWith('/api')) {
+    return `${apiBase}${cleanPath.slice(4)}`;
+  }
+
+  // Prevent duplicate prepends if cleanPath already begins with apiBase
   if (cleanPath.startsWith(apiBase)) {
     return cleanPath;
   }
